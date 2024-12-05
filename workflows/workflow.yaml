@@ -1,0 +1,82 @@
+main:
+  steps:
+    - start-extraction:
+        call: http
+        args:
+          url: https://<YOUR-CLOUD-RUN-URL>
+          method: POST
+        result: extraction_response
+
+    - dataproc-create-cluster:
+        call: googleapis.dataproc.v1.clusters.create
+        args:
+          projectId: ${sys.get_env("GCP_PROJECT_ID")}
+          region: europe-southwest1
+          cluster:
+            clusterName: ephemeral-cluster
+            config:
+              masterConfig:
+                machineTypeUri: n1-standard-1
+              workerConfig:
+                numInstances: 2
+                machineTypeUri: n1-standard-1
+        result: cluster_operation
+
+    - wait-for-cluster:
+        call: googleapis.dataproc.v1.operations.get
+        args:
+          name: ${cluster_operation.name}
+        result: cluster_status
+        retry:
+          condition: ${cluster_status.done == false}
+          delay: 10s
+
+    - run-pyspark-job:
+        call: googleapis.dataproc.v1.jobs.submit
+        args:
+          projectId: ${sys.get_env("GCP_PROJECT_ID")}
+          region: europe-southwest1
+          job:
+            placement:
+              clusterName: ephemeral-cluster
+            pysparkJob:
+              mainPythonFileUri: gs://infass/build_merc_table.py
+              args:
+                - gs://infass/path-to-latest-csv
+                - ${sys.get_env("GCP_PROJECT_ID")}:infass.merc
+        result: pyspark_job
+
+    - wait-for-job:
+        call: googleapis.dataproc.v1.operations.get
+        args:
+          name: ${pyspark_job.name}
+        result: job_status
+        retry:
+          condition: ${job_status.done == false}
+          delay: 10s
+
+    - delete-cluster:
+        call: googleapis.dataproc.v1.clusters.delete
+        args:
+          projectId: ${sys.get_env("GCP_PROJECT_ID")}
+          region: europe-southwest1
+          clusterName: ephemeral-cluster
+
+#    - refresh-reports:
+#      steps:
+#        - refresh-table-1:
+#            call: googleapis.bigquery.v2.jobs.query
+#            args:
+#              projectId: ${sys.get_env("GCP_PROJECT_ID")}
+#              body:
+#                query: |
+#                  CREATE OR REPLACE TABLE project_id.dataset.aggregated_table_1 AS
+#                  SELECT
+#                      category,
+#                      SUM(metric_value) AS total_metric,
+#                      COUNT(DISTINCT user_id) AS unique_users,
+#                      DATE(timestamp) AS aggregation_date
+#                  FROM project_id.dataset.consolidated_table
+#                  WHERE DATE(timestamp) = CURRENT_DATE()
+#                  GROUP BY category, DATE(timestamp);
+#                useLegacySql: false
