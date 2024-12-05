@@ -1,0 +1,38 @@
+FROM openjdk:11-jre-slim AS java-build
+
+FROM python:3.11-slim AS python-build
+WORKDIR /jobs
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV SPARK_VERSION=3.5.3
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir pyspark==${SPARK_VERSION} pytest==8.3.4 pandas==2.2.3
+
+FROM python:3.11-slim AS final
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/usr/local/openjdk-11
+ENV PATH=$JAVA_HOME/bin:$PATH \
+    SPARK_VERSION=3.5.3 \
+    PYTHONPATH=/jobs
+
+RUN curl -fLO https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    tar -xvzf spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$SPARK_HOME/bin:$SPARK_HOME/sbin:$PATH
+
+COPY --from=java-build /usr/local/openjdk-11 /usr/local/openjdk-11
+COPY --from=python-build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=python-build /usr/local/bin /usr/local/bin
+
+WORKDIR /jobs
+COPY spark_jobs/ ./
+COPY spark_jobs/tests/ ./tests
+ENTRYPOINT ["pytest", "--durations=0", "/jobs/tests"]
