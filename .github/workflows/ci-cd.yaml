@@ -71,7 +71,7 @@ jobs:
             --service-account ${{ secrets.GCP_COMPUTE_SA }} \
             --region ${{ env.GCP_REGION }} \
             --max-retries 1 \
-            --timeout 1200s
+            --task-timeout 1200s
 
   deploy-pyspark-script:
     name: Deploy PySpark Script to GCS
