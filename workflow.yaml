@@ -1,7 +1,7 @@
 main:
   steps:
     - run-selenium-ingestor:
-        call: googleapis.run.v1.executions.run
+        call: googleapis.run.v1.namespaces.jobs.run
         args:
           name: projects/${sys.get_env("GCP_PROJECT_ID")}/locations/${sys.get_env("GCP_REGION")}/jobs/selenium-ingestor-job
 
