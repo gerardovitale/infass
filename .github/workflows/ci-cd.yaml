@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload PySpark Script
         run: |
-          gsutil cp spark-jobs/spark_jobs/*.py ${{ env.GCS_BUCKET_URI }}/spark-jobs/
+          gcloud storage cp spark-jobs/spark_jobs/*.py ${{ env.GCS_BUCKET_URI }}/spark-jobs/
 
   deploy-workflow:
     name: Deploy Google Workflow
