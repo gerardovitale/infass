@@ -87,7 +87,6 @@ jobs:
 
       - name: Upload PySpark Script
         run: |
-          echo "Using env variable GCS_BUCKET_URI: ${{ env.GCS_BUCKET_URI }}"
           gsutil cp spark-jobs/spark_jobs/*.py ${{ env.GCS_BUCKET_URI }}/spark-jobs/
 
   deploy-workflow:
@@ -106,7 +105,6 @@ jobs:
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
         run: |
-          echo "Deploying Google Workflow to region: ${{ env.GCP_REGION }}"
           gcloud workflows deploy merc-workflow --source workflow.yaml
             --service-account ${{ secrets.GCP_COMPUTE_SA }}
             --location ${{ env.GCP_REGION }}
