@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the main branch
+    paths:
+      - '**'  # Trigger when any file is modified
+
+env:
+  GCS_BUCKET_URI: gs://infass/
+  GCP_REGION: europe-southwest1
+
+jobs:
+  test:
+    name: Parallel Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [selenium-ingestor, pyspark-jobs]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Run Tests
+        run: |
+          cd ${{ matrix.service }}/
+          docker buildx build -f Dockerfile.test -t test-image .
+          docker run --rm test-image
+  
+  build-push-ingestor:
+    name: Build and Push Selenium Ingestor Image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Registry
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        run: |
+          cd selenium-ingestor
+          docker buildx build -t ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
+
+  deploy-ingestor:
+    name: Deploy Cloud Run Job
+    runs-on: ubuntu-latest
+    needs: build-push-ingestor
+    steps:
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Deploy Cloud Run Job
+        run: |
+          gcloud run jobs update selenium-ingestor-job \
+            --image ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest \
+            --service-account ${{ secrets.GCP_COMPUTE_SA }} \
+            --region $GCP_REGION \
+            --max-retries 1 \
+            --timeout 1200s
+
+  deploy-pyspark-script:
+    name: Deploy PySpark Script to GCS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Upload PySpark Script
+        run: |
+          gsutil cp spark-jobs/spark_jobs/*.py $GCS_BUCKET_URI/spark-jobs/
+
+  deploy-workflow:
+    name: Deploy Google Workflow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Deploy Workflow
+        env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          gcloud workflows deploy merc-workflow \
+            --service-account ${{ secrets.GCP_COMPUTE_SA }}
+            --location=$GCP_REGION \
+            --source=workflow.yaml
