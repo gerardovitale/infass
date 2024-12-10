@@ -20,18 +20,29 @@ main:
                 machineTypeUri: n1-standard-2
         result: cluster_operation
 
+    - initialize-cluster-wait-loop:
+        assign:
+          - cluster_done: false
+
     - wait-for-cluster:
-        do:
-          - call: googleapis.dataproc.v1.operations.get
-            args:
-              name: ${cluster_operation.name}
-            result: cluster_status
-          - switch:
-              - condition: ${cluster_status.done == true}
-                next: run-pyspark-job
-          - sleep:
+        call: googleapis.dataproc.v1.operations.get
+        args:
+          name: ${cluster_operation.name}
+        result: cluster_status
+
+    - check-cluster-status:
+        switch:
+          - condition: ${cluster_status.done == true}
+            assign:
+              - cluster_done: true
+          - condition: ${cluster_status.done == false}
+            sleep:
               seconds: 10
-        loop: true
+
+    - repeat-wait-for-cluster:
+        switch:
+          - condition: ${cluster_done == false}
+            next: wait-for-cluster
 
     - run-pyspark-job:
         call: googleapis.dataproc.v1.jobs.submit
@@ -45,18 +56,29 @@ main:
               mainPythonFileUri: gs://infass/pyspark-jobs/build_merc_table.py
         result: pyspark_job
 
+    - initialize-job-wait-loop:
+        assign:
+          - job_done: false
+
     - wait-for-job:
-        do:
-          - call: googleapis.dataproc.v1.operations.get
-            args:
-              name: ${pyspark_job.name}
-            result: job_status
-          - switch:
-              - condition: ${job_status.done == true}
-                next: delete-dataproc-cluster
-          - sleep:
+        call: googleapis.dataproc.v1.operations.get
+        args:
+          name: ${pyspark_job.name}
+        result: job_status
+
+    - check-job-status:
+        switch:
+          - condition: ${job_status.done == true}
+            assign:
+              - job_done: true
+          - condition: ${job_status.done == false}
+            sleep:
               seconds: 10
-        loop: true
+
+    - repeat-wait-for-job:
+        switch:
+          - condition: ${job_done == false}
+            next: wait-for-job
 
     - delete-dataproc-cluster:
         call: googleapis.dataproc.v1.clusters.delete
