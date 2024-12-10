@@ -1,0 +1,58 @@
+main:
+  steps:
+    - run-selenium-ingestor:
+        call: googleapis.run.v1.executions.run
+        args:
+          name: projects/${sys.get_env("GCP_PROJECT_ID")}/locations/${sys.get_env("GCP_REGION")}/jobs/selenium-ingestor-job
+
+    - create-dataproc-cluster:
+        call: googleapis.dataproc.v1.clusters.create
+        args:
+          projectId: ${sys.get_env("GCP_PROJECT_ID")}
+          region: ${sys.get_env("GCP_REGION")}
+          cluster:
+            clusterName: ephemeral-cluster
+            config:
+              masterConfig:
+                machineTypeUri: n1-standard-2
+              workerConfig:
+                numInstances: 2
+                machineTypeUri: n1-standard-2
+        result: cluster_operation
+
+    - wait-for-cluster:
+        call: googleapis.dataproc.v1.operations.get
+        args:
+          name: ${cluster_operation.name}
+        result: cluster_status
+        retry:
+          condition: ${cluster_status.done == false}
+          delay: 10s
+
+    - run-pyspark-job:
+        call: googleapis.dataproc.v1.jobs.submit
+        args:
+          projectId: ${sys.get_env("GCP_PROJECT_ID")}
+          region: ${sys.get_env("GCP_REGION")}
+          job:
+            placement:
+              clusterName: ephemeral-cluster
+            pysparkJob:
+              mainPythonFileUri: gs://infass/pyspark-jobs/build_merc_table.py
+        result: pyspark_job
+
+    - wait-for-job:
+        call: googleapis.dataproc.v1.operations.get
+        args:
+          name: ${pyspark_job.name}
+        result: job_status
+        retry:
+          condition: ${job_status.done == false}
+          delay: 10s
+
+    - delete-dataproc-cluster:
+        call: googleapis.dataproc.v1.clusters.delete
+        args:
+          projectId: ${sys.get_env("GCP_PROJECT_ID")}
+          region: ${sys.get_env("GCP_REGION")}
+          clusterName: ephemeral-cluster
