@@ -51,7 +51,7 @@ jobs:
       - name: Build and Push Docker Image
         run: |
           cd selenium-ingestor
-          docker buildx build -t ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest .
+          docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest .
           docker push ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
 
   deploy-ingestor:
@@ -91,6 +91,7 @@ jobs:
         env:
               GCS_BUCKET_URI: ${{ env.GCS_BUCKET_URI }}
         run: |
+          echo "Using env variable GCS_BUCKET_URI: $GCS_BUCKET_URI"
           gsutil cp spark-jobs/spark_jobs/*.py $GCS_BUCKET_URI/spark-jobs/
 
   deploy-workflow:
@@ -110,7 +111,7 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REGION: ${{ env.GCP_REGION }}
         run: |
-          gcloud workflows deploy merc-workflow \
+          echo "Deploying Google Workflow to region: $GCP_REGION"
+          gcloud workflows deploy merc-workflow --source workflow.yaml
             --service-account ${{ secrets.GCP_COMPUTE_SA }}
-            --location=$GCP_REGION \
-            --source=workflow.yaml
+            --location $GCP_REGION
