@@ -21,13 +21,17 @@ main:
         result: cluster_operation
 
     - wait-for-cluster:
-        call: googleapis.dataproc.v1.operations.get
-        args:
-          name: ${cluster_operation.name}
-        result: cluster_status
-        retry:
-          condition: ${cluster_status.done == false}
-          delay: 10s
+        do:
+          - call: googleapis.dataproc.v1.operations.get
+            args:
+              name: ${cluster_operation.name}
+            result: cluster_status
+          - switch:
+              - condition: ${cluster_status.done == true}
+                next: run-pyspark-job
+          - sleep:
+              seconds: 10
+        loop: true
 
     - run-pyspark-job:
         call: googleapis.dataproc.v1.jobs.submit
@@ -42,13 +46,17 @@ main:
         result: pyspark_job
 
     - wait-for-job:
-        call: googleapis.dataproc.v1.operations.get
-        args:
-          name: ${pyspark_job.name}
-        result: job_status
-        retry:
-          condition: ${job_status.done == false}
-          delay: 10s
+        do:
+          - call: googleapis.dataproc.v1.operations.get
+            args:
+              name: ${pyspark_job.name}
+            result: job_status
+          - switch:
+              - condition: ${job_status.done == true}
+                next: delete-dataproc-cluster
+          - sleep:
+              seconds: 10
+        loop: true
 
     - delete-dataproc-cluster:
         call: googleapis.dataproc.v1.clusters.delete
