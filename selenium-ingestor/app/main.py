@@ -1,7 +1,7 @@
 import logging
 import os
 
-from app.extractor import ingest_data
+from extractor import ingest_data
 
 # LOGGING
 logging.basicConfig(
