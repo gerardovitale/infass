@@ -8,7 +8,7 @@ on:
       - '**'  # Trigger when any file is modified
 
 env:
-  GCS_BUCKET_URI: gs://infass/
+  GCS_BUCKET_URI: gs://infass
   GCP_REGION: europe-southwest1
 
 jobs:
