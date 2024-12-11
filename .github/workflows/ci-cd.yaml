@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.7.1
 
@@ -48,11 +48,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Extract Commit ID
+        id: vars
+        run: echo "COMMIT_ID=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
       - name: Build and Push Docker Image
         run: |
           cd selenium-ingestor
-          docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
+          docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:${{ env.COMMIT_ID }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:${{ env.COMMIT_ID }}
 
   deploy-ingestor:
     name: Deploy Cloud Run Job
@@ -67,12 +71,12 @@ jobs:
       - name: Deploy Cloud Run Job
         run: |
           gcloud run jobs update selenium-ingestor-job \
-            --image ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest \
+            --image ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:${{ env.COMMIT_ID }} \
             --service-account ${{ secrets.GCP_COMPUTE_SA }} \
             --region ${{ env.GCP_REGION }} \
             --max-retries 1 \
             --task-timeout 1200s
-
+  
   deploy-pyspark-script:
     name: Deploy PySpark Script to GCS
     runs-on: ubuntu-latest
