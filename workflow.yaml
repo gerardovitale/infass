@@ -6,7 +6,7 @@ main:
           name: projects/${sys.get_env("GCP_PROJECT_ID")}/locations/${sys.get_env("GCP_REGION")}/jobs/selenium-ingestor-job
 
     - create-dataproc-cluster:
-        call: googleapis.dataproc.v1.clusters.create
+        call: googleapis.dataproc.v1.projects.regions.clusters.create
         args:
           projectId: ${sys.get_env("GCP_PROJECT_ID")}
           region: ${sys.get_env("GCP_REGION")}
@@ -21,7 +21,7 @@ main:
         result: cluster_operation
 
     - check-cluster-status:
-        call: googleapis.dataproc.v1.operations.get
+        call: googleapis.dataproc.v1.projects.regions.operations.get
         args:
           name: ${cluster_operation.name}
         result: cluster_status
@@ -40,7 +40,7 @@ main:
         next: check-cluster-status
 
     - run-pyspark-job:
-        call: googleapis.dataproc.v1.jobs.submit
+        call: googleapis.dataproc.v1.projects.regions.jobs.submit
         args:
           projectId: ${sys.get_env("GCP_PROJECT_ID")}
           region: ${sys.get_env("GCP_REGION")}
@@ -52,7 +52,7 @@ main:
         result: pyspark_job
 
     - check-job-status:
-        call: googleapis.dataproc.v1.operations.get
+        call: googleapis.dataproc.v1.projects.regions.operations.get
         args:
           name: ${pyspark_job.name}
         result: job_status
@@ -71,7 +71,7 @@ main:
         next: check-job-status
 
     - delete-dataproc-cluster:
-        call: googleapis.dataproc.v1.clusters.delete
+        call: googleapis.dataproc.v1.projects.regions.clusters.delete
         args:
           projectId: ${sys.get_env("GCP_PROJECT_ID")}
           region: ${sys.get_env("GCP_REGION")}
