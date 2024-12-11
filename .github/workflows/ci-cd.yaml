@@ -107,4 +107,5 @@ jobs:
         run: |
           gcloud workflows deploy merc-workflow --source workflow.yaml \
             --service-account ${{ secrets.GCP_COMPUTE_SA }} \
-            --location ${{ env.GCP_REGION }}
+            --location ${{ env.GCP_REGION }} \
+            --update-env-vars GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_REGION=${{ env.GCP_REGION }}
