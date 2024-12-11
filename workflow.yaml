@@ -6,11 +6,13 @@ main:
           name: projects/${sys.get_env("GCP_PROJECT_ID")}/locations/${sys.get_env("GCP_REGION")}/jobs/selenium-ingestor-job
 
     - create-dataproc-cluster:
-        call: googleapis.dataproc.v1.projects.regions.clusters.create
+        call: http.post
         args:
-          projectId: ${sys.get_env("GCP_PROJECT_ID")}
-          region: ${sys.get_env("GCP_REGION")}
-          cluster:
+          url: https://dataproc.googleapis.com/v1/projects/${sys.get_env("GCP_PROJECT_ID")}/regions/${sys.get_env("GCP_REGION")}/clusters
+          auth:
+            type: OIDC
+          body:
+            projectId: ${sys.get_env("GCP_PROJECT_ID")}
             clusterName: ephemeral-cluster
             config:
               masterConfig:
@@ -21,9 +23,11 @@ main:
         result: cluster_operation
 
     - check-cluster-status:
-        call: googleapis.dataproc.v1.projects.regions.operations.get
+        call: http.get
         args:
-          name: ${cluster_operation.name}
+          url: https://dataproc.googleapis.com/v1/${cluster_operation.name}
+          auth:
+            type: OIDC
         result: cluster_status
 
     - check-if-cluster-done:
@@ -40,21 +44,26 @@ main:
         next: check-cluster-status
 
     - run-pyspark-job:
-        call: googleapis.dataproc.v1.projects.regions.jobs.submit
+        call: http.post
         args:
-          projectId: ${sys.get_env("GCP_PROJECT_ID")}
-          region: ${sys.get_env("GCP_REGION")}
-          job:
-            placement:
-              clusterName: ephemeral-cluster
-            pysparkJob:
-              mainPythonFileUri: gs://infass/pyspark-jobs/build_merc_table.py
+          url: https://dataproc.googleapis.com/v1/projects/${sys.get_env("GCP_PROJECT_ID")}/regions/${sys.get_env("GCP_REGION")}/jobs:submit
+          auth:
+            type: OIDC
+          body:
+            projectId: ${sys.get_env("GCP_PROJECT_ID")}
+            job:
+              placement:
+                clusterName: ephemeral-cluster
+              pysparkJob:
+                mainPythonFileUri: gs://infass/pyspark-jobs/build_merc_table.py
         result: pyspark_job
 
     - check-job-status:
-        call: googleapis.dataproc.v1.projects.regions.operations.get
+        call: http.get
         args:
-          name: ${pyspark_job.name}
+          url: https://dataproc.googleapis.com/v1/${pyspark_job.name}
+          auth:
+            type: OIDC
         result: job_status
 
     - check-if-job-done:
@@ -71,8 +80,8 @@ main:
         next: check-job-status
 
     - delete-dataproc-cluster:
-        call: googleapis.dataproc.v1.projects.regions.clusters.delete
+        call: http.delete
         args:
-          projectId: ${sys.get_env("GCP_PROJECT_ID")}
-          region: ${sys.get_env("GCP_REGION")}
-          clusterName: ephemeral-cluster
+          url: https://dataproc.googleapis.com/v1/projects/${sys.get_env("GCP_PROJECT_ID")}/regions/${sys.get_env("GCP_REGION")}/clusters/ephemeral-cluster
+          auth:
+            type: OIDC
