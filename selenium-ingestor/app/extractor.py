@@ -2,13 +2,9 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import datetime
-from itertools import chain
-from typing import Any, Dict, List
+from typing import Any, Dict, Generator, List
 
-import pandas as pd
 from bs4 import BeautifulSoup
-from google.cloud import storage
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -19,7 +15,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 POSTAL_CODE = "28050"
 BASE_URL = "https://tienda.mercadona.es"
-WAIT_CONTENT_TIME_SLEEP = 3
+WAIT_CONTENT_TIME_SLEEP = 2
 COOKIES_BUTTON_XPATH = "//button[contains(text(), 'Aceptar')]"
 POSTAL_CODE_INPUT_BOX_SELECTOR = "[data-testid='postal-code-checker-input']"
 CATEGORY_SELECTOR = ".category-menu__item button span label"
@@ -29,24 +25,6 @@ SUBCATEGORY_SELECTOR = "ul li.category-item button"
 SUBCATEGORY_BUTTON_SELECTOR_TEMPLATE = "//button[contains(text(), '{0}')]"
 
 logger = logging.getLogger(__name__)
-
-
-def ingest_data(destination_path: str) -> None:
-    logger.info("Starting data ingestion")
-    sources = get_page_sources()
-    df = build_df(sources)
-    df["date"] = datetime.now().date().isoformat()
-    write_pandas_to_bucket_as_csv(df, destination_path)
-    logger.info(f"Successfully ingested {df.shape[0]} rows of data")
-
-
-def write_pandas_to_bucket_as_csv(df: pd.DataFrame, bucket_uri: str) -> None:
-    logger.info(f"Writing raw pandas data as CSV to {bucket_uri}")
-    storage_client = storage.Client()
-    logger.info("Getting bucket")
-    bucket = storage_client.get_bucket(bucket_uri)
-    blob = bucket.blob(f"{datetime.now().date().isoformat()}.csv")
-    blob.upload_from_string(df.to_csv(index=False), "text/csv")
 
 
 def initialize_driver() -> webdriver.Chrome:
@@ -97,9 +75,29 @@ def get_subcategories(driver: webdriver.Chrome) -> List[str]:
     return [subcat.text for subcat in subcategories]
 
 
+def extract_product_data(page_source: str, category: str) -> Generator[Dict[str, Any], None, None] | None:
+    logger.info(f"Extracting product data for category: {category}")
+    if not page_source:
+        return
+
+    soup = BeautifulSoup(page_source, "html.parser")
+    products = soup.find_all("div", {"data-testid": "product-cell"})
+    return (
+        {
+            "name": product.find("h4", {"data-testid": "product-cell-name"}).text.strip(),
+            "original_price": (prices[0].text.strip() if prices else None),
+            "discount_price": (prices[1].text.strip() if len(prices) > 1 else None),
+            "size": product.find("div", class_="product-format").text.strip(),
+            "category": category,
+        }
+        for product in products
+        if (prices := product.find_all("p", {"data-testid": "product-price"}))
+    )
+
+
 def extract_page_source_for_subcategory(
     driver: webdriver.Chrome, category_name: str, subcategory_name: str, click: bool = True
-) -> str:
+):
     if click:
         logger.info(f"Clicking subcategory: {subcategory_name}")
         subcategory_button = driver.find_element(
@@ -109,10 +107,10 @@ def extract_page_source_for_subcategory(
 
     logger.info(f"Extracting page source for category '{category_name}', subcategory '{subcategory_name}'")
     time.sleep(WAIT_CONTENT_TIME_SLEEP)
-    return driver.page_source
+    return extract_product_data(driver.page_source, f"{category_name} > {subcategory_name}")
 
 
-def get_page_sources() -> Dict[str, str]:
+def get_page_sources():
     logger.info("Getting page content")
     driver = initialize_driver()
 
@@ -124,7 +122,7 @@ def get_page_sources() -> Dict[str, str]:
         enter_postal_code(driver)
         navigate_to_categories(driver)
 
-        page_sources = {}
+        product_gen_list = []
         category_names = get_main_categories(driver)
 
         # Iterate over each main category
@@ -139,47 +137,17 @@ def get_page_sources() -> Dict[str, str]:
 
             # Get page source for the first subcategory (already loaded)
             if subcategory_names:
-                first_subcategory_name = subcategory_names[0]
-                page_sources[f"{category_name} > {first_subcategory_name}"] = extract_page_source_for_subcategory(
-                    driver, category_name, first_subcategory_name, click=False
+                product_gen_list.append(
+                    extract_page_source_for_subcategory(driver, category_name, subcategory_names[0], click=False)
                 )
 
                 # For remaining subcategories, click and get page source
                 for subcategory_name in subcategory_names[1:]:
-                    page_sources[f"{category_name} > {subcategory_name}"] = extract_page_source_for_subcategory(
-                        driver, category_name, subcategory_name
+                    product_gen_list.append(
+                        extract_page_source_for_subcategory(driver, category_name, subcategory_name)
                     )
 
-        return page_sources
+        return product_gen_list
 
     finally:
         driver.quit()
-
-
-def extract_product_data(page_source: str, category: str) -> List[Dict[str, Any]]:
-    logger.info(f"Extracting product data for category: {category}")
-    if not page_source:
-        return []
-
-    soup = BeautifulSoup(page_source, "html.parser")
-    products = soup.find_all("div", {"data-testid": "product-cell"})
-    return [
-        {
-            "name": product.find("h4", {"data-testid": "product-cell-name"}).text.strip(),
-            "original_price": (prices[0].text.strip() if prices else None),
-            "discount_price": (prices[1].text.strip() if len(prices) > 1 else None),
-            "size": product.find("div", class_="product-format").text.strip(),
-            "category": category,
-        }
-        for product in products
-        if (prices := product.find_all("p", {"data-testid": "product-price"}))
-    ]
-
-
-def build_df(page_sources: Dict[str, str]) -> pd.DataFrame:
-    logger.info(f"Building dataframe from {len(page_sources)} page_sources")
-    return pd.DataFrame(
-        chain.from_iterable(
-            extract_product_data(page_source, category) for category, page_source in page_sources.items()
-        )
-    )

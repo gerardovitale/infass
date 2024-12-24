@@ -1,20 +1,11 @@
-from typing import Dict
 from unittest.mock import patch
 
-import pandas as pd
-
-from app.extractor import build_df
 from app.extractor import extract_product_data
 from tests.conf_test import BasicTestCase
 
 
-class TestMercadonaExtractor(BasicTestCase):
-    def setUp(self):
-        logger_patch = patch("extractor.logger")
-        self.addCleanup(logger_patch.stop)
-        self.mock_logger = logger_patch.start()
-
-        self.sample_html = """
+def get_test_html():
+    return """
         <div data-testid="product-cell" class="product-cell product-cell--actionable">
             <button class="product-cell__content-link" data-testid="open-product-detail">
                 <div class="product-cell__image-wrapper" aria-hidden="true">
@@ -44,19 +35,30 @@ class TestMercadonaExtractor(BasicTestCase):
         </div>
         """
 
+
+class TestExtractor(BasicTestCase):
+    def setUp(self):
+        logger_patch = patch("extractor.logger")
+        self.addCleanup(logger_patch.stop)
+        self.mock_logger = logger_patch.start()
+
+        time_patch = patch("extractor.time.sleep")
+        self.addCleanup(time_patch.stop)
+        self.mock_sleep = time_patch.start()
+
+        self.test_html = get_test_html()
+
     def test_extract_product_data(self):
         category = "test_category"
-        expected_output = [
-            {
-                "name": "Sample Product",
-                "original_price": "1,58 €",
-                "discount_price": "1,53 €",
-                "size": "Paquete 1 kg",
-                "category": category
-            }
-        ]
-        actual_output = extract_product_data(self.sample_html, category)
-        self.assertEqual(actual_output, expected_output)
+        expected_output = {
+            "name": "Sample Product",
+            "original_price": "1,58 €",
+            "discount_price": "1,53 €",
+            "size": "Paquete 1 kg",
+            "category": category,
+        }
+        actual_output = extract_product_data(self.test_html, category)
+        self.assertEqual(next(actual_output), expected_output)
 
     def test_extract_product_data_when_there_is_no_discount(self):
         category = "test_category"
@@ -82,22 +84,12 @@ class TestMercadonaExtractor(BasicTestCase):
         </div>
         """
 
-        expected_output = [
-            {
-                "name": "No Discount Product",
-                "original_price": "2,00 €",
-                "discount_price": None,
-                "size": "Unidad 500 ml",
-                "category": category
-            }
-        ]
+        expected_output = {
+            "name": "No Discount Product",
+            "original_price": "2,00 €",
+            "discount_price": None,
+            "size": "Unidad 500 ml",
+            "category": category,
+        }
         actual_output = extract_product_data(no_discount_html, category)
-        self.assertEqual(actual_output, expected_output)
-
-    @patch("extractor.extract_product_data")
-    def test_build_df_empty_sources(self, mock_extract_product_data):
-        mock_page_sources: Dict[str, str] = {}
-        mock_extract_product_data.return_value = []
-        expected_df = pd.DataFrame()
-        actual_df = build_df(mock_page_sources)
-        self.assert_pandas_dataframes_equal(expected_df, actual_df)
+        self.assertEqual(next(actual_output), expected_output)
