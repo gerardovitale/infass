@@ -8,6 +8,8 @@ on:
       - '**'  # Trigger when any file is modified
 
 env:
+  APP_NAME: infass
+  DOCKER_HUB_USERNAME: gerardovitale
   GCS_BUCKET_URI: gs://infass
   GCP_REGION: europe-southwest1
 
@@ -77,6 +79,7 @@ jobs:
   deploy-pyspark-script:
     name: Deploy PySpark Script to GCS
     runs-on: ubuntu-latest
+    needs: test
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -109,3 +112,48 @@ jobs:
             --location ${{ env.GCP_REGION }} \
             --set-env-vars GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_REGION=${{ env.GCP_REGION }} \
             --verbosity=debug 
+
+  terraform-deploy:
+    name: Deploy infra using terraform
+    runs-on: ubuntu-latest
+    needs: build-push-ingestor
+    env:
+      TF_VAR_APP_NAME: ${{ env.APP_NAME }}
+      TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+      TF_VAR_REGION: ${{ env.GCP_REGION }}
+      TF_VAR_DOCKER_HUB_USERNAME: ${{ env.DOCKER_HUB_USERNAME }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2.1.3
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up Terraform
+        id: setup-tf
+        uses: hashicorp/setup-terraform@v3.1.1
+        with:
+          terraform_version: 1.10.4
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: false
+
+      - name: Initialize Terraform
+        id: init
+        working-directory: ./tf-infra
+        run: terraform init
+
+      - name: Plan Terraform changes
+        id: plan
+        working-directory: ./tf-infra
+        run: terraform plan
+
+      - name: Apply Terraform changes
+        id: apply
+        working-directory: ./tf-infra
+        run: terraform apply -auto-approve
