@@ -25,8 +25,11 @@ spark-jobs.test:
 
 
 # TERRAFORM
+tf-init:
+	cd tf-infra/backend_support && terraform init
+
 tf-plan:
-	cd tf-infra/ && terraform plan
+	cd tf-infra/backend_support && terraform plan
 
 tf-apply:
-	cd tf-infra/ && terraform apply -auto-approve
+	cd tf-infra/backend_support && terraform apply -auto-approve
