@@ -10,7 +10,7 @@ resource "google_project_iam_member" "cloud_run_job_storage_permissions" {
     "roles/storage.objectCreator",
   ])
   project = var.PROJECT
-  member  = "serviceAccount:${google_service_account.cloud_run_job_writer.email}"
+  member  = "serviceAccount:${google_service_account.selenium_ingestor_sa.email}"
   role    = each.value
 }
 
