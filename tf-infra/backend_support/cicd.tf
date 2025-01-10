@@ -4,7 +4,8 @@ resource "google_project_service" "required_apis" {
     "iam.googleapis.com",
     "run.googleapis.com",
     "storage.googleapis.com",
-#     "workflows.googleapis.com",
+    "cloudresourcemanager.googleapis.com"
+    # "workflows.googleapis.com",
   ])
   project = var.PROJECT
   service = each.value
@@ -25,6 +26,7 @@ resource "google_project_iam_member" "cicd_service_account_roles" {
     "roles/storage.admin",
     "roles/run.admin",
     "roles/workflows.editor",
+    "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountTokenCreator",
     "roles/iam.workloadIdentityUser",
   ])
@@ -33,6 +35,11 @@ resource "google_project_iam_member" "cicd_service_account_roles" {
   role    = each.value
 }
 
+resource "google_project_iam_member" "cicd_service_account_act_as" {
+  project = var.PROJECT
+  member  = "serviceAccount:${google_service_account.cicd_service_account.email}"
+  role    = "roles/iam.serviceAccountUser"
+}
 output "cicd_service_account_email" {
   value = google_service_account.cicd_service_account.email
 }
