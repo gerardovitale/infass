@@ -14,12 +14,12 @@ resource "google_project_iam_member" "cloud_run_job_storage_permissions" {
   role    = each.value
 }
 
-# Job Definitiod
+# Job Definition
 resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
   name                = "selenium-ingestor-job"
   location            = var.REGION
   deletion_protection = true
-  labels = local.labels
+  labels              = local.labels
 
   template {
     template {
@@ -34,6 +34,7 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
             cpu    = "1"
             memory = "2Gi"
           }
+        }
       }
     }
   }
