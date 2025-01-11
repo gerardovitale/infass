@@ -56,6 +56,9 @@ jobs:
           docker tag ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
 
+      - name: Output Image Tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
   deploy-ingestor:
     name: Deploy Cloud Run Job
     runs-on: ubuntu-latest
@@ -122,7 +125,7 @@ jobs:
       TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_REGION: europe-southwest1
       TF_VAR_DOCKER_HUB_USERNAME: gerardovitale
-      TF_VAR_DOCKER_IMAGE_TAG: ${GITHUB_SHA::7}
+      TF_VAR_DOCKER_IMAGE_TAG: ${{ env.IMAGE_TAG }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
