@@ -151,7 +151,7 @@ jobs:
       - name: Plan Terraform changes
         id: plan
         working-directory: ./tf-infra
-        run: terraform plan
+        run: terraform plan -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
 
       - name: Apply Terraform changes
         id: apply
