@@ -7,7 +7,8 @@ from writer import write_pandas_to_bucket_as_csv
 
 # LOGGING
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    # format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 
@@ -23,6 +24,8 @@ def ingest_data(destination_path: str) -> None:
 if __name__ == "__main__":
     bucket_uri = os.getenv("INGESTION_MERC_PATH", "gs://infass/merc")
     if not bucket_uri:
-        logging.error(f"An invalid Bucket URI was provided: {bucket_uri}")
+        logging.error(f"A Bucket URI must be provided: {bucket_uri}")
         raise Exception("Bucket URI must be provided!")
+
+    logging.info(f"Starting data ingestion with bucket uri: {bucket_uri}")
     ingest_data(bucket_uri)
