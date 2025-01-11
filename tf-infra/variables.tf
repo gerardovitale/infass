@@ -17,3 +17,8 @@ variable "DOCKER_HUB_USERNAME" {
   type        = string
   description = "DockerHub username"
 }
+
+variable "DOCKER_IMAGE_TAG" {
+  type        = string
+  description = "Tag to be use when pull image from docker hub"
+}

@@ -28,7 +28,7 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
       service_account = google_service_account.selenium_ingestor_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/selenium-ingestor:latest"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/selenium-ingestor:${var.DOCKER_IMAGE_TAG}"
         resources {
           limits = {
             cpu    = "1"
