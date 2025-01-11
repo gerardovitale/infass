@@ -35,12 +35,10 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
             memory = "2Gi"
           }
         }
-        env = [
-          {
-            name  = "INGESTION_MERC_PATH"
-            value = "gs://${google_storage_bucket.infass_bucket.name}/merc"
-          },
-        ]
+        env {
+          name  = "INGESTION_MERC_PATH"
+          value = "gs://${google_storage_bucket.infass_bucket.name}/merc"
+        }
       }
     }
   }
