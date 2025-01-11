@@ -56,9 +56,6 @@ jobs:
           docker tag ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/selenium-ingestor:latest
 
-      - name: Output Image Tag
-        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
-
   deploy-ingestor:
     name: Deploy Cloud Run Job
     runs-on: ubuntu-latest
@@ -78,7 +75,7 @@ jobs:
             --max-retries 1 \
             --cpu 1 --memory 2Gi \
             --task-timeout 1200s
-  
+
   deploy-pyspark-script:
     name: Deploy PySpark Script to GCS
     runs-on: ubuntu-latest
@@ -125,7 +122,6 @@ jobs:
       TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_REGION: europe-southwest1
       TF_VAR_DOCKER_HUB_USERNAME: gerardovitale
-      TF_VAR_DOCKER_IMAGE_TAG: ${{ env.IMAGE_TAG }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
@@ -160,4 +156,4 @@ jobs:
       - name: Apply Terraform changes
         id: apply
         working-directory: ./tf-infra
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
