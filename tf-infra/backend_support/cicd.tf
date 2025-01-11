@@ -29,6 +29,7 @@ resource "google_project_iam_member" "cicd_service_account_roles" {
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountTokenCreator",
     "roles/iam.workloadIdentityUser",
+    "roles/resourcemanager.projectIamAdmin"
   ])
   project = var.PROJECT
   member  = "serviceAccount:${google_service_account.cicd_service_account.email}"
