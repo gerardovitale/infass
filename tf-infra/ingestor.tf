@@ -1,6 +1,7 @@
 # Service Account for Cloud Run job
 resource "google_service_account" "selenium_ingestor_sa" {
   account_id   = "${var.APP_NAME}-selenium-ingestor"
+  description = "Selenium Ingestor Service Account created by terraform"
   display_name = "Cloud Run Job Service Account for Selenium Ingestor"
 }
 
@@ -25,7 +26,7 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
   template {
     template {
       timeout         = "1200s"
-      max_retries     = 1
+      max_retries     = 0
       service_account = google_service_account.selenium_ingestor_sa.email
 
       containers {
