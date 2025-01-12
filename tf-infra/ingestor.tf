@@ -8,6 +8,7 @@ resource "google_service_account" "selenium_ingestor_sa" {
 resource "google_project_iam_member" "cloud_run_job_storage_permissions" {
   for_each = toset([
     "roles/storage.objectCreator",
+    "roles/storage.objectViewer",
   ])
   project = var.PROJECT
   member  = "serviceAccount:${google_service_account.selenium_ingestor_sa.email}"
@@ -39,6 +40,11 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
           name  = "INGESTION_MERC_PATH"
           value = "gs://${google_storage_bucket.infass_bucket.name}/merc"
         }
+        env {
+          name  = "TEST_MODE"
+          value = true
+        }
+
       }
     }
   }

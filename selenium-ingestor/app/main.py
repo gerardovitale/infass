@@ -15,7 +15,11 @@ logging.basicConfig(
 
 def ingest_data(destination_path: str) -> None:
     logging.info("Starting data ingestion")
-    sources = get_page_sources()
+    is_test_mode = False
+    if os.getenv("TEST_MODE"):
+        logging.info(f"Running test mode with: TEST_MODE = {os.getenv('TEST_MODE')}")
+        is_test_mode = True
+    sources = get_page_sources(is_test_mode)
     data_gen = build_data_gen(sources)
     write_pandas_to_bucket_as_csv(data_gen, destination_path)
     logging.info(f"Successfully ingested data")

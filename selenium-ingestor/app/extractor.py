@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, Generator, List
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    List,
+)
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -110,7 +115,7 @@ def extract_page_source_for_subcategory(
     return extract_product_data(driver.page_source, f"{category_name} > {subcategory_name}")
 
 
-def get_page_sources():
+def get_page_sources(test_mode: bool):
     logger.info("Getting page content")
     driver = initialize_driver()
 
@@ -146,6 +151,10 @@ def get_page_sources():
                     product_gen_list.append(
                         extract_page_source_for_subcategory(driver, category_name, subcategory_name)
                     )
+
+            if test_mode:  # Stop after the first category in test mode
+                logger.info("Test mode: Stopping after the first category")
+                break
 
         return product_gen_list
 
