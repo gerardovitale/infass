@@ -1,9 +1,8 @@
 import logging
 import os
+import sys
 
-from data_builder import build_data_gen
-from extractor import get_page_sources
-from writer import write_pandas_to_bucket_as_csv
+from bucket_reader import read_csv_as_pd_df
 
 # LOGGING
 logging.basicConfig(
@@ -13,23 +12,28 @@ logging.basicConfig(
 )
 
 
-def ingest_data(destination_path: str) -> None:
-    logging.info("Starting data ingestion")
-    is_test_mode = False
-    if os.getenv("TEST_MODE"):
-        logging.info(f"Running test mode with: TEST_MODE = {os.getenv('TEST_MODE')}")
-        is_test_mode = True
-    sources = get_page_sources(is_test_mode)
-    data_gen = build_data_gen(sources)
-    write_pandas_to_bucket_as_csv(data_gen, destination_path)
-    logging.info(f"Successfully ingested data")
+def run_data_transformation(bucket_data_source: str, bigquery_destination_table: str) -> None:
+    logging.info("Starting data transformation")
+    limit = -1
+    transformer_limit = os.getenv("TRANSFORMER_LIMIT")
+    if transformer_limit:
+        logging.info(f"Running pandas-transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
+        limit = int(transformer_limit)
+
+    raw_data = read_csv_as_pd_df(bucket_data_source, limit)
+    # data = transform(raw_data)
+    # write_to_bigquery(data, bigquery_destination_table)
+    logging.info(f"Successfully transformed data")
 
 
 if __name__ == "__main__":
-    bucket_uri = os.getenv("INGESTION_MERC_PATH", "gs://infass/merc")
-    if not bucket_uri:
-        logging.error(f"A Bucket URI must be provided: {bucket_uri}")
-        raise Exception("Bucket URI must be provided!")
+    data_source = os.getenv("DATA_SOURCE", "gs://infass/merc")
+    destination = os.getenv("DESTINATION", "inflation-assistant:infass.merc")
 
-    logging.info(f"Starting data ingestion with bucket uri: {bucket_uri}")
-    ingest_data(bucket_uri)
+    if data_source and destination:
+        logging.info(f"Starting data transformation with data_source and destination: {data_source}, {destination}")
+        run_data_transformation(data_source, destination)
+
+    else:
+        logging.error("Please provide data_source and destination")
+        sys.exit(1)

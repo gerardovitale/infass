@@ -21,14 +21,20 @@ def _read_blobs(bucket_name, blob_name):
 
 
 def read_csv_as_pd_df(bucket_name: str, limit: int = None) -> pd.DataFrame:
-    logger.info(f"Getting objects from {bucket_name}")
+    logger.info(f"Getting objects from {bucket_name} with limit: {limit}")
     df_list = []
-    buckets = _list_blobs(bucket_name)
-    if limit:
-        logger.info(f"Setting limit to {limit}")
-        buckets = sorted(list(buckets))[:limit]
+    blobs = _list_blobs(bucket_name)
 
-    for b in buckets:
+    blobs = sorted(blobs, key=lambda b: b.name, reverse=True)
+    if limit:
+        if limit == -1:
+            logger.info("Reading only the most recent object")
+            blobs = blobs[:1]
+        else:
+            logger.info(f"Setting limit to {limit}")
+            blobs = blobs[:limit]
+
+    for b in blobs:
         if not b.name.endswith(".csv"):
             logger.info(f"Skipping {b.name}")
             continue
