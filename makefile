@@ -18,6 +18,12 @@ selenium-ingestor.run:
 		selenium-ingestor:latest
 
 
+# PANDAS TRANSFORMER
+pd-transformer.test:
+	cd pandas-transformer/ && docker buildx build -f Dockerfile.test -t pandas-transformer-tests .
+	docker run --rm pandas-transformer-tests:latest
+
+
 # SPARK JOBS
 spark-jobs.test:
 	cd spark-jobs/ && docker buildx build -f Dockerfile.test -t spark-job-tests .
