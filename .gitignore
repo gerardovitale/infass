@@ -171,6 +171,7 @@ cicd-service-account-cred-key.json
 
 ### Terraform template
 # Local .terraform directories
+.terraform.lock.hcl
 **/.terraform/*
 
 # .tfstate files
