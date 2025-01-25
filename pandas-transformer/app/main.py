@@ -3,6 +3,7 @@ import os
 import sys
 
 from bucket_reader import read_csv_as_pd_df
+from transformer import transformer
 
 # LOGGING
 logging.basicConfig(
@@ -21,7 +22,7 @@ def run_data_transformation(bucket_data_source: str, bigquery_destination_table:
         limit = int(transformer_limit)
 
     raw_data = read_csv_as_pd_df(bucket_data_source, limit)
-    # data = transform(raw_data)
+    data = transformer(raw_data)
     # write_to_bigquery(data, bigquery_destination_table)
     logging.info(f"Successfully transformed data")
 
