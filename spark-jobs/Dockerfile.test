@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-ENV SPARK_VERSION=3.5.3
+ENV SPARK_VERSION=3.5.4
 RUN python -m pip install --upgrade pip && \
     pip install --no-cache-dir pyspark==${SPARK_VERSION} pytest==8.3.4 pandas==2.2.3
 
