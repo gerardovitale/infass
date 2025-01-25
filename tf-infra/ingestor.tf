@@ -1,12 +1,12 @@
 # Service Account for Cloud Run job
 resource "google_service_account" "selenium_ingestor_sa" {
   account_id   = "${var.APP_NAME}-selenium-ingestor"
-  description = "Selenium Ingestor Service Account created by terraform"
+  description  = "Selenium Ingestor Service Account created by terraform"
   display_name = "Cloud Run Job Service Account for Selenium Ingestor"
 }
 
 # Grant necessary permissions
-resource "google_project_iam_member" "cloud_run_job_storage_permissions" {
+resource "google_project_iam_member" "cloud_run_job_ingestor_storage_permissions" {
   for_each = toset([
     "roles/storage.objectCreator",
     "roles/storage.objectViewer",

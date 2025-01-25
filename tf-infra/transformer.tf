@@ -6,7 +6,7 @@ resource "google_service_account" "pandas_transformer_sa" {
 }
 
 # Grant necessary permissions
-resource "google_project_iam_member" "cloud_run_job_storage_permissions" {
+resource "google_project_iam_member" "cloud_run_job_transformer_storage_permissions" {
   for_each = toset([
     "roles/storage.objectCreator",
     "roles/storage.objectViewer",
