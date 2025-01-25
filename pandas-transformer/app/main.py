@@ -14,10 +14,9 @@ logging.basicConfig(
 )
 
 
-def run_data_transformation(bucket_data_source: str, bigquery_destination_table: str) -> None:
+def run_data_transformation(bucket_data_source: str, bigquery_destination_table: str, transformer_limit) -> None:
     logging.info("Starting data transformation")
     limit = -1
-    transformer_limit = os.getenv("TRANSFORMER_LIMIT")
     if transformer_limit:
         logging.info(f"Running pandas-transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
         limit = int(transformer_limit)
@@ -31,10 +30,11 @@ def run_data_transformation(bucket_data_source: str, bigquery_destination_table:
 if __name__ == "__main__":
     data_source = os.getenv("DATA_SOURCE", "gs://infass/merc")
     destination = os.getenv("DESTINATION", "inflation-assistant.infass.merc")
+    transformer_limit = os.getenv("TRANSFORMER_LIMIT")
 
     if data_source and destination:
         logging.info(f"Starting data transformation with data_source and destination: {data_source}, {destination}")
-        run_data_transformation(data_source, destination)
+        run_data_transformation(data_source, destination, transformer_limit)
 
     else:
         logging.error("Please provide data_source and destination")
