@@ -28,7 +28,7 @@ def run_data_transformation(bucket_data_source: str, bigquery_destination_table:
 
 
 if __name__ == "__main__":
-    data_source = os.getenv("DATA_SOURCE", "gs://infass/merc")
+    data_source = os.getenv("DATA_SOURCE", "infass")
     destination = os.getenv("DESTINATION", "inflation-assistant.infass.merc")
     transformer_limit = os.getenv("TRANSFORMER_LIMIT")
 
