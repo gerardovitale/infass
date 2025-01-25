@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+from bigquery_writer import write_to_bigquery
 from bucket_reader import read_csv_as_pd_df
 from transformer import transformer
 
@@ -23,13 +24,13 @@ def run_data_transformation(bucket_data_source: str, bigquery_destination_table:
 
     raw_data = read_csv_as_pd_df(bucket_data_source, limit)
     data = transformer(raw_data)
-    # write_to_bigquery(data, bigquery_destination_table)
+    write_to_bigquery(data, *bigquery_destination_table.split("."))
     logging.info(f"Successfully transformed data")
 
 
 if __name__ == "__main__":
     data_source = os.getenv("DATA_SOURCE", "gs://infass/merc")
-    destination = os.getenv("DESTINATION", "inflation-assistant:infass.merc")
+    destination = os.getenv("DESTINATION", "inflation-assistant.infass.merc")
 
     if data_source and destination:
         logging.info(f"Starting data transformation with data_source and destination: {data_source}, {destination}")
@@ -37,4 +38,5 @@ if __name__ == "__main__":
 
     else:
         logging.error("Please provide data_source and destination")
+        logging.error(f"Got data_source, destination: {data_source}, {destination}")
         sys.exit(1)
