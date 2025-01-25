@@ -18,7 +18,7 @@ RUN apt-get update && \
 
 ENV JAVA_HOME=/usr/local/openjdk-11
 ENV PATH=$JAVA_HOME/bin:$PATH \
-    SPARK_VERSION=3.5.3 \
+    SPARK_VERSION=3.5.4 \
     PYTHONPATH=/jobs
 
 RUN curl -fLO https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
