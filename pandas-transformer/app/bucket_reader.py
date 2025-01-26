@@ -25,7 +25,7 @@ def read_csv_as_pd_df(bucket_name: str, limit: int = None) -> pd.DataFrame:
     df_list = []
     blobs = _list_blobs(bucket_name)
 
-    blobs = sorted(blobs, key=lambda b: b.name, reverse=True)
+    blobs = sorted([b for b in blobs if b.name.endswith(".csv")], key=lambda b: b.name, reverse=True)
     if limit:
         if limit == -1:
             logger.info("Reading only the most recent object")
@@ -35,10 +35,6 @@ def read_csv_as_pd_df(bucket_name: str, limit: int = None) -> pd.DataFrame:
             blobs = blobs[:limit]
 
     for b in blobs:
-        if not b.name.endswith(".csv"):
-            logger.info(f"Skipping {b.name}")
-            continue
-
         logger.info(f"Reading {b.name}")
         string_csv_data = _read_blobs(bucket_name, b.name)
         csv_data = StringIO(string_csv_data)
