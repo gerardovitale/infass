@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from io import StringIO
 
@@ -20,7 +22,7 @@ def _read_blobs(bucket_name, blob_name):
         return f.read()
 
 
-def read_csv_as_pd_df(bucket_name: str, limit: int = None) -> pd.DataFrame:
+def read_csv_as_pd_df(bucket_name: str, limit: int | None) -> pd.DataFrame:
     logger.info(f"Getting objects from {bucket_name} with limit: {limit}")
     df_list = []
     blobs = _list_blobs(bucket_name)

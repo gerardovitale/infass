@@ -16,7 +16,7 @@ logging.basicConfig(
 
 def run_data_transformation(bucket_data_source: str, bigquery_destination_table: str, transformer_limit) -> None:
     logging.info("Starting data transformation")
-    limit = -1
+    limit = None
     if transformer_limit:
         logging.info(f"Running pandas-transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
         limit = int(transformer_limit)
