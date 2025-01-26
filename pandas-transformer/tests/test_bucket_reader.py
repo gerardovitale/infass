@@ -50,7 +50,7 @@ class TestBucketReader(BasicTestCase):
         self.assertIsInstance(actual, pd.DataFrame)
         self.assert_pandas_dataframes_equal(expected, actual)
 
-    def test_read_csv_as_pd_df_should_return_all_objects_when_limit_is_not_passed(self):
+    def test_read_csv_as_pd_df_should_return_all_objects_when_limit_is_none(self):
         test_bucket_name = 'test_bucket_name'
         self.mock_list_blobs.return_value = (
             MockBlob(f"2025-01-0{day}.csv", "mock_content")
@@ -63,7 +63,7 @@ class TestBucketReader(BasicTestCase):
             "col2": [2, 2, 2, 2, 2, 2, 2, 2, 2],
             "col3": [3, 3, 3, 3, 3, 3, 3, 3, 3],
         })
-        actual = read_csv_as_pd_df(test_bucket_name)
+        actual = read_csv_as_pd_df(test_bucket_name, None)
 
         self.assertIsInstance(actual, pd.DataFrame)
         self.assert_pandas_dataframes_equal(expected, actual)
