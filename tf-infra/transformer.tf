@@ -37,10 +37,6 @@ resource "google_cloud_run_v2_job" "pandas_transformer_job" {
             memory = "1Gi"
           }
         }
-        env {
-          name  = "TRANSFORMER_LIMIT"
-          value = 2
-        }
       }
     }
   }
