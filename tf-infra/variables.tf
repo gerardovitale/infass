@@ -22,3 +22,8 @@ variable "DOCKER_IMAGE_TAG" {
   type        = string
   description = "Tag to be use when pull image from docker hub"
 }
+
+variable "GCP_USER" {
+  type        = string
+  description = "GCP user email"
+}

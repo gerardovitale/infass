@@ -10,4 +10,9 @@ resource "google_bigquery_dataset" "infass_dataset" {
     role          = "OWNER"
     user_by_email = google_service_account.pandas_transformer_sa.email
   }
+
+  access {
+    role          = "READER"
+    user_by_email = var.GCP_USER
+  }
 }
