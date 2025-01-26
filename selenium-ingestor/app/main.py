@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 from data_builder import build_data_gen
 from extractor import get_page_sources
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     bucket_uri = os.getenv("INGESTION_MERC_PATH", "gs://infass/merc")
     if not bucket_uri:
         logging.error(f"A Bucket URI must be provided: {bucket_uri}")
-        raise Exception("Bucket URI must be provided!")
+        sys.exit(1)
 
     logging.info(f"Starting data ingestion with bucket uri: {bucket_uri}")
     ingest_data(bucket_uri)
