@@ -90,7 +90,6 @@ def add_is_fake_discount(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def strip_accents(string: str) -> str:
-    logger.info("Stripping accents")
     if pd.isna(string):
         return string
     return "".join(char for char in unicodedata.normalize("NFD", string) if unicodedata.category(char) != "Mn")
