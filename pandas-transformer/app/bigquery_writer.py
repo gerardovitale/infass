@@ -17,7 +17,7 @@ def write_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     job_config = bigquery.LoadJobConfig(
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
         autodetect=True,  # Let BigQuery auto-detect schema
     )
 
