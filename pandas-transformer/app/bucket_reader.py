@@ -41,5 +41,5 @@ def read_csv_as_pd_df(bucket_name: str, limit: int | None) -> pd.DataFrame:
         csv_data = StringIO(string_csv_data)
         df_list.append(pd.read_csv(csv_data))
 
-    logger.info(f"Read {len(df_list)} objects, with max and min: {max(df_list)} and {min(df_list)}")
+    logger.info(f"Read {len(df_list)} objects")
     return pd.concat(df_list).reset_index().drop(columns=["index"])
