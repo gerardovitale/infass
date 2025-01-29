@@ -6,6 +6,7 @@ resource "google_project_service" "required_apis" {
     "storage.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "bigquery.googleapis.com",
+    "monitoring.googleapis.com",
     # "workflows.googleapis.com",
   ])
   project = var.PROJECT
@@ -32,6 +33,8 @@ resource "google_project_iam_member" "cicd_service_account_roles" {
     "roles/iam.workloadIdentityUser",
     "roles/resourcemanager.projectIamAdmin",
     "roles/bigquery.admin",
+    "roles/bigquery.admin",
+    "roles/monitoring.admin",
   ])
   project = var.PROJECT
   member  = "serviceAccount:${google_service_account.cicd_service_account.email}"
