@@ -12,7 +12,7 @@ resource "google_monitoring_alert_policy" "job_failure_alert" {
   conditions {
     display_name = "Job Failed Condition"
     condition_threshold {
-      filter = "metric.type=\"run.googleapis.com/job/completed_execution_count\" AND resource.type=\"cloud_run_job\" AND metric.labels.result=\"failed\""
+      filter          = "metric.type=\"run.googleapis.com/job/completed_execution_count\" AND resource.type=\"cloud_run_job\" AND metric.labels.result=\"failed\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "60s"
@@ -22,6 +22,6 @@ resource "google_monitoring_alert_policy" "job_failure_alert" {
       }
     }
   }
-
   notification_channels = [google_monitoring_notification_channel.email.name]
+  user_labels           = local.labels
 }
