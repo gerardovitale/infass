@@ -32,9 +32,6 @@ if __name__ == "__main__":
     destination = os.getenv("DESTINATION", "inflation-assistant.infass.merc")
     transformer_limit = os.getenv("TRANSFORMER_LIMIT")
 
-    logging.error("This is an error message")
-    raise Exception("Simulated Failure")
-
     if data_source and destination:
         logging.info(f"Starting data transformation with data_source and destination: {data_source}, {destination}")
         run_data_transformation(data_source, destination, transformer_limit)
