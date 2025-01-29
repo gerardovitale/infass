@@ -12,6 +12,7 @@ resource "google_project_iam_member" "cloud_scheduler_run_invoker" {
 resource "google_cloud_scheduler_job" "trigger_cloud_run_job" {
   name        = "${var.APP_NAME}-trigger-cloud-run-job"
   description = "Trigger Cloud Run Job at 5 AM daily"
+  region      = var.REGION
   schedule    = "0 8 * * *"
   time_zone   = "Europe/Madrid" #"Etc/UTC"
 
