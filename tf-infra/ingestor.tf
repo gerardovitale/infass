@@ -41,10 +41,10 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
           name  = "INGESTION_MERC_PATH"
           value = "gs://${google_storage_bucket.infass_bucket.name}/merc"
         }
-        env {
-          name  = "TEST_MODE"
-          value = true
-        }
+        # env {
+        #   name  = "TEST_MODE"
+        #   value = true
+        # }
 
       }
     }
