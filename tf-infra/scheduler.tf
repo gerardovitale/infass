@@ -12,7 +12,7 @@ resource "google_project_iam_member" "cloud_scheduler_run_invoker" {
 
 resource "google_cloud_scheduler_job" "trigger_ingestion_job_daily" {
   name        = "${var.APP_NAME}-trigger-ingestion-job-daily"
-  description = "Trigger Ingestion Cloud Run Job at 5 AM daily"
+  description = "Trigger Ingestion Cloud Run Job at 5 AM CET daily"
   region      = "europe-west1"
   schedule    = "0 8 * * *"
   time_zone   = "Europe/Madrid" #"Etc/UTC"
@@ -29,7 +29,7 @@ resource "google_cloud_scheduler_job" "trigger_ingestion_job_daily" {
 
 resource "google_cloud_scheduler_job" "trigger_transformer_weekly" {
   name        = "${var.APP_NAME}-trigger-transformer-job-weekly"
-  description = "Trigger Transformer Cloud Run Job every Saturday at 8 AM UTC"
+  description = "Trigger Transformer Cloud Run Job every Saturday at 8 AM CET"
   region      = "europe-west1"
   schedule    = "0 8 * * 6"     # ⏰ Runs every Saturday at 8:00 AM UTC
   time_zone   = "Europe/Madrid" #"Etc/UTC"
