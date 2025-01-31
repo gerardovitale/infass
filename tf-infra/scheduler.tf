@@ -31,7 +31,7 @@ resource "google_cloud_scheduler_job" "trigger_transformer_weekly" {
   name        = "${var.APP_NAME}-trigger-transformer-job-weekly"
   description = "Trigger Transformer Cloud Run Job every Saturday at 8 AM CET"
   region      = "europe-west1"
-  schedule    = "0 8 * * 6"     # ⏰ Runs every Saturday at 8:00 AM UTC
+  schedule    = "0 9 * * 6"     # ⏰ Runs every Saturday at 8:00 AM UTC
   time_zone   = "Europe/Madrid" #"Etc/UTC"
 
   http_target {
