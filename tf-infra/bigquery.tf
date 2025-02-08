@@ -43,7 +43,7 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   display_name           = "Weekly Data Quality Report"
   data_source_id         = "scheduled_query"
   location               = "EU"
-  schedule               = "0 9 * * 6"
+  schedule               = "every saturday 09:00"
   service_account_name   = google_service_account.bigquery_schedule_job_sa.email
   project                = "inflation-assistant"
   destination_dataset_id = "infass"
