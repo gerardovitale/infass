@@ -7,6 +7,7 @@ resource "google_project_service" "required_apis" {
     "cloudresourcemanager.googleapis.com",
     "bigquery.googleapis.com",
     "monitoring.googleapis.com",
+    "bigquerydatatransfer.googleapis.com",
   ])
   project = var.PROJECT
   service = each.value
