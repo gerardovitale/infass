@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 from bigquery_writer import write_to_bigquery
 from bucket_reader import read_csv_as_pd_df
@@ -28,8 +27,8 @@ def run_data_transformation(bucket_data_source: str, bigquery_destination_table:
 
 
 if __name__ == "__main__":
-    data_source = os.getenv("DATA_SOURCE", "infass")
-    destination = os.getenv("DESTINATION", "inflation-assistant.infass.merc")
+    data_source = os.getenv("DATA_SOURCE")
+    destination = os.getenv("DESTINATION")
     transformer_limit = os.getenv("TRANSFORMER_LIMIT")
 
     if data_source and destination:
@@ -39,4 +38,4 @@ if __name__ == "__main__":
     else:
         logging.error("Please provide data_source and destination")
         logging.error(f"Got data_source, destination: {data_source}, {destination}")
-        sys.exit(1)
+        raise Exception("Must provide data_source and destination!")

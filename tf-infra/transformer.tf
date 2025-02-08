@@ -37,6 +37,15 @@ resource "google_cloud_run_v2_job" "pandas_transformer_job" {
             memory = "1Gi"
           }
         }
+        env {
+          name  = "DATA_SOURCE"
+          value = google_storage_bucket.infass_bucket.name
+        }
+        env {
+          name  = "DESTINATION"
+          value = "${google_bigquery_dataset.infass_dataset.project}.${google_bigquery_dataset.infass_dataset.dataset_id}.merc"
+        }
+
       }
     }
   }
