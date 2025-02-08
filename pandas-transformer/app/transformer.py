@@ -106,13 +106,17 @@ def create_size_pattern_column(df: pd.DataFrame) -> pd.DataFrame:
 
     def generate_pattern(size: str):
         units = ["mg", "g", "kg", "ml", "cl", "l"]
-        containers = ["lata", "latas", "botella", "botellas", "garrafa", "brick", "botellin", "botellines", "caja",
-                      "sobres", "ud"]
+        containers = [
+            "lata", "latas", "botella", "botellas", "garrafa", "garrafas", "brick", "bricks", "botellin", "botellines",
+            "caja", "sobres", "ud", "paquete", "paquetes", "bandeja", "bandejas", "pieza", "tarro", "tarrina", "frasco",
+            "spray", "tarro", "tableta", "bote", "capsulas", "bolsitas", "bol", "tubo", "raciones", "malla", "vaso",
+            "rebanadas", "bolsas", "lavados", "barritas", "sobre", "packs", "tarrinas", "vasitos", "tarritos", "saco",
+            "botes", "granel", "chicles", "tarrito", "bolsa", "dosis", "rollos", "velas", "bandas", "tiras", "quesitos",
+        ]
+        size = size.replace("x", "").replace("apro", "").replace("escurrido", "")  # Replace "x" with space
         size = re.sub(r"[().]", "", size)  # Remove dots and parentheses
-        size = size.replace("x", "")  # Replace "x" with space
         size = re.sub(r'\d+,\d*', lambda x: x.group().replace(',', '.'), size)
         tokens = size.split()
-        print(tokens)
         pattern = []
         for token in tokens:
             if token in containers:
