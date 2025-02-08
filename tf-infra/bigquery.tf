@@ -46,7 +46,6 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   schedule               = "every saturday 09:00"
   service_account_name   = google_service_account.bigquery_schedule_job_sa.email
   project                = "inflation-assistant"
-  destination_dataset_id = "infass"
   disabled               = false
 
   params = {
