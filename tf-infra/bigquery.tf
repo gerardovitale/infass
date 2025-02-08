@@ -50,11 +50,11 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   disabled               = false
 
   params = {
-    destination_table_id = "quality_report"
-    write_disposition    = "WRITE_TRUNCATE"
-    query                = <<EOT
+    write_disposition = "WRITE_TRUNCATE"
+    query             = <<EOT
       DECLARE run_date DATE DEFAULT CURRENT_DATE();
 
+      CREATE OR REPLACE TABLE `inflation-assistant.infass.quality_report` AS
       WITH null_counts AS (
         SELECT
           date,
