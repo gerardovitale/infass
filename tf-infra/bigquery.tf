@@ -50,7 +50,6 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   disabled               = false
 
   params = {
-    write_disposition = "WRITE_TRUNCATE"
     query             = <<EOT
       DECLARE run_date DATE DEFAULT CURRENT_DATE();
 
