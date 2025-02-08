@@ -47,12 +47,12 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   service_account_name   = google_service_account.bigquery_schedule_job_sa.email
   project                = "inflation-assistant"
   destination_dataset_id = "infass"
-  destination_table_id   = "quality_report"
-  write_disposition      = "WRITE_TRUNCATE"
   disabled               = false
 
   params = {
-    query = <<EOT
+    destination_table_id = "quality_report"
+    write_disposition    = "WRITE_TRUNCATE"
+    query                = <<EOT
       DECLARE run_date DATE DEFAULT CURRENT_DATE();
 
       WITH null_counts AS (
