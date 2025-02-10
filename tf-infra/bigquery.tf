@@ -49,7 +49,7 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   disabled             = false
 
   params = {
-    query = file("${path.module}/tf-infra/bq_queries/data_quality_report.sql")
+    query = file("${path.module}/bq_queries/data_quality_report.sql")
   }
 }
 
