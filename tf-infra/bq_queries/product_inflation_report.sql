@@ -24,9 +24,12 @@ WITH
 SELECT
   *,
   (latest_price - earliest_price) AS inflation_abs,
-  (latest_price - earliest_price) / earliest_price * 100 AS inflation_percent,
+  SAFE_DIVIDE (latest_price - earliest_price, earliest_price) AS inflation_percent,
   (max_original_price - min_original_price) AS max_price_variation_abs,
-  (max_original_price - min_original_price) / min_original_price * 100 AS max_price_variation_percent
+  SAFE_DIVIDE (
+    max_original_price - min_original_price,
+    min_original_price
+  ) AS max_price_variation_percent
 FROM
   pre_calculation
 ORDER BY
