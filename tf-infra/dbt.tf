@@ -1,5 +1,5 @@
 # Service Account for DBT
-resource "google_service_account" "bigquery_schedule_job_sa" {
+resource "google_service_account" "dbt_sa" {
   account_id   = "${var.APP_NAME}-dbt"
   description  = "DBT Service Account created by terraform"
   display_name = "DBT Service Account"
