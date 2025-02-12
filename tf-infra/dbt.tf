@@ -12,6 +12,6 @@ resource "google_project_iam_member" "dbt_permissions" {
     "roles/bigquery.dataEditor",
   ])
   project = var.PROJECT
-  member  = "serviceAccount:${google_service_account.bigquery_schedule_job_sa.email}"
+  member  = "serviceAccount:${google_service_account.dbt_sa.email}"
   role    = each.value
 }
