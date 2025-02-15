@@ -30,14 +30,14 @@ resource "google_monitoring_alert_policy" "clour_run_job_failure_alert" {
 }
 
 resource "google_monitoring_alert_policy" "bq_job_failure_alert" {
-  display_name = "BigQuery Scheduled Job Failure Alert"
+  display_name = "BigQuery Scheduled Query Failure Alert"
   combiner     = "OR"
   severity     = "ERROR"
 
   conditions {
     display_name = "BigQuery Scheduled Job Failed"
     condition_threshold {
-      filter          = "resource.type = \"bigquery_dts_config\" AND metric.type = \"bigquerydatatransfer.googleapis.com/transfer_count\" AND metric.labels.state = \"FAILED\""
+      filter          = "resource.type = \"bigquery_dts_config\" AND metric.type = \"bigquerydatatransfer.googleapis.com/transfer_run_execution_count\" AND metric.labels.status = \"FAILED\""
       comparison      = "COMPARISON_GT"
       threshold_value = 0
       duration        = "0s"
@@ -51,3 +51,4 @@ resource "google_monitoring_alert_policy" "bq_job_failure_alert" {
   notification_channels = [google_monitoring_notification_channel.email.name]
   user_labels           = local.labels
 }
+
