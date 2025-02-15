@@ -31,6 +31,7 @@ resource "google_project_iam_member" "bigquery_schedule_job_permissions" {
   for_each = toset([
     "roles/bigquery.jobUser",
     "roles/bigquery.dataEditor",
+    "roles/bigquery.user",
   ])
   project = var.PROJECT
   member  = "serviceAccount:${google_service_account.bigquery_schedule_job_sa.email}"
