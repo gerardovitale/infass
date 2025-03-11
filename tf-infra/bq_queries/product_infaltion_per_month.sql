@@ -1,3 +1,5 @@
+CREATE
+OR REPLACE TABLE `inflation-assistant.infass.product_inflation_per_month_report` AS
 WITH
     monthly_prices AS (
         -- Get first and last price per product per month
