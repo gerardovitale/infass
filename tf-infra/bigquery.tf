@@ -50,7 +50,7 @@ resource "google_bigquery_data_transfer_config" "weekly_data_quality_report" {
   disabled             = false
 
   params = {
-    query = file("${path.module}/bq_queries/data_quality_report.sql")
+    query = file("${path.module}/bq_queries/data_quality.sql")
   }
 }
 
@@ -66,6 +66,6 @@ resource "google_bigquery_data_transfer_config" "weekly_product_inflation_report
   disabled             = false
 
   params = {
-    query = file("${path.module}/bq_queries/product_inflation_report.sql")
+    query = file("${path.module}/bq_queries/product_inflation.sql")
   }
 }
