@@ -96,6 +96,11 @@ def add_is_fake_discount(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+###############################################
+############### NOT IMPLEMENTED ###############
+###############################################
+
+
 def create_size_pattern_column(df: pd.DataFrame) -> pd.DataFrame:
     def is_number(s):
         try:
@@ -115,7 +120,7 @@ def create_size_pattern_column(df: pd.DataFrame) -> pd.DataFrame:
         ]
         size = size.replace("x", "").replace("apro", "").replace("escurrido", "")  # Replace "x" with space
         size = re.sub(r"[().]", "", size)  # Remove dots and parentheses
-        size = re.sub(r'\d+,\d*', lambda x: x.group().replace(',', '.'), size)
+        size = re.sub(r"\d+,\d*", lambda x: x.group().replace(",", "."), size)
         tokens = size.split()
         pattern = []
         for token in tokens:
