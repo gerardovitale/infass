@@ -168,6 +168,7 @@ cython_debug/
 .vscode
 infass-compute-sa-cred-key.json
 cicd-service-account-cred-key.json
+infass-dbt-sa-cred-key.json
 
 ### Terraform template
 # Local .terraform directories
