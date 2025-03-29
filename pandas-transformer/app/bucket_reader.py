@@ -42,4 +42,6 @@ def read_csv_as_pd_df(bucket_name: str, limit: int | None) -> pd.DataFrame:
         df_list.append(pd.read_csv(csv_data))
 
     logger.info(f"Read {len(df_list)} objects")
-    return pd.concat(df_list).reset_index().drop(columns=["index"])
+    df = pd.concat(df_list).reset_index().drop(columns=["index"])
+    logger.info(f"DataFrame size: {df.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB")
+    return df
