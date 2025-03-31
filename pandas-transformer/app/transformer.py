@@ -78,14 +78,14 @@ def deduplicate_products_with_diff_prices_per_date(df: pd.DataFrame) -> pd.DataF
 def add_prev_original_price(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Adding prev_original_price column")
     df = df.sort_values(by=["name", "size", "date"])
-    df["prev_original_price"] = df.groupby(["name", "size"])["original_price"].shift(1).astype("float32")
+    df["prev_original_price"] = df.groupby(["name", "size"])["original_price"].shift(1)
     return df
 
 
 def add_inflation_columns(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Adding inflation columns: inflation_percent, inflation_abs")
-    df["inflation_percent"] = (df["original_price"] / df["prev_original_price"] - 1).astype("float32")
-    df["inflation_abs"] = (df["original_price"] - df["prev_original_price"]).astype("float32")
+    df["inflation_percent"] = (df["original_price"] / df["prev_original_price"] - 1)
+    df["inflation_abs"] = (df["original_price"] - df["prev_original_price"])
     return df
 
 
@@ -93,7 +93,7 @@ def add_is_fake_discount(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Adding is_fake_discount column")
     df["is_fake_discount"] = None
     df.loc[df["discount_price"].notna(), "is_fake_discount"] = df["discount_price"] == df["prev_original_price"]
-    df["is_fake_discount"] = df["is_fake_discount"].fillna(False).astype("boolean")
+    df["is_fake_discount"] = df["is_fake_discount"].astype("boolean").fillna(False)
     return df
 
 
