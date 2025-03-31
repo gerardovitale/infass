@@ -12,6 +12,7 @@ from transformer import (
     transformer,
     standardize_size_columns,
     create_size_pattern_column,
+    standardize_string_columns,
 )
 
 
@@ -37,13 +38,57 @@ class TestIntegration(BasicTestCase):
             (date(2024, 11, 21), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.79, 1.79, True, ((1.85 / 1.79) - 1), 1.85 - 1.79),
             (date(2024, 11, 22), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.85, 1.79, False, 0.00, 0.00 ),
         ]
-        expected_df = pd.DataFrame(expected_data, columns=DELTA_SCHEMA)\
-            .astype(DELTA_SCHEMA_TYPES)
+        expected_df = pd.DataFrame(expected_data, columns=DELTA_SCHEMA).astype(DELTA_SCHEMA_TYPES)
 
         actual_df = transformer(test_df)
 
         pd.testing.assert_frame_equal(actual_df, expected_df, check_exact=False, rtol=1e-5, atol=1e-8)
         # self.assert_pandas_dataframes_equal(actual_df, expected_df)
+
+
+class TestStandardizeStringColumns(BasicTestCase):
+
+    def test_lowercase_and_trim(self):
+        df = pd.DataFrame({
+            "name": ["  Ápple  "],
+            "size": ["  SMALL "],
+            "category": ["  Frutás "],
+            "subcategory": ["  TROPICAL "]
+        })
+        result = standardize_string_columns(df)
+
+        assert result.at[0, "name"] == "apple"
+        assert result.at[0, "size"] == "small"
+        assert result.at[0, "category"] == "frutas"
+        assert result.at[0, "subcategory"] == "tropical"
+
+    def test_handles_accents(self):
+        df = pd.DataFrame({
+            "name": ["piñá"],
+            "size": ["gránde"],
+            "category": ["bebídas"],
+            "subcategory": ["azúcares"]
+        })
+        result = standardize_string_columns(df)
+
+        assert result.at[0, "name"] == "pina"
+        assert result.at[0, "size"] == "grande"
+        assert result.at[0, "category"] == "bebidas"
+        assert result.at[0, "subcategory"] == "azucares"
+
+    def test_dtypes(self):
+        df = pd.DataFrame({
+            "name": ["apple"],
+            "size": ["small"],
+            "category": ["fruit"],
+            "subcategory": ["fresh"]
+        })
+        result = standardize_string_columns(df)
+
+        assert isinstance(result["name"].dtype, pd.StringDtype)
+        assert isinstance(result["size"].dtype, pd.StringDtype)
+        assert isinstance(result["category"].dtype, pd.CategoricalDtype)
+        assert isinstance(result["subcategory"].dtype, pd.CategoricalDtype)
 
 
 class TestSizeTransformer(BasicTestCase):

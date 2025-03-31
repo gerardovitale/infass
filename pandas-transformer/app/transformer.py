@@ -51,12 +51,21 @@ def standardize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
             return string
         return "".join(char for char in unicodedata.normalize("NFD", string) if unicodedata.category(char) != "Mn")
 
+    def cast_string_columns(df: pd.DataFrame) -> pd.DataFrame:
+        dtype_map = {
+            "name":        "string",
+            "size":        "string",
+            "category":    "category",
+            "subcategory": "category",
+        }
+        return df.astype(dtype_map)
+
     logger.info("Standardizing string columns")
     string_columns = ["name", "size", "category", "subcategory"]
     for column in string_columns:
         df[column] = df[column].str.lower().str.strip()
         df[column] = df[column].apply(strip_accents)
-    return df
+    return cast_string_columns(df)
 
 
 def map_old_categories(df: pd.DataFrame) -> pd.DataFrame:
@@ -70,7 +79,7 @@ def map_old_categories(df: pd.DataFrame) -> pd.DataFrame:
 
 def deduplicate_products_with_diff_prices_per_date(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Deduplicating products with different prices per date")
-    df["dedup_id"] = df.groupby(["date", "name", "size", "category", "subcategory"]).cumcount() + 1
+    df["dedup_id"] = df.groupby(["date", "name", "size", "category", "subcategory"], observed=True).cumcount() + 1
     df["dedup_id"] = df["dedup_id"].astype("int8")
     return df
 

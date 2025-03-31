@@ -24,6 +24,10 @@ DELTA_SCHEMA = [
 DELTA_SCHEMA_TYPES = {
     "date":                "datetime64[ns]",
     "dedup_id":            "int8",
+    "name":                "string",
+    "size":                "string",
+    "category":            "category",
+    "subcategory":         "category",
     "original_price":      "float32",
     "prev_original_price": "float32",
     "discount_price":      "float32",
