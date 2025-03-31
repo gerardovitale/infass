@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def transformer(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Starting data transformation with df shape {df.shape}")
     df = cats_date_column(df)
-    df = cast_price_columns_as_double(df)
+    df = cast_price_columns_as_float32(df)
     df = split_category_subcategory(df)
     df = standardize_string_columns(df)
     df = map_old_categories(df)
@@ -31,10 +31,16 @@ def cats_date_column(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def cast_price_columns_as_double(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Casting price columns as double")
-    df["original_price"] = df["original_price"].str.replace("€", "").str.replace(",", ".").astype("float32")
-    df["discount_price"] = df["discount_price"].str.replace("€", "").str.replace(",", ".").astype("float32")
+def cast_price_columns_as_float32(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Casting price columns as float32")
+    price_columns = ["original_price", "discount_price"]
+    for col in price_columns:
+        df[col] = (
+            df[col]
+            .str.replace("€", "", regex=False)
+            .str.replace(",", ".", regex=False)
+        )
+        df[col] = pd.to_numeric(df[col], errors="coerce").astype("float32")
     return df
 
 
@@ -51,14 +57,14 @@ def standardize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
             return string
         return "".join(char for char in unicodedata.normalize("NFD", string) if unicodedata.category(char) != "Mn")
 
-    def cast_string_columns(df: pd.DataFrame) -> pd.DataFrame:
+    def cast_string_columns(_df: pd.DataFrame) -> pd.DataFrame:
         dtype_map = {
             "name":        "string",
             "size":        "string",
             "category":    "category",
             "subcategory": "category",
         }
-        return df.astype(dtype_map)
+        return _df.astype(dtype_map)
 
     logger.info("Standardizing string columns")
     string_columns = ["name", "size", "category", "subcategory"]

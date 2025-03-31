@@ -13,6 +13,7 @@ from transformer import (
     standardize_size_columns,
     create_size_pattern_column,
     standardize_string_columns,
+    cast_price_columns_as_float32,
 )
 
 
@@ -41,54 +42,50 @@ class TestIntegration(BasicTestCase):
         expected_df = pd.DataFrame(expected_data, columns=DELTA_SCHEMA).astype(DELTA_SCHEMA_TYPES)
 
         actual_df = transformer(test_df)
-
-        pd.testing.assert_frame_equal(actual_df, expected_df, check_exact=False, rtol=1e-5, atol=1e-8)
-        # self.assert_pandas_dataframes_equal(actual_df, expected_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
-class TestStandardizeStringColumns(BasicTestCase):
+class TestTransformer(BasicTestCase):
 
-    def test_lowercase_and_trim(self):
-        df = pd.DataFrame({
-            "name": ["  Ápple  "],
-            "size": ["  SMALL "],
-            "category": ["  Frutás "],
-            "subcategory": ["  TROPICAL "]
+    def test_standardize_string_columns(self):
+        test_df = pd.DataFrame({
+            "name":        ["  Ápple  ", "piñá"],
+            "size":        ["  SMALL ", "gránde"],
+            "category":    ["  Frutás ", "bebídas"],
+            "subcategory": ["  TROPICAL ", "azúcares"],
         })
-        result = standardize_string_columns(df)
 
-        assert result.at[0, "name"] == "apple"
-        assert result.at[0, "size"] == "small"
-        assert result.at[0, "category"] == "frutas"
-        assert result.at[0, "subcategory"] == "tropical"
-
-    def test_handles_accents(self):
-        df = pd.DataFrame({
-            "name": ["piñá"],
-            "size": ["gránde"],
-            "category": ["bebídas"],
-            "subcategory": ["azúcares"]
+        expected_df = pd.DataFrame({
+            "name":        ["apple", "pina"],
+            "size":        ["small", "grande"],
+            "category":    ["frutas", "bebidas"],
+            "subcategory": ["tropical", "azucares"],
+        }).astype({
+            "name":        "string",
+            "size":        "string",
+            "category":    "category",
+            "subcategory": "category",
         })
-        result = standardize_string_columns(df)
 
-        assert result.at[0, "name"] == "pina"
-        assert result.at[0, "size"] == "grande"
-        assert result.at[0, "category"] == "bebidas"
-        assert result.at[0, "subcategory"] == "azucares"
+        actual_df = standardize_string_columns(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
-    def test_dtypes(self):
-        df = pd.DataFrame({
-            "name": ["apple"],
-            "size": ["small"],
-            "category": ["fruit"],
-            "subcategory": ["fresh"]
+    def test_cast_price_columns_as_float32(self):
+        test_df = pd.DataFrame({
+            "original_price": ["€12,99", "€3,50", None, "5.99"],
+            "discount_price": ["€10,99", "€2,99", None, "5.99"],
         })
-        result = standardize_string_columns(df)
 
-        assert isinstance(result["name"].dtype, pd.StringDtype)
-        assert isinstance(result["size"].dtype, pd.StringDtype)
-        assert isinstance(result["category"].dtype, pd.CategoricalDtype)
-        assert isinstance(result["subcategory"].dtype, pd.CategoricalDtype)
+        expected_df = pd.DataFrame({
+            "original_price": [12.99, 3.50, None, 5.99],
+            "discount_price": [10.99, 2.99, None, 5.99],
+        }).astype({
+            "original_price": "float32",
+            "discount_price": "float32",
+        })
+
+        actual_df = cast_price_columns_as_float32(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
 class TestSizeTransformer(BasicTestCase):
