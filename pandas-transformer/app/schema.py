@@ -21,3 +21,13 @@ DELTA_SCHEMA = [
     "inflation_percent",
     "inflation_abs",
 ]
+DELTA_SCHEMA_TYPES = {
+    "date":                "datetime64[ns]",
+    "dedup_id":            "int8",
+    "original_price":      "float32",
+    "prev_original_price": "float32",
+    "discount_price":      "float32",
+    "is_fake_discount":    "boolean",
+    "inflation_percent":   "float32",
+    "inflation_abs":       "float32",
+}
