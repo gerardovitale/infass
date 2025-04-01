@@ -1,19 +1,20 @@
 from datetime import date
 
 import pandas as pd
+from tests.conf_test import BasicTestCase
 
 from schema import (
     DELTA_SCHEMA,
     DELTA_SCHEMA_TYPES,
     INGESTION_SCHEMA,
 )
-from tests.conf_test import BasicTestCase
 from transformer import (
     transformer,
     standardize_size_columns,
     create_size_pattern_column,
     standardize_string_columns,
     cast_price_columns_as_float32,
+    split_category_subcategory,
 )
 
 
@@ -86,6 +87,19 @@ class TestTransformer(BasicTestCase):
 
         actual_df = cast_price_columns_as_float32(test_df)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_split_category_subcategory(self):
+        test_df = pd.DataFrame({
+            "category": ["Food > Snacks", "Beverages > Coffee", "Household > Cleaning", "Electronics", None],
+        })
+
+        expected_df = pd.DataFrame({
+            "category":    ["Food", "Beverages", "Household", "Electronics", None],
+            "subcategory": ["Snacks", "Coffee", "Cleaning", None, None],
+        })
+
+        actual_df = split_category_subcategory(test_df)
+        self.assert_pandas_dataframes_equal(expected_df, actual_df)
 
 
 class TestSizeTransformer(BasicTestCase):
