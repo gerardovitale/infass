@@ -48,29 +48,6 @@ class TestIntegration(BasicTestCase):
 
 class TestTransformer(BasicTestCase):
 
-    def test_standardize_string_columns(self):
-        test_df = pd.DataFrame({
-            "name":        ["  Ápple  ", "piñá"],
-            "size":        ["  SMALL ", "gránde"],
-            "category":    ["  Frutás ", "bebídas"],
-            "subcategory": ["  TROPICAL ", "azúcares"],
-        })
-
-        expected_df = pd.DataFrame({
-            "name":        ["apple", "pina"],
-            "size":        ["small", "grande"],
-            "category":    ["frutas", "bebidas"],
-            "subcategory": ["tropical", "azucares"],
-        }).astype({
-            "name":        "string",
-            "size":        "string",
-            "category":    "category",
-            "subcategory": "category",
-        })
-
-        actual_df = standardize_string_columns(test_df)
-        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
-
     def test_cast_price_columns_as_float32(self):
         test_df = pd.DataFrame({
             "original_price": ["€12,99", "€3,50", None, "5.99"],
@@ -100,6 +77,29 @@ class TestTransformer(BasicTestCase):
 
         actual_df = split_category_subcategory(test_df)
         self.assert_pandas_dataframes_equal(expected_df, actual_df)
+
+    def test_standardize_string_columns(self):
+        test_df = pd.DataFrame({
+            "name":        ["  Ápple  ", "piñá"],
+            "size":        ["  SMALL ", "gránde"],
+            "category":    ["  Frutás ", "bebídas"],
+            "subcategory": ["  TROPICAL ", "azúcares"],
+        })
+
+        expected_df = pd.DataFrame({
+            "name":        ["apple", "pina"],
+            "size":        ["small", "grande"],
+            "category":    ["frutas", "bebidas"],
+            "subcategory": ["tropical", "azucares"],
+        }).astype({
+            "name":        "string",
+            "size":        "string",
+            "category":    "category",
+            "subcategory": "category",
+        })
+
+        actual_df = standardize_string_columns(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
 class TestSizeTransformer(BasicTestCase):
