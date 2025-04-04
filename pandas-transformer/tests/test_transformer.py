@@ -15,6 +15,7 @@ from transformer import (
     standardize_string_columns,
     cast_price_columns_as_float32,
     split_category_subcategory,
+    deduplicate_products_with_diff_prices_per_date,
 )
 
 
@@ -99,6 +100,23 @@ class TestTransformer(BasicTestCase):
         })
 
         actual_df = standardize_string_columns(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_deduplicate_products_with_diff_prices_per_date(self):
+        test_df = pd.DataFrame({
+            "date":        ["2024-01-01", "2024-01-01", "2024-01-01", "2024-01-02"],
+            "name":        ["Apple", "Apple", "Banana", "Apple"],
+            "size":        ["1kg", "1kg", "1kg", "1kg"],
+            "category":    ["Fruit", "Fruit", "Fruit", "Fruit"],
+            "subcategory": ["Fresh", "Fresh", "Fresh", "Fresh"],
+            "price":       [1.99, 2.09, 0.99, 2.19],
+        })
+
+        expected_df = test_df.copy()
+        expected_df["dedup_id"] = [1, 2, 1, 1]
+        expected_df["dedup_id"] = expected_df["dedup_id"].astype("int8")
+
+        actual_df = deduplicate_products_with_diff_prices_per_date(test_df)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
