@@ -13,7 +13,7 @@ env:
 
 jobs:
   test:
-    name: Parallel Tests
+    name: Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,7 +34,7 @@ jobs:
         run: docker run --rm test-image
   
   build-and-push:
-    name: Parallel Build and Push
+    name: Build and Push
     runs-on: ubuntu-latest
     needs: test
     strategy:
