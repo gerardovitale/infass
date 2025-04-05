@@ -7,21 +7,7 @@ INGESTION_SCHEMA = [
     "date",
 ]
 
-DELTA_SCHEMA = [
-    "date",
-    "dedup_id",
-    "name",
-    "size",
-    "category",
-    "subcategory",
-    "original_price",
-    "prev_original_price",
-    "discount_price",
-    "is_fake_discount",
-    "inflation_percent",
-    "inflation_abs",
-]
-DELTA_SCHEMA_TYPES = {
+DELTA_SCHEMA = {
     "date":                "datetime64[ns]",
     "dedup_id":            "int8",
     "name":                "string",

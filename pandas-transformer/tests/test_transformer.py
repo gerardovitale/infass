@@ -1,11 +1,9 @@
-from datetime import date
-
+import numpy as np
 import pandas as pd
 from tests.conf_test import BasicTestCase
 
 from schema import (
     DELTA_SCHEMA,
-    DELTA_SCHEMA_TYPES,
     INGESTION_SCHEMA,
 )
 from transformer import (
@@ -19,31 +17,38 @@ from transformer import (
 )
 
 
-class TestIntegration(BasicTestCase):
+class TestIntegrationTransformer(BasicTestCase):
 
     def test_transformer(self):
         # COLUMNS: name, original_price, discount_price, size, category, date
         test_data = [
-            ("Aceite", "6,75 €", None, "Botella 1 L", "Aceite > Aceite", date(2024, 11, 20)),
-            ("Aceite", "7,75 €", None, "Botella 1 L", "Aceite > Aceite", date(2024, 11, 21)),
-            ("Aceite", "8,75 €", None, "Botella 1 L", "Aceite > Aceite", date(2024, 11, 22)),
-            ("Monster", "1,79 €", "1,45 €", "Lata 500 ml", "Refrescos > Isotónico", date(2024, 11, 20)),
-            ("Monster", "1,85 €", "1,79 €", "Lata 500 ml", "Refrescos > Isotónico", date(2024, 11, 21)),
-            ("Monster", "1,85 €", "1,79 €", "Lata 500 ml", "Refrescos > Isotónico", date(2024, 11, 22)),
+            ("Aceite", "6,75 €", None, "Botella 1 L", "Aceite > Aceite", "2024-11-20"),
+            ("Aceite", "7,75 €", None, "Botella 1 L", "Aceite > Aceite", "2024-11-21"),
+            ("Aceite", "8,75 €", "", "Botella 1 L", "Aceite > Aceite", "2024-11-22"),
+            ("Monster", "1,79 €", "1,45 €", "Lata 500 ml", "Refrescos > Isotónico", "2024-11-20"),
+            ("Monster", "1,85 €", "1,79 €", "Lata 500 ml", "Refrescos > Isotónico", "2024-11-21"),
+            ("Monster", "1,85 €", "1,79 €", "Lata 500 ml", "Refrescos > Isotónico", "2024-11-22"),
         ]
         test_df = pd.DataFrame(test_data, columns=INGESTION_SCHEMA)
 
         expected_data = [
-            (date(2024, 11, 20), 1, "aceite", "botella 1 l", "aceite", "aceite", 6.75, None, None, False, None, None),
-            (date(2024, 11, 21), 1, "aceite", "botella 1 l", "aceite", "aceite", 7.75, 6.75, None, False, ((7.75 / 6.75) - 1) ,1.0),
-            (date(2024, 11, 22), 1, "aceite", "botella 1 l", "aceite", "aceite", 8.75, 7.75, None, False, ((8.75 / 7.75) - 1), 1.0),
-            (date(2024, 11, 20), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.79, None, 1.45, False, None, None),
-            (date(2024, 11, 21), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.79, 1.79, True, ((1.85 / 1.79) - 1), 1.85 - 1.79),
-            (date(2024, 11, 22), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.85, 1.79, False, 0.00, 0.00 ),
+            ("2024-11-20", 1, "aceite", "botella 1 l", "aceite", "aceite", 6.75, None, None, False, None, None),
+            ("2024-11-21", 1, "aceite", "botella 1 l", "aceite", "aceite", 7.75, 6.75, None, False, ((7.75 / 6.75) - 1), 1.0),
+            ("2024-11-22", 1, "aceite", "botella 1 l", "aceite", "aceite", 8.75, 7.75, None, False, ((8.75 / 7.75) - 1), 1.0),
+            ("2024-11-20", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.79, None, 1.45, False, None, None),
+            ("2024-11-21", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.79, 1.79, True, ((1.85 / 1.79) - 1), 1.85 - 1.79),
+            ("2024-11-22", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.85, 1.79, False, 0.00, 0.00),
         ]
-        expected_df = pd.DataFrame(expected_data, columns=DELTA_SCHEMA).astype(DELTA_SCHEMA_TYPES)
+        expected_df = pd.DataFrame(expected_data, columns=DELTA_SCHEMA.keys()).astype(DELTA_SCHEMA)
 
         actual_df = transformer(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_transformer_2(self):
+        test_df = pd.read_csv("tests/test-data-source/raw_data.csv")
+        expected_df = pd.read_csv("tests/test-data-source/expected_data.csv").astype(DELTA_SCHEMA)
+        actual_df = transformer(test_df)
+        print(actual_df["category"].unique())
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
@@ -105,10 +110,10 @@ class TestTransformer(BasicTestCase):
     def test_deduplicate_products_with_diff_prices_per_date(self):
         test_df = pd.DataFrame({
             "date":        ["2024-01-01", "2024-01-01", "2024-01-01", "2024-01-02"],
-            "name":        ["Apple", "Apple", "Banana", "Apple"],
+            "name":        ["apple", "apple", "banana", "apple"],
             "size":        ["1kg", "1kg", "1kg", "1kg"],
-            "category":    ["Fruit", "Fruit", "Fruit", "Fruit"],
-            "subcategory": ["Fresh", "Fresh", "Fresh", "Fresh"],
+            "category":    ["fruit", "fruit", "fruit", "fruit"],
+            "subcategory": ["fresh", "fresh", "fresh", "fresh"],
             "price":       [1.99, 2.09, 0.99, 2.19],
         })
 
@@ -117,6 +122,24 @@ class TestTransformer(BasicTestCase):
         expected_df["dedup_id"] = expected_df["dedup_id"].astype("int8")
 
         actual_df = deduplicate_products_with_diff_prices_per_date(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_deduplicate_products_with_diff_prices_per_date_when_subcategory_has_nan_values(self):
+        test_df = pd.DataFrame({
+            "date":        ["2024-01-01", "2024-01-01", "2024-01-01", "2024-01-02"],
+            "name":        ["apple", "apple", "apple", "apple"],
+            "size":        ["1kg", "1kg", "1kg", "1kg"],
+            "category":    ["fruit", "fruit", "fruit", "fruit"],
+            "subcategory": ["fresh", "fresh", "fresh", np.nan],
+            "price":       [1.99, 2.09, 2.99, 2.19],
+        })
+
+        expected_df = test_df.copy()
+        expected_df["dedup_id"] = [1, 2, 3, 1]
+        expected_df["dedup_id"] = expected_df["dedup_id"].astype("int8")
+
+        actual_df = deduplicate_products_with_diff_prices_per_date(test_df)
+
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
