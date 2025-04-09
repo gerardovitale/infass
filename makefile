@@ -7,8 +7,8 @@ export
 
 # INGESTOR
 selenium-ingestor.test:
-	cd selenium-ingestor/ && docker buildx build -f Dockerfile.test -t selenium-ingestor-tests .
-	docker run --rm selenium-ingestor-tests:latest
+	cd selenium-ingestor/ && docker buildx build -f Dockerfile.test -t selenium-ingestor-test .
+	docker run --rm selenium-ingestor-test:latest
 
 selenium-ingestor.run:
 	cd selenium-ingestor/ && docker buildx build -f Dockerfile -t selenium-ingestor .
@@ -20,14 +20,25 @@ selenium-ingestor.run:
 
 # PANDAS TRANSFORMER
 pd-transformer.test:
-	cd pandas-transformer/ && docker buildx build -f Dockerfile.test -t pandas-transformer-tests .
-	docker run --rm pandas-transformer-tests:latest
+	cd pandas-transformer/ && docker buildx build -f Dockerfile.test -t pandas-transformer-test .
+	docker run --rm pandas-transformer-test:latest
+
+pd-transformer.local-run:
+	cd pandas-transformer/ && docker buildx build -f Dockerfile -t pandas-transformer .
+	docker run --rm \
+		-v $(GCP_CREDS_PATH):/app/key.json \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
+		-e DATA_SOURCE=infass-merc \
+		-e DESTINATION=$(GCP_PROJECT_ID).infass.merc \
+		-e TRANSFORMER_LIMIT=7 \
+		-e IS_LOCAL_RUN=true \
+		pandas-transformer:latest
 
 
 # SPARK JOBS
 spark-jobs.test:
-	cd spark-jobs/ && docker buildx build -f Dockerfile.test -t spark-job-tests .
-	docker run --rm spark-job-tests:latest
+	cd spark-jobs/ && docker buildx build -f Dockerfile.test -t spark-job-test .
+	docker run --rm spark-job-test:latest
 
 
 # TERRAFORM
