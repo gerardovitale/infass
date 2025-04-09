@@ -26,6 +26,7 @@ pd-transformer.test:
 pd-transformer.local-run:
 	cd pandas-transformer/ && docker buildx build -f Dockerfile -t pandas-transformer .
 	docker run --rm \
+		-v $(TRANSFORMER_OUTPUT_PATH):/app/data/ \
 		-v $(GCP_CREDS_PATH):/app/key.json \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		-e DATA_SOURCE=infass-merc \
