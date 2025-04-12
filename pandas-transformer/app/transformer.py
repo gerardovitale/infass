@@ -5,8 +5,7 @@ import re
 import unicodedata
 
 import pandas as pd
-
-from schema import DELTA_SCHEMA
+from schema import PD_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ def transformer(df: pd.DataFrame) -> pd.DataFrame:
     df = add_prev_original_price(df)
     df = add_inflation_columns(df)
     df = add_is_fake_discount(df)
-    return df[DELTA_SCHEMA.keys()]
+    return df[PD_MERC_SCHEMA.keys()]
 
 
 def cats_date_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -99,8 +98,8 @@ def add_prev_original_price(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_inflation_columns(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Adding inflation columns: inflation_percent, inflation_abs")
-    df["inflation_percent"] = (df["original_price"] / df["prev_original_price"] - 1)
-    df["inflation_abs"] = (df["original_price"] - df["prev_original_price"])
+    df["inflation_percent"] = df["original_price"] / df["prev_original_price"] - 1
+    df["inflation_abs"] = df["original_price"] - df["prev_original_price"]
     return df
 
 

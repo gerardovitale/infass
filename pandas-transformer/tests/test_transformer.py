@@ -1,19 +1,16 @@
 import numpy as np
 import pandas as pd
-from tests.conf_test import BasicTestCase
 
-from schema import (
-    DELTA_SCHEMA,
-    INGESTION_SCHEMA,
-)
+from schema import INGESTION_SCHEMA, PD_MERC_SCHEMA
+from tests.conf_test import BasicTestCase
 from transformer import (
-    transformer,
-    standardize_size_columns,
-    create_size_pattern_column,
-    standardize_string_columns,
     cast_price_columns_as_float32,
-    split_category_subcategory,
+    create_size_pattern_column,
     deduplicate_products_with_diff_prices_per_date,
+    split_category_subcategory,
+    standardize_size_columns,
+    standardize_string_columns,
+    transformer,
 )
 
 
@@ -39,14 +36,14 @@ class TestIntegrationTransformer(BasicTestCase):
             ("2024-11-21", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.79, 1.79, True, ((1.85 / 1.79) - 1), 1.85 - 1.79),
             ("2024-11-22", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.85, 1.79, False, 0.00, 0.00),
         ]
-        expected_df = pd.DataFrame(expected_data, columns=DELTA_SCHEMA.keys()).astype(DELTA_SCHEMA)
+        expected_df = pd.DataFrame(expected_data, columns=PD_MERC_SCHEMA.keys()).astype(PD_MERC_SCHEMA)
 
         actual_df = transformer(test_df)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
     def test_transformer_2(self):
         test_df = pd.read_csv("tests/test-data-source/raw_data.csv")
-        expected_df = pd.read_csv("tests/test-data-source/expected_data.csv").astype(DELTA_SCHEMA)
+        expected_df = pd.read_csv("tests/test-data-source/expected_data.csv").astype(PD_MERC_SCHEMA)
         actual_df = transformer(test_df)
         print(actual_df["category"].unique())
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
