@@ -1,3 +1,4 @@
+.DS_Store
 # Local Data folder
 data/
 
@@ -206,3 +207,8 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# UI config files
+.next
+coverage/
+node_modules/
