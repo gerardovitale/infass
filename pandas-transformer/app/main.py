@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 
 
-def run_data_transformation(bucket_data_source: str, bigquery_destination_table: str, transformer_limit) -> None:
+def run_data_transformation(bucket_data_source: str, destination_table: str, transformer_limit, is_local_run) -> None:
     logging.info("Starting data transformation")
     limit = None
     if transformer_limit:
@@ -22,7 +22,18 @@ def run_data_transformation(bucket_data_source: str, bigquery_destination_table:
 
     raw_data = read_csv_as_pd_df(bucket_data_source, limit)
     data = transformer(raw_data)
-    write_to_bigquery(data, *bigquery_destination_table.split("."))
+
+    if is_local_run:
+        logging.info("Running in local mode, skipping BigQuery write")
+        if not os.path.exists("data"):
+            os.makedirs("data")
+        formatted_dest_table = destination_table.replace(".", "_")
+        logging.info(f"Writing data to local file data/{formatted_dest_table}.csv")
+        data.to_csv(f"data/{formatted_dest_table}.csv", index=False)
+        return
+
+    logging.info(f"Writing data to BigQuery table {destination_table}")
+    write_to_bigquery(data, *destination_table.split("."))
     logging.info(f"Successfully transformed data")
 
 
@@ -30,10 +41,11 @@ if __name__ == "__main__":
     data_source = os.getenv("DATA_SOURCE")
     destination = os.getenv("DESTINATION")
     transformer_limit = os.getenv("TRANSFORMER_LIMIT")
+    is_local_run = os.getenv("IS_LOCAL_RUN")
 
     if data_source and destination:
         logging.info(f"Starting data transformation with data_source and destination: {data_source}, {destination}")
-        run_data_transformation(data_source, destination, transformer_limit)
+        run_data_transformation(data_source, destination, transformer_limit, is_local_run)
 
     else:
         logging.error("Please provide data_source and destination")

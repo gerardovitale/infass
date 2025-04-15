@@ -5,8 +5,7 @@ import re
 import unicodedata
 
 import pandas as pd
-
-from schema import DELTA_SCHEMA
+from schema import PD_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
 
@@ -16,13 +15,13 @@ def transformer(df: pd.DataFrame) -> pd.DataFrame:
     df = cats_date_column(df)
     df = cast_price_columns_as_float32(df)
     df = split_category_subcategory(df)
-    df = standardize_string_columns(df)
     df = map_old_categories(df)
+    df = standardize_string_columns(df)
     df = deduplicate_products_with_diff_prices_per_date(df)
     df = add_prev_original_price(df)
     df = add_inflation_columns(df)
     df = add_is_fake_discount(df)
-    return df[DELTA_SCHEMA]
+    return df[PD_MERC_SCHEMA.keys()]
 
 
 def cats_date_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -86,7 +85,7 @@ def map_old_categories(df: pd.DataFrame) -> pd.DataFrame:
 def deduplicate_products_with_diff_prices_per_date(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Deduplicating products with different prices per date")
     df["dedup_id"] = df.groupby(["date", "name", "size", "category", "subcategory"], observed=True).cumcount() + 1
-    df["dedup_id"] = df["dedup_id"].astype("int8")
+    df["dedup_id"] = df["dedup_id"].fillna(1).astype("int8")
     return df
 
 
@@ -99,8 +98,8 @@ def add_prev_original_price(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_inflation_columns(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Adding inflation columns: inflation_percent, inflation_abs")
-    df["inflation_percent"] = (df["original_price"] / df["prev_original_price"] - 1)
-    df["inflation_abs"] = (df["original_price"] - df["prev_original_price"])
+    df["inflation_percent"] = df["original_price"] / df["prev_original_price"] - 1
+    df["inflation_abs"] = df["original_price"] - df["prev_original_price"]
     return df
 
 

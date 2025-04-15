@@ -1,15 +1,15 @@
-name: Trigger Ingestor
+name: Trigger Transformer
 
 on:
   schedule:
     - cron: "0 9 * * 6"
 
 env:
-  GCP_RUN_JOB_NAME: infass-pandas-transformer
+  GCP_RUN_JOB_NAME: infass-pandas-transformer-job
   GCP_REGION: europe-southwest1
 
 jobs:
-  trigger-ingestor:
+  trigger-transformer:
     runs-on: ubuntu-latest
     steps:
       - name: Authenticate to Google Cloud

@@ -1,16 +1,11 @@
 import logging
-from enum import Enum
 
 import pandas as pd
 from google.cloud import bigquery
 
+from schema import BQ_MERC_SCHEMA
+
 logger = logging.getLogger(__name__)
-
-
-class BigQueryWriteDis(Enum):
-    WRITE_TRUNCATE = "WRITE_TRUNCATE"  # Overwrites the entire table with the new data
-    WRITE_APPEND = "WRITE_APPEND"  # Appends new rows to the existing table
-    WRITE_EMPTY = "WRITE_EMPTY"  # Fails the write if the table is not empty
 
 
 def write_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_id: str):
@@ -18,7 +13,8 @@ def write_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     job_config = bigquery.LoadJobConfig(
         write_disposition="WRITE_TRUNCATE",
-        autodetect=True,  # Let BigQuery auto-detect schema
+        schema=BQ_MERC_SCHEMA,
+        autodetect=False,
     )
 
     try:
