@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pandas as pd
+
 from main import run_data_transformation
 
 TEST_MODULE = "main"
@@ -29,7 +30,7 @@ class TestRunDataTransformation(TestCase):
 
     def test_remote_run_with_limit(self):
         test_params = {
-            "bucket_data_source": "my_bucket/file.csv",
+            "bucket_data_source": "my_bucket_name",
             "destination_table": "myproject.dataset.table",
             "transformer_limit": "5",
             "is_local_run": None,
@@ -41,13 +42,13 @@ class TestRunDataTransformation(TestCase):
 
         run_data_transformation(**test_params)
 
-        self.mock_csv_reader.assert_called_once_with("my_bucket/file.csv", 5)
+        self.mock_csv_reader.assert_called_once_with("my_bucket_name", 5)
         self.mock_transformer.assert_called_once_with(mock_df)
         self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table")
 
     def test_local_run_with_limit_should_save_csv(self):
         test_params = {
-            "bucket_data_source": "my_bucket/file.csv",
+            "bucket_data_source": "my_bucket_name",
             "destination_table": "myproject.dataset.table",
             "transformer_limit": "5",
             "is_local_run": True,
@@ -60,7 +61,7 @@ class TestRunDataTransformation(TestCase):
 
         run_data_transformation(**test_params)
 
-        self.mock_csv_reader.assert_called_once_with("my_bucket/file.csv", 5)
+        self.mock_csv_reader.assert_called_once_with("my_bucket_name", 5)
         self.mock_transformer.assert_called_once_with(mock_df)
         self.mock_bigquery_writer.assert_not_called()
 
@@ -71,7 +72,7 @@ class TestRunDataTransformation(TestCase):
 
     def test_remote_run_without_limit(self):
         test_params = {
-            "bucket_data_source": "my_bucket/file.csv",
+            "bucket_data_source": "my_bucket_name",
             "destination_table": "myproject.dataset.table",
             "transformer_limit": None,
             "is_local_run": None,
@@ -83,13 +84,13 @@ class TestRunDataTransformation(TestCase):
 
         run_data_transformation(**test_params)
 
-        self.mock_csv_reader.assert_called_once_with("my_bucket/file.csv", None)
+        self.mock_csv_reader.assert_called_once_with("my_bucket_name", None)
         self.mock_transformer.assert_called_once_with(mock_df)
         self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table")
 
     def test_run_with_invalid_limit(self):
         test_params = {
-            "bucket_data_source": "my_bucket/file.csv",
+            "bucket_data_source": "my_bucket_name",
             "destination_table": "myproject.dataset.table",
             "transformer_limit": "invalid_limit",
             "is_local_run": None,

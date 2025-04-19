@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
-
-from schema import INGESTION_SCHEMA, PD_MERC_SCHEMA
 from tests.conf_test import BasicTestCase
+
+from schema import (
+    PD_MERC_SCHEMA,
+)
 from transformer import (
     cast_price_columns_as_float32,
     create_size_pattern_column,
@@ -11,37 +13,13 @@ from transformer import (
     standardize_size_columns,
     standardize_string_columns,
     transformer,
+    add_price_column,
 )
 
 
 class TestIntegrationTransformer(BasicTestCase):
 
     def test_transformer(self):
-        # COLUMNS: name, original_price, discount_price, size, category, date
-        test_data = [
-            ("Aceite", "6,75 €", None, "Botella 1 L", "Aceite > Aceite", "2024-11-20"),
-            ("Aceite", "7,75 €", None, "Botella 1 L", "Aceite > Aceite", "2024-11-21"),
-            ("Aceite", "8,75 €", "", "Botella 1 L", "Aceite > Aceite", "2024-11-22"),
-            ("Monster", "1,79 €", "1,45 €", "Lata 500 ml", "Refrescos > Isotónico", "2024-11-20"),
-            ("Monster", "1,85 €", "1,79 €", "Lata 500 ml", "Refrescos > Isotónico", "2024-11-21"),
-            ("Monster", "1,85 €", "1,79 €", "Lata 500 ml", "Refrescos > Isotónico", "2024-11-22"),
-        ]
-        test_df = pd.DataFrame(test_data, columns=INGESTION_SCHEMA)
-
-        expected_data = [
-            ("2024-11-20", 1, "aceite", "botella 1 l", "aceite", "aceite", 6.75, None, None, False, None, None),
-            ("2024-11-21", 1, "aceite", "botella 1 l", "aceite", "aceite", 7.75, 6.75, None, False, ((7.75 / 6.75) - 1), 1.0),
-            ("2024-11-22", 1, "aceite", "botella 1 l", "aceite", "aceite", 8.75, 7.75, None, False, ((8.75 / 7.75) - 1), 1.0),
-            ("2024-11-20", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.79, None, 1.45, False, None, None),
-            ("2024-11-21", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.79, 1.79, True, ((1.85 / 1.79) - 1), 1.85 - 1.79),
-            ("2024-11-22", 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.85, 1.79, False, 0.00, 0.00),
-        ]
-        expected_df = pd.DataFrame(expected_data, columns=PD_MERC_SCHEMA.keys()).astype(PD_MERC_SCHEMA)
-
-        actual_df = transformer(test_df)
-        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
-
-    def test_transformer_2(self):
         test_df = pd.read_csv("tests/test-data-source/raw_data.csv")
         expected_df = pd.read_csv("tests/test-data-source/expected_data.csv").astype(PD_MERC_SCHEMA)
         actual_df = transformer(test_df)
@@ -138,6 +116,19 @@ class TestTransformer(BasicTestCase):
         actual_df = deduplicate_products_with_diff_prices_per_date(test_df)
 
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_add_price_column(self):
+        test_df = pd.DataFrame({
+            "original_price": [1.99, 2.09, 2.99],
+            "discount_price": [0.99, None, np.nan],
+        })
+        expected_df = pd.DataFrame({
+            "original_price": [1.99, 2.09, 2.99],
+            "discount_price": [0.99, None, np.nan],
+            "price":          [0.99, 2.09, 2.99],
+        })
+        actual_df = add_price_column(test_df)
+        self.assert_pandas_dataframes_equal(expected_df, actual_df)
 
 
 class TestSizeTransformer(BasicTestCase):
