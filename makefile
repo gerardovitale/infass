@@ -56,10 +56,10 @@ dbt.build:
 
 # TERRAFORM
 tf-init:
-	cd tf-infra/backend_support && terraform init
+	cd infra/backend_support && terraform init
 
 tf-plan:
-	cd tf-infra/backend_support && terraform plan
+	cd infra/backend_support && terraform plan
 
 tf-apply:
-	cd tf-infra/backend_support && terraform apply -auto-approve
+	cd infra/backend_support && terraform apply -auto-approve
