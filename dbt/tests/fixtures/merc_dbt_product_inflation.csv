@@ -1,0 +1,8 @@
+date,dedup_id,name,size,category,subcategory,original_price,prev_original_price,discount_price,is_fake_discount,inflation_percent,inflation_abs
+2025-04-03,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.6,,,False,,
+2025-04-04,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.6,4.6,,False,0.0,0.0
+2025-04-05,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.95,4.6,,False,0.07608688,0.3499999
+2025-04-06,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.95,4.95,,False,0.0,0.0
+2025-04-07,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.95,4.95,,False,0.0,0.0
+2025-04-08,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.95,4.95,,False,0.0,0.0
+2025-04-09,1,cafe molido natural hacendado,paquete 500 g,"cacao, cafe e infusiones",cafe molido y en grano,4.6,4.95,,False,-0.07608688,-0.3499999

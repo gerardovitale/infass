@@ -1,0 +1,47 @@
+version: 2
+
+sources:
+  - name: infass
+    description: InFass tables
+    database: "{{ target.database }}"
+    schema: "{{ target.schema }}"
+    tables:
+      - name: merc
+        description: Merc historical product prices
+        columns:
+          - name: date
+            data_type: timestamp
+            
+          - name: dedup_id
+            data_type: integer
+            
+          - name: name
+            data_type: string
+            
+          - name: size
+            data_type: string
+            
+          - name: category
+            data_type: string
+            
+          - name: subcategory
+            data_type: string
+            
+          - name: original_price
+            data_type: float
+            
+          - name: prev_original_price
+            data_type: float
+            
+          - name: discount_price
+            data_type: float
+            
+          - name: is_fake_discount
+            data_type: boolean
+            
+          - name: inflation_percent
+            data_type: float
+            
+          - name: inflation_abs
+            data_type: float
+            

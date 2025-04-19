@@ -1,0 +1,11 @@
+macros:
+
+  - name: divide
+    description: cross db safe divide macro
+    arguments:
+      - name: numerator
+        type: number
+        description: The name of the column you want to convert
+      - name: denominator
+        type: number
+        description: The name of the column you want to convert

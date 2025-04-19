@@ -4,7 +4,9 @@ import logging
 import re
 import unicodedata
 
+import numpy as np
 import pandas as pd
+
 from schema import PD_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -18,7 +20,9 @@ def transformer(df: pd.DataFrame) -> pd.DataFrame:
     df = map_old_categories(df)
     df = standardize_string_columns(df)
     df = deduplicate_products_with_diff_prices_per_date(df)
-    df = add_prev_original_price(df)
+    df = add_price_column(df)
+    df = add_prev(df, "price")
+    df = add_prev(df, "original_price")
     df = add_inflation_columns(df)
     df = add_is_fake_discount(df)
     return df[PD_MERC_SCHEMA.keys()]
@@ -89,10 +93,15 @@ def deduplicate_products_with_diff_prices_per_date(df: pd.DataFrame) -> pd.DataF
     return df
 
 
-def add_prev_original_price(df: pd.DataFrame) -> pd.DataFrame:
+def add_price_column(df: pd.DataFrame) -> pd.DataFrame:
+    df["price"] = np.where(df["discount_price"].notna(), df["discount_price"], df["original_price"])
+    return df
+
+
+def add_prev(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
     logger.info("Adding prev_original_price column")
     df = df.sort_values(by=["name", "size", "date"])
-    df["prev_original_price"] = df.groupby(["name", "size"])["original_price"].shift(1)
+    df[f"prev_{target_col}"] = df.groupby(["name", "size"])[target_col].shift(1)
     return df
 
 

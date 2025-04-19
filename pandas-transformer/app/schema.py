@@ -1,27 +1,29 @@
 from google.cloud.bigquery import SchemaField
 
 INGESTION_SCHEMA = [
+    "date",
     "name",
-    "original_price",
-    "discount_price",
     "size",
     "category",
-    "date",
+    "original_price",
+    "discount_price",
 ]
 
 PD_MERC_SCHEMA = {
-    "date": "datetime64[ns]",
-    "dedup_id": "int8",
-    "name": "string",
-    "size": "string",
-    "category": "category",
-    "subcategory": "category",
-    "original_price": "float32",
+    "date":                "datetime64[ns]",
+    "dedup_id":            "int8",
+    "name":                "string",
+    "size":                "string",
+    "category":            "category",
+    "subcategory":         "category",
+    "price":               "float32",
+    "prev_price":          "float32",
+    "original_price":      "float32",
     "prev_original_price": "float32",
-    "discount_price": "float32",
-    "is_fake_discount": "boolean",
-    "inflation_percent": "float32",
-    "inflation_abs": "float32",
+    "discount_price":      "float32",
+    "is_fake_discount":    "boolean",
+    "inflation_percent":   "float32",
+    "inflation_abs":       "float32",
 }
 
 BQ_MERC_SCHEMA = [
@@ -31,6 +33,8 @@ BQ_MERC_SCHEMA = [
     SchemaField("size", "STRING"),
     SchemaField("category", "STRING"),
     SchemaField("subcategory", "STRING"),
+    SchemaField("price", "FLOAT"),
+    SchemaField("prev_price", "FLOAT"),
     SchemaField("original_price", "FLOAT"),
     SchemaField("prev_original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),

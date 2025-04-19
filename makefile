@@ -5,6 +5,7 @@ ENV := $(PWD)/.env
 include $(ENV)
 export
 
+
 # INGESTOR
 selenium-ingestor.test:
 	cd selenium-ingestor/ && docker buildx build -f Dockerfile.test -t selenium-ingestor-test .
@@ -40,6 +41,17 @@ pd-transformer.local-run:
 spark-jobs.test:
 	cd spark-jobs/ && docker buildx build -f Dockerfile.test -t spark-job-test .
 	docker run --rm spark-job-test:latest
+
+
+# DBT
+dbt.test:
+	cd dbt/ && .dbt_venv/bin/dbt test --profile infass --target dev
+
+dbt.run:
+	cd dbt/ && .dbt_venv/bin/dbt run --profile infass --target dev
+
+dbt.build:
+	cd dbt/ && .dbt_venv/bin/dbt build --profile infass --target dev
 
 
 # TERRAFORM
