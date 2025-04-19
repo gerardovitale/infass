@@ -1,13 +1,13 @@
 from google.cloud.bigquery import SchemaField
 
-INGESTION_SCHEMA = {
-    "name":           "string",
-    "original_price": "string",
-    "discount_price": "string",
-    "size":           "string",
-    "category":       "string",
-    "date":           "string",
-}
+INGESTION_SCHEMA = [
+    "date",
+    "name",
+    "size",
+    "category",
+    "original_price",
+    "discount_price",
+]
 
 PD_MERC_SCHEMA = {
     "date":                "datetime64[ns]",

@@ -3,6 +3,7 @@ import os
 
 from bigquery_writer import write_to_bigquery
 from bucket_reader import read_csv_as_pd_df
+from schema import INGESTION_SCHEMA
 from transformer import transformer
 
 # LOGGING
@@ -28,7 +29,9 @@ def run_data_transformation(bucket_data_source: str, destination_table: str, tra
         if not os.path.exists("data"):
             os.makedirs("data")
         logging.info(f"Writing raw data to local file data/{bucket_data_source}.csv")
-        raw_data.to_csv(f"data/{bucket_data_source}.csv", index=False)
+        (raw_data[INGESTION_SCHEMA]
+         .sort_values(["name", "size", "date"])
+         .to_csv(f"data/{bucket_data_source}.csv", index=False))
         formatted_dest_table = destination_table.replace(".", "_")
         logging.info(f"Writing data to local file data/{formatted_dest_table}.csv")
         data.to_csv(f"data/{formatted_dest_table}.csv", index=False)
