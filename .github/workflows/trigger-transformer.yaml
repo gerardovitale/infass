@@ -2,7 +2,7 @@ name: Trigger Transformer
 
 on:
   schedule:
-    - cron: "0 9 * * 6"
+    - cron: "0 7 * * 6"
 
 env:
   GCP_RUN_JOB_NAME: infass-pandas-transformer-job
