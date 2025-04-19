@@ -8,56 +8,56 @@ models:
     columns:
       - name: name
         description: "The name of the product"
-        data_type: "string"
+        data_type: string
 
       - name: size
         description: "The size of the product"
-        data_type: "string"
+        data_type: string
 
       - name: category
         description: "The category of the product"
-        data_type: "string"
+        data_type: string
 
       - name: processing_date
         description: "The date when the data was processed"
-        data_type: "date"
+        data_type: date
 
       - name: earliest_date
         description: "The earliest date of the product price"
-        data_type: "date"
+        data_type: date
 
       - name: latest_date
         description: "The latest date of the product price"
-        data_type: "date"
+        data_type: date
 
       - name: earliest_price
         description: "The earliest price of the product"
-        data_type: "float"
+        data_type: float
 
       - name: latest_price
         description: "The latest price of the product"
-        data_type: "float"
+        data_type: float
 
       - name: min_price
         description: "The minimum price of the product"
-        data_type: "float"
+        data_type: float
 
       - name: max_price
         description: "The maximum price of the product"
-        data_type: "float"
+        data_type: float
 
       - name: inflation_abs
         description: "The absolute inflation of the product (earliest_price - latest_price)"
-        data_type: "float"
+        data_type: float
 
       - name: inflation_percent
         description: "The percentage inflation of the product ((earliest_price - latest_price) / earliest_price * 100)"
-        data_type: "float"
+        data_type: float
 
       - name: max_price_variation_abs
         description: "The absolute maximum price variation of the product (max_price - min_price)"
-        data_type: "float"
+        data_type: float
 
       - name: max_price_variation_percent
         description: "The percentage maximum price variation of the product ((max_price - min_price) / min_price * 100)"
-        data_type: "float"
+        data_type: float
