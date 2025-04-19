@@ -3,6 +3,7 @@ name: Trigger Ingestor
 on:
   schedule:
     - cron: "0 5 * * *"
+  workflow_dispatch:
 
 env:
   GCP_RUN_JOB_NAME: infass-selenium-ingestor-job
