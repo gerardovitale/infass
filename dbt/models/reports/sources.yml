@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: infass
+    description: InFass tables
+    database: "{{ target.database }}"
+    schema: "{{ target.schema }}"
+    tables:
+      - name: merc
+        description: Merc historical product prices
