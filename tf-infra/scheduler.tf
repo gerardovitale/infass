@@ -1,8 +1,8 @@
 locals {
   schedules = {
-    ingestion           = "0 8 * * *",
-    transformation      = "0 9 * * 6",
-    post_transformation = "every saturday 10:00"
+    ingestion           = "0 5 * * *",
+    transformation      = "0 6 * * 6",
+    post_transformation = "every saturday 7:00"
   }
 }
 
