@@ -100,7 +100,7 @@ def add_price_column(df: pd.DataFrame) -> pd.DataFrame:
 
 def add_prev(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
     logger.info("Adding prev_original_price column")
-    df = df.sort_values(by=["date", "name", "size"])
+    df = df.sort_values(by=["name", "size", "date"])
     df[f"prev_{target_col}"] = df.groupby(["name", "size"])[target_col].shift(1)
     return df
 
