@@ -33,6 +33,8 @@ BQ_MERC_SCHEMA = [
     SchemaField("size", "STRING"),
     SchemaField("category", "STRING"),
     SchemaField("subcategory", "STRING"),
+    SchemaField("price", "FLOAT"),
+    SchemaField("prev_price", "FLOAT"),
     SchemaField("original_price", "FLOAT"),
     SchemaField("prev_original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),
