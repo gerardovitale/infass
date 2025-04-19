@@ -1,6 +1,6 @@
 # Service Account for Cloud Run job
 resource "google_service_account" "pandas_transformer_sa" {
-  account_id   = "${var.APP_NAME}-pandas-transformer"
+  account_id   = "${var.APP_NAME}-transformer"
   description  = "Pandas Transformer Service Account created by terraform"
   display_name = "Cloud Run Job Service Account for Pandas Transformer"
 }
@@ -18,7 +18,7 @@ resource "google_project_iam_member" "cloud_run_job_transformer_storage_permissi
 
 # Job Definition
 resource "google_cloud_run_v2_job" "pandas_transformer_job" {
-  name                = "${var.APP_NAME}-pandas-transformer-job"
+  name                = "${var.APP_NAME}-transformer-job"
   location            = var.REGION
   deletion_protection = true
   labels              = local.labels
@@ -30,7 +30,7 @@ resource "google_cloud_run_v2_job" "pandas_transformer_job" {
       service_account = google_service_account.pandas_transformer_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/pandas-transformer:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/transformer:${var.DOCKER_IMAGE_TAG}"
         resources {
           limits = {
             cpu    = "1"

@@ -7,25 +7,25 @@ export
 
 
 # INGESTOR
-selenium-ingestor.test:
-	cd selenium-ingestor/ && docker buildx build -f Dockerfile.test -t selenium-ingestor-test .
-	docker run --rm selenium-ingestor-test:latest
+ingestor.test:
+	cd ingestor/ && docker buildx build -f Dockerfile.test -t ingestor-test .
+	docker run --rm ingestor-test:latest
 
-selenium-ingestor.run:
-	cd selenium-ingestor/ && docker buildx build -f Dockerfile -t selenium-ingestor .
-	docker run --rm --name selenium-ingestor \
+ingestor.run:
+	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
+	docker run --rm --name ingestor \
 		-v /Users/gerardovitale/Documents/repos/infass/infass-compute-sa-cred-key.json:/app/keyfile.json \
    		-e GOOGLE_APPLICATION_CREDENTIALS=/app/keyfile.json \
-		selenium-ingestor:latest
+		ingestor:latest
 
 
 # PANDAS TRANSFORMER
-pd-transformer.test:
-	cd pandas-transformer/ && docker buildx build -f Dockerfile.test -t pandas-transformer-test .
-	docker run --rm pandas-transformer-test:latest
+transformer.test:
+	cd transformer/ && docker buildx build -f Dockerfile.test -t transformer-test .
+	docker run --rm transformer-test:latest
 
-pd-transformer.local-run:
-	cd pandas-transformer/ && docker buildx build -f Dockerfile -t pandas-transformer .
+transformer.local-run:
+	cd transformer/ && docker buildx build -f Dockerfile -t transformer .
 	docker run --rm \
 		-v $(TRANSFORMER_OUTPUT_PATH):/app/data/ \
 		-v $(GCP_CREDS_PATH):/app/key.json \
@@ -34,7 +34,7 @@ pd-transformer.local-run:
 		-e DESTINATION=$(GCP_PROJECT_ID).infass.merc \
 		-e TRANSFORMER_LIMIT=7 \
 		-e IS_LOCAL_RUN=true \
-		pandas-transformer:latest
+		transformer:latest
 
 
 # SPARK JOBS

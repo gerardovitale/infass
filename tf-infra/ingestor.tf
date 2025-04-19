@@ -1,6 +1,6 @@
 # Service Account for Cloud Run job
 resource "google_service_account" "selenium_ingestor_sa" {
-  account_id   = "${var.APP_NAME}-selenium-ingestor"
+  account_id   = "${var.APP_NAME}-ingestor"
   description  = "Selenium Ingestor Service Account created by terraform"
   display_name = "Cloud Run Job Service Account for Selenium Ingestor"
 }
@@ -18,7 +18,7 @@ resource "google_project_iam_member" "cloud_run_job_ingestor_storage_permissions
 
 # Job Definition
 resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
-  name                = "${var.APP_NAME}-selenium-ingestor-job"
+  name                = "${var.APP_NAME}-ingestor-job"
   location            = var.REGION
   deletion_protection = true
   labels              = local.labels
@@ -30,7 +30,7 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
       service_account = google_service_account.selenium_ingestor_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/selenium-ingestor:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/ingestor:${var.DOCKER_IMAGE_TAG}"
         resources {
           limits = {
             cpu    = "1"

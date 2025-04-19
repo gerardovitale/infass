@@ -17,7 +17,7 @@ def run_data_transformation(bucket_data_source: str, destination_table: str, tra
     logging.info("Starting data transformation")
     limit = None
     if transformer_limit:
-        logging.info(f"Running pandas-transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
+        logging.info(f"Running transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
         limit = int(transformer_limit)
 
     raw_data = read_csv_as_pd_df(bucket_data_source, limit)

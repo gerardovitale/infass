@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_RUN_JOB_NAME: infass-selenium-ingestor-job
+  GCP_RUN_JOB_NAME: infass-ingestor-job
   GCP_REGION: europe-southwest1
 
 jobs:
