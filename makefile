@@ -6,6 +6,16 @@ include $(ENV)
 export
 
 
+test-all:
+	@echo "Running tests for all components..."
+	@$(MAKE) -s ingestor.test
+	@$(MAKE) -s transformer.test
+	@$(MAKE) -s dbt.test
+	@$(MAKE) -s api.test
+	@$(MAKE) -s ui.test
+	@echo "Tests completed for all components."
+
+
 # INGESTOR
 ingestor.test:
 	cd ingestor/ && docker buildx build -f Dockerfile.test -t ingestor-test .
@@ -45,13 +55,13 @@ spark-jobs.test:
 
 # DBT
 dbt.test:
-	cd dbt/ && .dbt_venv/bin/dbt test --profile infass --target dev
+	cd dbt/ && .dbt-venv/bin/dbt test --profile infass --target dev
 
 dbt.run:
-	cd dbt/ && .dbt_venv/bin/dbt run --profile infass --target dev
+	cd dbt/ && .dbt-venv/bin/dbt run --profile infass --target dev
 
 dbt.build:
-	cd dbt/ && .dbt_venv/bin/dbt build --profile infass --target dev
+	cd dbt/ && .dbt-venv/bin/dbt build --profile infass --target dev
 
 
 # TERRAFORM
