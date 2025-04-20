@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 import json
-from typing import (
-    List,
-    Tuple,
-)
+from typing import List
+from typing import Tuple
 from unittest import TestCase
 
 import pandas as pd
-from pyspark.sql import (
-    DataFrame,
-    SparkSession,
-)
+from pyspark.sql import DataFrame
+from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType
 
 

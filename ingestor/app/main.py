@@ -23,7 +23,7 @@ def ingest_data(destination_path: str) -> None:
     sources = get_page_sources(is_test_mode)
     data_gen = build_data_gen(sources)
     write_pandas_to_bucket_as_csv(data_gen, destination_path)
-    logging.info(f"Successfully ingested data")
+    logging.info("Successfully ingested data}")
 
 
 if __name__ == "__main__":

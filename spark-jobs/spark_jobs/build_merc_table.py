@@ -5,28 +5,27 @@ import sys
 import unicodedata
 from typing import Callable
 
-from pyspark.sql import Column, DataFrame, SparkSession, Window
-from pyspark.sql.functions import (
-    broadcast,
-    col,
-    lag,
-    lower,
-    regexp_replace,
-    row_number,
-    split,
-    trim,
-    udf,
-    when,
-)
-from pyspark.sql.types import (
-    BooleanType,
-    DateType,
-    DoubleType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
+from pyspark.sql import Column
+from pyspark.sql import DataFrame
+from pyspark.sql import SparkSession
+from pyspark.sql import Window
+from pyspark.sql.functions import broadcast
+from pyspark.sql.functions import col
+from pyspark.sql.functions import lag
+from pyspark.sql.functions import lower
+from pyspark.sql.functions import regexp_replace
+from pyspark.sql.functions import row_number
+from pyspark.sql.functions import split
+from pyspark.sql.functions import trim
+from pyspark.sql.functions import udf
+from pyspark.sql.functions import when
+from pyspark.sql.types import BooleanType
+from pyspark.sql.types import DateType
+from pyspark.sql.types import DoubleType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.types import StringType
+from pyspark.sql.types import StructField
+from pyspark.sql.types import StructType
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +71,13 @@ def build_table(
         logger.info("Applying transformation: {0}".format(transformation_func.__name__))
         df = transformation_func(df)
     logger.info("Writing delta table at {0}".format(bigquery_destination_table))
-    (df.write.format("bigquery")
-     .option("table", bigquery_destination_table)
-     .option("writeMethod", "direct")
-     .mode(write_mode).save()
-     )
+    (
+        df.write.format("bigquery")
+        .option("table", bigquery_destination_table)
+        .option("writeMethod", "direct")
+        .mode(write_mode)
+        .save()
+    )
     spark.stop()
 
 
@@ -172,7 +173,7 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     params = {
-        "data_source": sys.argv[1],                 # gs://bucket_name/
+        "data_source": sys.argv[1],  # gs://bucket_name/
         "schema": INGESTION_SCHEMA,
         "transformation_func": process_raw_data,
         "bigquery_destination_table": sys.argv[2],  # project_id:dataset_name.table_name

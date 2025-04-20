@@ -24,7 +24,8 @@ def get_test_html():
                             <p class="product-price__previous-unit-price footnote1-r" data-testid="product-price">
                                 1,58 €
                             </p>
-                            <p class="product-price__unit-price subhead1-b product-price__unit-price--discount" data-testid="product-price">
+                            <p class="product-price__unit-price subhead1-b product-price__unit-price--discount"
+                            data-testid="product-price">
                                 1,53 €
                             </p>
                             <p class="product-price__extra-price subhead1-r"> /ud.</p>

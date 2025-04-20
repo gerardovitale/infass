@@ -2,7 +2,8 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pandas as pd
-from data_builder import build_data_gen, build_df
+from data_builder import build_data_gen
+from data_builder import build_df
 from tests.conf_test import BasicTestCase
 
 TEST_MODULE = "data_builder"

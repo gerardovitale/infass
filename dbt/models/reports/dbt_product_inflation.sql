@@ -17,7 +17,7 @@ WITH
       name,
       size
   )
-  
+
 SELECT
   *,
   round(latest_price - earliest_price, {{ var('default_round_precision') }}) AS inflation_abs,

@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    List,
-)
+from typing import Any
+from typing import Dict
+from typing import Generator
+from typing import List
 
 from bs4 import BeautifulSoup
 from selenium import webdriver

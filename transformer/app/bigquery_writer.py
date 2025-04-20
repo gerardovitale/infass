@@ -1,11 +1,8 @@
 import logging
 
 import pandas as pd
-from google.cloud.bigquery import (
-    Client,
-    LoadJobConfig,
-)
-
+from google.cloud.bigquery import Client
+from google.cloud.bigquery import LoadJobConfig
 from schema import BQ_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)

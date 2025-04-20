@@ -3,6 +3,7 @@ import os
 
 from bigquery_writer import write_to_bigquery
 from bucket_reader import read_csv_as_pd_df
+
 from transformer import transformer
 
 # LOGGING
@@ -36,7 +37,7 @@ def run_data_transformation(bucket_data_source: str, destination_table: str, tra
 
     logging.info(f"Writing data to BigQuery table {destination_table}")
     write_to_bigquery(data, *destination_table.split("."))
-    logging.info(f"Successfully transformed data")
+    logging.info("Successfully transformed data")
 
 
 if __name__ == "__main__":

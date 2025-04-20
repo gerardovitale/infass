@@ -6,7 +6,6 @@ import unicodedata
 
 import numpy as np
 import pandas as pd
-
 from schema import PD_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -38,11 +37,7 @@ def cast_price_columns_as_float32(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Casting price columns as float32")
     price_columns = ["original_price", "discount_price"]
     for col in price_columns:
-        df[col] = (
-            df[col]
-            .str.replace("€", "", regex=False)
-            .str.replace(",", ".", regex=False)
-        )
+        df[col] = df[col].str.replace("€", "", regex=False).str.replace(",", ".", regex=False)
         df[col] = pd.to_numeric(df[col], errors="coerce").astype("float32")
     return df
 
@@ -62,9 +57,9 @@ def standardize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     def cast_string_columns(_df: pd.DataFrame) -> pd.DataFrame:
         dtype_map = {
-            "name":        "string",
-            "size":        "string",
-            "category":    "category",
+            "name": "string",
+            "size": "string",
+            "category": "category",
             "subcategory": "category",
         }
         return _df.astype(dtype_map)
@@ -121,7 +116,7 @@ def add_is_fake_discount(df: pd.DataFrame) -> pd.DataFrame:
 
 
 ###############################################
-############### NOT IMPLEMENTED ###############
+# NOT IMPLEMENTED #############################
 ###############################################
 
 
@@ -136,11 +131,59 @@ def create_size_pattern_column(df: pd.DataFrame) -> pd.DataFrame:
     def generate_pattern(size: str):
         units = ["mg", "g", "kg", "ml", "cl", "l"]
         containers = [
-            "lata", "latas", "botella", "botellas", "garrafa", "garrafas", "brick", "bricks", "botellin", "botellines",
-            "caja", "sobres", "ud", "paquete", "paquetes", "bandeja", "bandejas", "pieza", "tarro", "tarrina", "frasco",
-            "spray", "tarro", "tableta", "bote", "capsulas", "bolsitas", "bol", "tubo", "raciones", "malla", "vaso",
-            "rebanadas", "bolsas", "lavados", "barritas", "sobre", "packs", "tarrinas", "vasitos", "tarritos", "saco",
-            "botes", "granel", "chicles", "tarrito", "bolsa", "dosis", "rollos", "velas", "bandas", "tiras", "quesitos",
+            "lata",
+            "latas",
+            "botella",
+            "botellas",
+            "garrafa",
+            "garrafas",
+            "brick",
+            "bricks",
+            "botellin",
+            "botellines",
+            "caja",
+            "sobres",
+            "ud",
+            "paquete",
+            "paquetes",
+            "bandeja",
+            "bandejas",
+            "pieza",
+            "tarro",
+            "tarrina",
+            "frasco",
+            "spray",
+            "tarro",
+            "tableta",
+            "bote",
+            "capsulas",
+            "bolsitas",
+            "bol",
+            "tubo",
+            "raciones",
+            "malla",
+            "vaso",
+            "rebanadas",
+            "bolsas",
+            "lavados",
+            "barritas",
+            "sobre",
+            "packs",
+            "tarrinas",
+            "vasitos",
+            "tarritos",
+            "saco",
+            "botes",
+            "granel",
+            "chicles",
+            "tarrito",
+            "bolsa",
+            "dosis",
+            "rollos",
+            "velas",
+            "bandas",
+            "tiras",
+            "quesitos",
         ]
         size = size.replace("x", "").replace("apro", "").replace("escurrido", "")  # Replace "x" with space
         size = re.sub(r"[().]", "", size)  # Remove dots and parentheses

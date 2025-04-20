@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 from unittest import TestCase
 
 import pandas as pd

@@ -1,6 +1,9 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Generator, List
+from typing import Any
+from typing import Dict
+from typing import Generator
+from typing import List
 
 import pandas as pd
 
@@ -16,7 +19,7 @@ def build_df(product_gen: Generator[Dict[str, Any], None, None]) -> pd.DataFrame
 
 
 def build_data_gen(
-    product_gen_list: List[Generator[Dict[str, Any], None, None]]
+    product_gen_list: List[Generator[Dict[str, Any], None, None]],
 ) -> Generator[pd.DataFrame, None, None]:
     logger.info("Building data generator")
     return (build_df(product_gen) for product_gen in product_gen_list)

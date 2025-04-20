@@ -51,4 +51,3 @@ resource "google_monitoring_alert_policy" "clour_run_job_failure_alert" {
 #   notification_channels = [google_monitoring_notification_channel.email.name]
 #   user_labels           = local.labels
 # }
-

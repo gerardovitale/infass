@@ -3,7 +3,6 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pandas as pd
-
 from main import run_data_transformation
 
 TEST_MODULE = "main"
