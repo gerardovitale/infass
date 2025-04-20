@@ -18,7 +18,7 @@ resource "google_project_iam_member" "cloud_run_job_ingestor_storage_permissions
 
 # Job Definition
 resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
-  name                = "${var.APP_NAME}-ingestor-job"
+  name                = "${var.APP_NAME}-selenium-ingestor-job"
   location            = var.REGION
   deletion_protection = false
   labels              = local.labels

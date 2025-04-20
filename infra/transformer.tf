@@ -18,7 +18,7 @@ resource "google_project_iam_member" "cloud_run_job_transformer_storage_permissi
 
 # Job Definition
 resource "google_cloud_run_v2_job" "pandas_transformer_job" {
-  name                = "${var.APP_NAME}-transformer-job"
+  name                = "${var.APP_NAME}-pandas-transformer-job"
   location            = var.REGION
   deletion_protection = false
   labels              = local.labels
