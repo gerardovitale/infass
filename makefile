@@ -63,3 +63,19 @@ tf-plan:
 
 tf-apply:
 	cd infra/backend_support && terraform apply -auto-approve
+
+# API
+api.test:
+	cd infass-api/ && docker buildx build -f Dockerfile.test -t infass-api-test .
+	docker run --rm infass-api-test:latest
+api.run:
+	cd infass-api/ && docker buildx build -t infass-api .
+	docker run -p 8000:8000 --rm infass-api:latest
+
+# UI
+ui.test:
+	cd infass-ui/ && docker buildx build -f Dockerfile.test -t infass-ui-test .
+	docker run --rm infass-ui-test:latest
+ui.run:
+	cd infass-ui/ && docker buildx build -t infass-ui .
+	docker run -p 3000:3000 --rm infass-ui:latest
