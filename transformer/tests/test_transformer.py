@@ -1,21 +1,19 @@
 import numpy as np
 import pandas as pd
-from tests.conf_test import BasicTestCase
-
 from schema import (
     PD_MERC_SCHEMA,
 )
-from transformer import (
-    add_price_column,
-    add_price_moving_average,
-    cast_price_columns_as_float32,
-    create_size_pattern_column,
-    deduplicate_products_with_diff_prices_per_date,
-    split_category_subcategory,
-    standardize_size_columns,
-    standardize_string_columns,
-    transformer,
-)
+from tests.conf_test import BasicTestCase
+
+from transformer import add_price_column
+from transformer import add_price_moving_average
+from transformer import cast_price_columns_as_float32
+from transformer import create_size_pattern_column
+from transformer import deduplicate_products_with_diff_prices_per_date
+from transformer import split_category_subcategory
+from transformer import standardize_size_columns
+from transformer import standardize_string_columns
+from transformer import transformer
 
 
 class TestIntegrationTransformer(BasicTestCase):
