@@ -18,6 +18,9 @@ PD_MERC_SCHEMA = {
     "subcategory": "category",
     "price": "float32",
     "prev_price": "float32",
+    "price_ma_7": "float32",
+    "price_ma_15": "float32",
+    "price_ma_30": "float32",
     "original_price": "float32",
     "prev_original_price": "float32",
     "discount_price": "float32",
@@ -27,7 +30,7 @@ PD_MERC_SCHEMA = {
 }
 
 BQ_MERC_SCHEMA = [
-    SchemaField("date", "TIMESTAMP"),
+    SchemaField("date", "DATE"),
     SchemaField("dedup_id", "INTEGER"),
     SchemaField("name", "STRING"),
     SchemaField("size", "STRING"),
@@ -35,6 +38,9 @@ BQ_MERC_SCHEMA = [
     SchemaField("subcategory", "STRING"),
     SchemaField("price", "FLOAT"),
     SchemaField("prev_price", "FLOAT"),
+    SchemaField("price_ma_7", "FLOAT"),
+    SchemaField("price_ma_15", "FLOAT"),
+    SchemaField("price_ma_30", "FLOAT"),
     SchemaField("original_price", "FLOAT"),
     SchemaField("prev_original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),

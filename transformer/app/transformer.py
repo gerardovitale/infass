@@ -20,8 +20,10 @@ def transformer(df: pd.DataFrame) -> pd.DataFrame:
     df = standardize_string_columns(df)
     df = deduplicate_products_with_diff_prices_per_date(df)
     df = add_price_column(df)
+    df = sort_by_name_size_and_date(df)
     df = add_prev(df, "price")
     df = add_prev(df, "original_price")
+    df = add_price_moving_average(df)
     df = add_inflation_columns(df)
     df = add_is_fake_discount(df)
     return df[PD_MERC_SCHEMA.keys()]
@@ -93,10 +95,23 @@ def add_price_column(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def sort_by_name_size_and_date(df: pd.DataFrame) -> pd.DataFrame:
+    return df.sort_values(by=["name", "size", "date"]).reset_index(drop=True)
+
+
 def add_prev(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
     logger.info("Adding prev_original_price column")
-    df = df.sort_values(by=["name", "size", "date"])
     df[f"prev_{target_col}"] = df.groupby(["name", "size"])[target_col].shift(1)
+    return df
+
+
+def add_price_moving_average(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Adding price moving average columns")
+    for days in [7, 15, 30]:
+        logger.info(f"Adding price moving average for {days} days")
+        df[f"price_ma_{days}"] = (
+            df.groupby(["name", "size"])["price"].rolling(days).mean().reset_index(drop=True).astype("float32")
+        )
     return df
 
 

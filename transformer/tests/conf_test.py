@@ -8,8 +8,8 @@ import pandas as pd
 class BasicTestCase(TestCase):
 
     def assert_pandas_dataframe_almost_equal(self, expected_df: pd.DataFrame, actual_df: pd.DataFrame) -> None:
-        sorted_expected_df = expected_df.sort_values(expected_df.columns.to_list())
-        sorted_actual_df = actual_df.sort_values(actual_df.columns.to_list())
+        sorted_expected_df = expected_df.sort_values(expected_df.columns.to_list()).reset_index(drop=True)
+        sorted_actual_df = actual_df.sort_values(actual_df.columns.to_list()).reset_index(drop=True)
         self.check_is_pd_dataframe(sorted_expected_df, sorted_actual_df)
         self.assert_columns_are_equal(sorted_expected_df, sorted_actual_df)
         self.print_dfs(sorted_expected_df, sorted_actual_df)

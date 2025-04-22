@@ -6,6 +6,7 @@ from schema import (
 from tests.conf_test import BasicTestCase
 
 from transformer import add_price_column
+from transformer import add_price_moving_average
 from transformer import cast_price_columns_as_float32
 from transformer import create_size_pattern_column
 from transformer import deduplicate_products_with_diff_prices_per_date
@@ -151,6 +152,53 @@ class TestTransformer(BasicTestCase):
         )
         actual_df = add_price_column(test_df)
         self.assert_pandas_dataframes_equal(expected_df, actual_df)
+
+    def test_add_price_moving_average(self):
+        test_df = pd.DataFrame(
+            {
+                "date": [
+                    "2025-04-01",
+                    "2025-04-02",
+                    "2025-04-03",
+                    "2025-04-04",
+                    "2025-04-05",
+                    "2025-04-06",
+                    "2025-04-07",
+                ],
+                "name": ["test_name", "test_name", "test_name", "test_name", "test_name", "test_name", "test_name"],
+                "size": ["test_size", "test_size", "test_size", "test_size", "test_size", "test_size", "test_size"],
+                "price": [1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00],
+            }
+        )
+
+        expected_df = pd.DataFrame(
+            {
+                "date": [
+                    "2025-04-01",
+                    "2025-04-02",
+                    "2025-04-03",
+                    "2025-04-04",
+                    "2025-04-05",
+                    "2025-04-06",
+                    "2025-04-07",
+                ],
+                "name": ["test_name", "test_name", "test_name", "test_name", "test_name", "test_name", "test_name"],
+                "size": ["test_size", "test_size", "test_size", "test_size", "test_size", "test_size", "test_size"],
+                "price": [1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00],
+                "price_ma_7": [None, None, None, None, None, None, 4.00],
+                "price_ma_15": [None, None, None, None, None, None, None],
+                "price_ma_30": [None, None, None, None, None, None, None],
+            }
+        ).astype(
+            {
+                "price_ma_7": "float32",
+                "price_ma_15": "float32",
+                "price_ma_30": "float32",
+            }
+        )
+
+        actual_df = add_price_moving_average(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
 class TestSizeTransformer(BasicTestCase):
