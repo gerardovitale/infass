@@ -24,7 +24,6 @@ class TestIntegrationTransformer(BasicTestCase):
         test_df = pd.read_csv("tests/test-data-source/integration_input_data.csv")
         expected_df = pd.read_csv("tests/test-data-source/integration_expected_data.csv").astype(PD_MERC_SCHEMA)
         actual_df = transformer(test_df)
-        print(actual_df["category"].unique())
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
@@ -178,6 +177,18 @@ class TestTransformer(BasicTestCase):
             }
         )
 
+        actual_df = add_price_moving_average(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_add_price_moving_average(self):
+        test_df = pd.read_csv("tests/test-data-source/add_moving_average_input_data.csv")
+        expected_df = pd.read_csv("tests/test-data-source/add_moving_average_expected_data.csv").astype(
+            {
+                "price_ma_7": "float32",
+                "price_ma_15": "float32",
+                "price_ma_30": "float32",
+            }
+        )
         actual_df = add_price_moving_average(test_df)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
