@@ -15,6 +15,9 @@ test-all:
 	@$(MAKE) -s ui.test
 	@echo "Tests completed for all components."
 
+notebook:
+	docker run -it --rm -p 8888:8888 -v "${PWD}":/home/jovyan/work quay.io/jupyter/scipy-notebook:latest
+
 
 # INGESTOR
 ingestor.test:
