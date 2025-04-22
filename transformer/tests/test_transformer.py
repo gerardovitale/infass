@@ -1,26 +1,28 @@
 import numpy as np
 import pandas as pd
+from tests.conf_test import BasicTestCase
+
 from schema import (
     PD_MERC_SCHEMA,
 )
-from tests.conf_test import BasicTestCase
-
-from transformer import add_price_column
-from transformer import add_price_moving_average
-from transformer import cast_price_columns_as_float32
-from transformer import create_size_pattern_column
-from transformer import deduplicate_products_with_diff_prices_per_date
-from transformer import split_category_subcategory
-from transformer import standardize_size_columns
-from transformer import standardize_string_columns
-from transformer import transformer
+from transformer import (
+    add_price_column,
+    add_price_moving_average,
+    cast_price_columns_as_float32,
+    create_size_pattern_column,
+    deduplicate_products_with_diff_prices_per_date,
+    split_category_subcategory,
+    standardize_size_columns,
+    standardize_string_columns,
+    transformer,
+)
 
 
 class TestIntegrationTransformer(BasicTestCase):
 
     def test_transformer(self):
-        test_df = pd.read_csv("tests/test-data-source/raw_data.csv")
-        expected_df = pd.read_csv("tests/test-data-source/expected_data.csv").astype(PD_MERC_SCHEMA)
+        test_df = pd.read_csv("tests/test-data-source/integration_input_data.csv")
+        expected_df = pd.read_csv("tests/test-data-source/integration_expected_data.csv").astype(PD_MERC_SCHEMA)
         actual_df = transformer(test_df)
         print(actual_df["category"].unique())
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
@@ -153,43 +155,22 @@ class TestTransformer(BasicTestCase):
         actual_df = add_price_column(test_df)
         self.assert_pandas_dataframes_equal(expected_df, actual_df)
 
-    def test_add_price_moving_average(self):
+    def test_add_price_moving_average_when_there_just_7_records(self):
+        test_records_number = 7
         test_df = pd.DataFrame(
             {
-                "date": [
-                    "2025-04-01",
-                    "2025-04-02",
-                    "2025-04-03",
-                    "2025-04-04",
-                    "2025-04-05",
-                    "2025-04-06",
-                    "2025-04-07",
-                ],
-                "name": ["test_name", "test_name", "test_name", "test_name", "test_name", "test_name", "test_name"],
-                "size": ["test_size", "test_size", "test_size", "test_size", "test_size", "test_size", "test_size"],
-                "price": [1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00],
+                "date": [f"2025-04-0{n}" for n in range(1, test_records_number + 1)],
+                "name": ["test_name"] * test_records_number,
+                "size": ["test_size"] * test_records_number,
+                "price": [float(n) for n in range(1, test_records_number + 1)],
             }
         )
 
-        expected_df = pd.DataFrame(
-            {
-                "date": [
-                    "2025-04-01",
-                    "2025-04-02",
-                    "2025-04-03",
-                    "2025-04-04",
-                    "2025-04-05",
-                    "2025-04-06",
-                    "2025-04-07",
-                ],
-                "name": ["test_name", "test_name", "test_name", "test_name", "test_name", "test_name", "test_name"],
-                "size": ["test_size", "test_size", "test_size", "test_size", "test_size", "test_size", "test_size"],
-                "price": [1.00, 2.00, 3.00, 4.00, 5.00, 6.00, 7.00],
-                "price_ma_7": [None, None, None, None, None, None, 4.00],
-                "price_ma_15": [None, None, None, None, None, None, None],
-                "price_ma_30": [None, None, None, None, None, None, None],
-            }
-        ).astype(
+        expected_df = test_df.copy()
+        expected_df["price_ma_7"] = [None, None, None, None, None, None, 4.00]
+        expected_df["price_ma_15"] = [None] * test_records_number
+        expected_df["price_ma_30"] = [None] * test_records_number
+        expected_df = expected_df.astype(
             {
                 "price_ma_7": "float32",
                 "price_ma_15": "float32",
