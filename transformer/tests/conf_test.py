@@ -37,8 +37,8 @@ class BasicTestCase(TestCase):
 
     @staticmethod
     def print_dfs(expected_df: pd.DataFrame, actual_df: pd.DataFrame) -> None:
-        print("\nEXPECTED_DF (left)\n", expected_df.to_string(), "\n")
-        print("\nACTUAL_DF (right)\n", actual_df.to_string(), "\n")
+        print("\nEXPECTED_DF (left)\n", expected_df.to_string(index=False), "\n")
+        print("\nACTUAL_DF (right)\n", actual_df.to_string(index=False), "\n")
 
     def check_is_pd_dataframe(self, expected_df: pd.DataFrame, actual_df: pd.DataFrame) -> None:
         self.assertIsInstance(expected_df, pd.DataFrame)

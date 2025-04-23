@@ -20,11 +20,13 @@ def transformer(df: pd.DataFrame) -> pd.DataFrame:
     df = standardize_string_columns(df)
     df = deduplicate_products_with_diff_prices_per_date(df)
     df = add_price_column(df)
+    # below operations that need the df to be sorted
     df = sort_by_name_size_and_date(df)
     df = add_prev(df, "price")
     df = add_prev(df, "original_price")
+    df = add_price_var_columns(df, "price")
+    df = add_price_var_columns(df, "original_price")
     df = add_price_moving_average(df)
-    df = add_inflation_columns(df)
     df = add_is_fake_discount(df)
     return df[PD_MERC_SCHEMA.keys()]
 
@@ -69,8 +71,7 @@ def standardize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Standardizing string columns")
     string_columns = ["name", "size", "category", "subcategory"]
     for column in string_columns:
-        df[column] = df[column].str.lower().str.strip()
-        df[column] = df[column].apply(strip_accents)
+        df[column] = df[column].astype("string").str.lower().str.strip().apply(strip_accents)
     return cast_string_columns(df)
 
 
@@ -115,10 +116,10 @@ def add_price_moving_average(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def add_inflation_columns(df: pd.DataFrame) -> pd.DataFrame:
-    logger.info("Adding inflation columns: inflation_percent, inflation_abs")
-    df["inflation_percent"] = df["original_price"] / df["prev_original_price"] - 1
-    df["inflation_abs"] = df["original_price"] - df["prev_original_price"]
+def add_price_var_columns(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
+    logger.info(f"Adding inflation columns: {target_col}_var_abs, {target_col}_var_percent")
+    df[f"{target_col}_var_abs"] = df[f"{target_col}"] - df[f"prev_{target_col}"]
+    df[f"{target_col}_var_%"] = df[f"{target_col}_var_abs"] / df[f"{target_col}"]
     return df
 
 

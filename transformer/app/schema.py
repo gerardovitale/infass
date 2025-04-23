@@ -24,9 +24,11 @@ PD_MERC_SCHEMA = {
     "original_price": "float32",
     "prev_original_price": "float32",
     "discount_price": "float32",
+    "price_var_abs": "float32",
+    "price_var_%": "float32",
+    "original_price_var_abs": "float32",
+    "original_price_var_%": "float32",
     "is_fake_discount": "boolean",
-    "inflation_percent": "float32",
-    "inflation_abs": "float32",
 }
 
 BQ_MERC_SCHEMA = [
@@ -44,7 +46,9 @@ BQ_MERC_SCHEMA = [
     SchemaField("original_price", "FLOAT"),
     SchemaField("prev_original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),
+    SchemaField("price_var_abs", "FLOAT"),
+    SchemaField("price_var_%", "FLOAT"),
+    SchemaField("original_price_var_abs", "FLOAT"),
+    SchemaField("original_price_var_%", "FLOAT"),
     SchemaField("is_fake_discount", "BOOLEAN"),
-    SchemaField("inflation_percent", "FLOAT"),
-    SchemaField("inflation_abs", "FLOAT"),
 ]
