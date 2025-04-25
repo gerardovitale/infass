@@ -1,18 +1,43 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { ProductList } from '../ProductList/ProductList';
+import { Product } from '@/types';
+import { decodeSearch } from './utils/searchUtils';
 
 const SearchResult = () => {
     const searchParams = useSearchParams();
-    const searchValue = searchParams.get('product') || '';
+    const productSearched = decodeSearch(searchParams);
+    const products = [
+        {
+            id: '1',
+            name: 'Product 1',
+            size: 'Size M',
+            price: 19.99,
+            category: 'Category 1',
+        },
+        {
+            id: '2',
+            name: 'Product 2',
+            size: 'Size L',
+            price: 29.99,
+            category: 'Category 1',
+        },
+        {
+            id: '3',
+            name: 'Product 3',
+            size: 'Size S',
+            price: 39.99,
+            category: 'Category 1',
+        },
+    ];
 
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-            <h1 className="text-2xl font-bold text-gray-800">
-                You searched: {searchValue}
-            </h1>
-        </div>
-    );
+    const filteredProducts = (searchedValue: string): Product[] => {
+        return products.filter((p) =>
+            p.name.toLowerCase().includes(searchedValue.toLowerCase())
+        );
+    };
+    return <ProductList products={filteredProducts(productSearched)} />;
 };
 
 export default SearchResult;
