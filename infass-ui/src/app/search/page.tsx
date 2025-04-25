@@ -1,14 +1,15 @@
-'use client';
-
 import SearchResult from '@/components/Search/SearchResult';
+import React from 'react';
 import { Suspense } from 'react';
+import { PageProps } from '../../../.next/types/app/layout';
 
-const SearchPage = () => {
+export default async function SearchPage({ searchParams }: PageProps) {
+    const { product } = await searchParams;
+
+    const searchValue = product?.trim() ?? '';
     return (
         <Suspense>
-            <SearchResult />
+            <SearchResult productSearched={searchValue} />
         </Suspense>
     );
-};
-
-export default SearchPage;
+}

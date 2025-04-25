@@ -219,3 +219,4 @@ terraform.rc
 coverage/
 node_modules/
 .swc
+.env.*
