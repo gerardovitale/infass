@@ -27,8 +27,9 @@ ingestor.test:
 ingestor.run:
 	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
 	docker run --rm --name ingestor \
-		-v /Users/gerardovitale/Documents/repos/infass/infass-compute-sa-cred-key.json:/app/keyfile.json \
+		-v $(GCP_INGESTOR_CREDS_PATH):/app/keyfile.json \
    		-e GOOGLE_APPLICATION_CREDENTIALS=/app/keyfile.json \
+   		-e TEST_MODE=true \
 		ingestor:latest
 
 
@@ -41,7 +42,7 @@ transformer.local-run:
 	cd transformer/ && docker buildx build -f Dockerfile -t transformer .
 	docker run --rm \
 		-v $(TRANSFORMER_OUTPUT_PATH):/app/data/ \
-		-v $(GCP_CREDS_PATH):/app/key.json \
+		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		-e DATA_SOURCE=infass-merc \
 		-e DESTINATION=$(GCP_PROJECT_ID).infass.merc \
