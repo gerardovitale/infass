@@ -3,8 +3,17 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const searchButton = document.getElementById('search-button');
+        searchButton?.click();
+    }
+};
+
 export const SearchProduct = () => {
     const [searchValue, setSearchValue] = useState<string>('');
+
     return (
         <div className="flex items-center justify-center w-full max-w-md mx-auto">
             <input
@@ -14,6 +23,7 @@ export const SearchProduct = () => {
                 onChange={(e) => setSearchValue(e.target.value)}
                 placeholder="Search products..."
                 className="w-full max-w-md px-4 py-2 border rounded-xl focus:outline-none focus:ring focus:ring-blue-300"
+                onKeyDown={(e) => handleEnter(e)}
             />
             <Link
                 id="search-button"

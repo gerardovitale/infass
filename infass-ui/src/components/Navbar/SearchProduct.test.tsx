@@ -46,4 +46,18 @@ describe('SearchProduct', () => {
             expect.stringContaining('/search?product=eggs')
         );
     });
+
+    it('navigate to product list when Enter key is pressed', () => {
+        render(<SearchProduct />);
+        const input = screen.getByPlaceholderText('Search products...');
+        const button = screen.getByLabelText('Search');
+
+        fireEvent.change(input, { target: { value: 'eggs' } });
+        fireEvent.keyDown(input, { key: 'Enter', code: 'Enter', charCode: 13 });
+
+        expect(button).toHaveAttribute(
+            'href',
+            expect.stringContaining('/search?product=eggs')
+        );
+    });
 });
