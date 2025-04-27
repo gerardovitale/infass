@@ -76,27 +76,27 @@ The following transformations are applied to the input data:
 
 The transformed data is written with the following schema:
 
-| Column Name              | Data Type        | Description                                          |
-|--------------------------|------------------|------------------------------------------------------|
-| `date`                   | `datetime64[ns]` | The date of the product price record.                |
-| `dedup_id`               | `int8`           | Unique identifier for deduplicated records.          |
-| `name`                   | `string`         | The name of the product.                             |
-| `size`                   | `string`         | The size of the product.                             |
-| `category`               | `category`       | The category of the product.                         |
-| `subcategory`            | `category`       | The subcategory of the product.                      |
-| `price`                  | `float32`        | The current price of the product.                    |
-| `prev_price`             | `float32`        | The previous day's price of the product.             |
-| `price_ma_7`             | `float32`        | 7-day moving average of the price.                   |
-| `price_ma_15`            | `float32`        | 15-day moving average of the price.                  |
-| `price_ma_30`            | `float32`        | 30-day moving average of the price.                  |
-| `original_price`         | `float32`        | The original price of the product.                   |
-| `prev_original_price`    | `float32`        | The previous day's original price of the product.    |
-| `discount_price`         | `float32`        | The discounted price of the product.                 |
-| `price_var_abs`          | `float32`        | Absolute variation in price day-over-day.            |
-| `price_var_%`            | `float32`        | Percentage variation in price day-over-day.          |
-| `original_price_var_abs` | `float32`        | Absolute variation in original price day-over-day.   |
-| `original_price_var_%`   | `float32`        | Percentage variation in original price day-over-day. |
-| `is_fake_discount`       | `boolean`        | Flag indicating if the discount is fake.             |
+| Column Name              | Data Type        | Description                                                                                        |
+|--------------------------|------------------|----------------------------------------------------------------------------------------------------|
+| `date`                   | `datetime64[ns]` | The date of the product price record.                                                              |
+| `dedup_id`               | `int8`           | Unique identifier for deduplicated records.                                                        |
+| `name`                   | `string`         | The name of the product.                                                                           |
+| `size`                   | `string`         | The size of the product.                                                                           |
+| `category`               | `category`       | The category of the product.                                                                       |
+| `subcategory`            | `category`       | The subcategory of the product.                                                                    |
+| `price`                  | `float32`        | The current price of the product, uses `discount_price` if exist, otherwise uses `original_price`. |
+| `prev_price`             | `float32`        | The previous day's price of the product.                                                           |
+| `price_ma_7`             | `float32`        | 7-day moving average of the price.                                                                 |
+| `price_ma_15`            | `float32`        | 15-day moving average of the price.                                                                |
+| `price_ma_30`            | `float32`        | 30-day moving average of the price.                                                                |
+| `original_price`         | `float32`        | The original price of the product.                                                                 |
+| `prev_original_price`    | `float32`        | The previous day's original price of the product.                                                  |
+| `discount_price`         | `float32`        | The discounted price of the product.                                                               |
+| `price_var_abs`          | `float32`        | Absolute variation in price day-over-day.                                                          |
+| `price_var_%`            | `float32`        | Percentage variation in price day-over-day.                                                        |
+| `original_price_var_abs` | `float32`        | Absolute variation in original price day-over-day.                                                 |
+| `original_price_var_%`   | `float32`        | Percentage variation in original price day-over-day.                                               |
+| `is_fake_discount`       | `boolean`        | Flag indicating if the discount is fake.                                                           |
 
 ---
 
