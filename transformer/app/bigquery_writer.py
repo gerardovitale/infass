@@ -3,6 +3,8 @@ import logging
 import pandas as pd
 from google.cloud.bigquery import Client
 from google.cloud.bigquery import LoadJobConfig
+from google.cloud.bigquery import TimePartitioning
+from google.cloud.bigquery import TimePartitioningType
 from schema import BQ_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -15,6 +17,11 @@ def write_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_
         write_disposition="WRITE_TRUNCATE",
         schema=BQ_MERC_SCHEMA,
         autodetect=False,
+        time_partitioning=TimePartitioning(
+            type_=TimePartitioningType.DAY,
+            field="date",
+        ),
+        clustering_fields=["name", "size"],
     )
 
     try:
