@@ -1,19 +1,23 @@
 import numpy as np
 import pandas as pd
+from tests.conf_test import BasicTestCase
+
 from schema import (
     PD_MERC_SCHEMA,
 )
-from tests.conf_test import BasicTestCase
-
-from transformer import add_price_column
-from transformer import add_price_moving_average
-from transformer import cast_price_columns_as_float32
-from transformer import create_size_pattern_column
-from transformer import deduplicate_products_with_diff_prices_per_date
-from transformer import split_category_subcategory
-from transformer import standardize_size_columns
-from transformer import standardize_string_columns
-from transformer import transformer
+from transformer import (
+    add_price_column,
+    add_price_moving_average,
+    add_price_var_columns,
+    add_product_prev,
+    cast_price_columns_as_float32,
+    create_size_pattern_column,
+    deduplicate_products_with_diff_prices_per_date,
+    split_category_subcategory,
+    standardize_size_columns,
+    standardize_string_columns,
+    transformer,
+)
 
 
 class TestIntegrationTransformer(BasicTestCase):
@@ -22,6 +26,46 @@ class TestIntegrationTransformer(BasicTestCase):
         test_df = pd.read_csv("tests/test-data-source/integration_input_data.csv")
         expected_df = pd.read_csv("tests/test-data-source/integration_expected_data.csv").astype(PD_MERC_SCHEMA)
         actual_df = transformer(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+
+class TestSMA(BasicTestCase):
+    def test_add_price_moving_average_when_there_just_7_records(self):
+        test_records_number = 7
+        test_df = pd.DataFrame(
+            {
+                "date": [f"2025-04-0{n}" for n in range(1, test_records_number + 1)],
+                "name": ["test_name"] * test_records_number,
+                "size": ["test_size"] * test_records_number,
+                "price": [float(n) for n in range(1, test_records_number + 1)],
+            }
+        )
+
+        expected_df = test_df.copy()
+        expected_df["price_ma_7"] = [None, None, None, None, None, None, 4.00]
+        expected_df["price_ma_15"] = [None] * test_records_number
+        expected_df["price_ma_30"] = [None] * test_records_number
+        expected_df = expected_df.astype(
+            {
+                "price_ma_7": "float32",
+                "price_ma_15": "float32",
+                "price_ma_30": "float32",
+            }
+        )
+
+        actual_df = add_price_moving_average(test_df)
+        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+
+    def test_add_price_moving_average(self):
+        test_df = pd.read_csv("tests/test-data-source/add_moving_average_input_data.csv")
+        expected_df = pd.read_csv("tests/test-data-source/add_moving_average_expected_data.csv").astype(
+            {
+                "price_ma_7": "float32",
+                "price_ma_15": "float32",
+                "price_ma_30": "float32",
+            }
+        )
+        actual_df = add_price_moving_average(test_df)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
@@ -152,42 +196,32 @@ class TestTransformer(BasicTestCase):
         actual_df = add_price_column(test_df)
         self.assert_pandas_dataframes_equal(expected_df, actual_df)
 
-    def test_add_price_moving_average_when_there_just_7_records(self):
-        test_records_number = 7
-        test_df = pd.DataFrame(
-            {
-                "date": [f"2025-04-0{n}" for n in range(1, test_records_number + 1)],
-                "name": ["test_name"] * test_records_number,
-                "size": ["test_size"] * test_records_number,
-                "price": [float(n) for n in range(1, test_records_number + 1)],
-            }
-        )
+    def test_add_product_prev(self):
+        test_col = "test_col"
+        test_df = pd.DataFrame({
+            "name": ["coke zero", "coke zero", "coke", "coke zero", "coke zero", ],
+            "size": ["330 ml", "330 ml", "330 ml", "200 ml", "330 ml"],
+            "test_col": ["1", "2", "1", "1", "test"],
+        })
 
         expected_df = test_df.copy()
-        expected_df["price_ma_7"] = [None, None, None, None, None, None, 4.00]
-        expected_df["price_ma_15"] = [None] * test_records_number
-        expected_df["price_ma_30"] = [None] * test_records_number
-        expected_df = expected_df.astype(
-            {
-                "price_ma_7": "float32",
-                "price_ma_15": "float32",
-                "price_ma_30": "float32",
-            }
-        )
+        expected_df["prev_test_col"] = [None, "1", None, None, "2"]
 
-        actual_df = add_price_moving_average(test_df)
-        self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
+        actual_df = add_product_prev(test_df, test_col)
+        self.assert_pandas_dataframes_equal(expected_df, actual_df)
 
-    def test_add_price_moving_average(self):
-        test_df = pd.read_csv("tests/test-data-source/add_moving_average_input_data.csv")
-        expected_df = pd.read_csv("tests/test-data-source/add_moving_average_expected_data.csv").astype(
-            {
-                "price_ma_7": "float32",
-                "price_ma_15": "float32",
-                "price_ma_30": "float32",
-            }
-        )
-        actual_df = add_price_moving_average(test_df)
+    def test_add_price_var_columns(self):
+        test_col = "test_price_col"
+        test_df = pd.DataFrame({
+            f"{test_col}": [1.99, 1.99, 2.99],
+            f"prev_{test_col}": [None, 1.99, 1.99],
+        })
+
+        expected_df = test_df.copy()
+        expected_df[f"{test_col}_var_abs"] = [None, 0.00, 1.00]
+        expected_df[f"{test_col}_var_%"] = [None, 0.00, 0.3344481605]
+
+        actual_df = add_price_var_columns(test_df, test_col)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 

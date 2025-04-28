@@ -6,6 +6,8 @@ import unicodedata
 
 import numpy as np
 import pandas as pd
+
+from conf import PRODUCT_CONTAINERS
 from schema import PD_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
@@ -22,8 +24,8 @@ def transformer(df: pd.DataFrame) -> pd.DataFrame:
     df = add_price_column(df)
     # below operations that need the df to be sorted
     df = sort_by_name_size_and_date(df)
-    df = add_prev(df, "price")
-    df = add_prev(df, "original_price")
+    df = add_product_prev(df, "price")
+    df = add_product_prev(df, "original_price")
     df = add_price_var_columns(df, "price")
     df = add_price_var_columns(df, "original_price")
     df = add_price_moving_average(df)
@@ -100,7 +102,7 @@ def sort_by_name_size_and_date(df: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values(by=["name", "size", "date"]).reset_index(drop=True)
 
 
-def add_prev(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
+def add_product_prev(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
     logger.info("Adding prev_original_price column")
     df[f"prev_{target_col}"] = df.groupby(["name", "size"])[target_col].shift(1)
     return df
@@ -132,10 +134,92 @@ def add_is_fake_discount(df: pd.DataFrame) -> pd.DataFrame:
 
 
 ###############################################
-# NOT IMPLEMENTED #############################
+# NOT IMPLEMENTED: LABELER ####################
 ###############################################
 
+def label_deals_with_sma(df: pd.DataFrame, short_term_sma_col: str, mid_term_sma_col: str):
+    price_col = "price"
+    discount_col = "discount_price"
 
+    conditions = [
+        # When discount price exists
+        df[discount_col].notna() & (
+                (df[price_col] <= df[short_term_sma_col])
+                & (df[price_col] < df[mid_term_sma_col])
+        ),
+        df[discount_col].notna() & (
+                (df[price_col] > df[short_term_sma_col])
+                & (df[price_col] <= df[mid_term_sma_col])
+        ),
+        df[discount_col].notna() & (
+                (df[price_col] < df[short_term_sma_col])
+                & (df[price_col] > df[mid_term_sma_col])
+        ),
+        df[discount_col].notna() & (
+                (df[price_col] < df[short_term_sma_col])
+                & (df[price_col] == df[mid_term_sma_col])
+        ),
+        df[discount_col].notna() & (
+                (df[price_col] >= df[short_term_sma_col])
+                & (df[price_col] >= df[mid_term_sma_col])
+        ),
+
+        # When discount price does not exist
+        df[discount_col].isna() & (
+                (df[price_col] <= df[short_term_sma_col])
+                & (df[price_col] < df[mid_term_sma_col])
+        ),
+        df[discount_col].isna() & (
+                (df[price_col] > df[short_term_sma_col])
+                & (df[price_col] < df[mid_term_sma_col])
+        ),
+        df[discount_col].isna() & (
+                (df[price_col] > df[short_term_sma_col])
+                & (df[price_col] == df[mid_term_sma_col])
+        ),
+        df[discount_col].isna() & (
+                (df[price_col] == df[short_term_sma_col])
+                & (df[price_col] == df[mid_term_sma_col])
+        ),
+        df[discount_col].isna() & (
+                (df[price_col] < df[short_term_sma_col])
+                & (df[price_col] == df[mid_term_sma_col])
+        ),
+        df[discount_col].isna() & (
+                (df[price_col] < df[short_term_sma_col])
+                & (df[price_col] > df[mid_term_sma_col])
+        ),
+        df[discount_col].isna() & (
+                (df[price_col] >= df[short_term_sma_col])
+                & (df[price_col] > df[mid_term_sma_col])
+        ),
+    ]
+
+    choices = [
+        # When discount price exists
+        "Good Discount",
+        "Bad Discount",
+        "Recent Discount, Still High",
+        "Fake Discount",
+        "Fake Discount",
+
+        # When discount price does not exist
+        "Price Deflated",
+        "Recent Price Increase, Still Low",
+        "Recent Price Increase, Still Steady",
+        "Steady Price",
+        "Recent Price Drop, Still Steady",
+        "Recent Price Drop, Still High",
+        "Price Inflated",
+    ]
+
+    df["deal_label"] = np.select(conditions, choices, default="Unknown")
+    return df
+
+
+###############################################
+# NOT IMPLEMENTED: SIZE PATTERN GEN ###########
+###############################################
 def create_size_pattern_column(df: pd.DataFrame) -> pd.DataFrame:
     def is_number(s):
         try:
@@ -146,68 +230,13 @@ def create_size_pattern_column(df: pd.DataFrame) -> pd.DataFrame:
 
     def generate_pattern(size: str):
         units = ["mg", "g", "kg", "ml", "cl", "l"]
-        containers = [
-            "lata",
-            "latas",
-            "botella",
-            "botellas",
-            "garrafa",
-            "garrafas",
-            "brick",
-            "bricks",
-            "botellin",
-            "botellines",
-            "caja",
-            "sobres",
-            "ud",
-            "paquete",
-            "paquetes",
-            "bandeja",
-            "bandejas",
-            "pieza",
-            "tarro",
-            "tarrina",
-            "frasco",
-            "spray",
-            "tarro",
-            "tableta",
-            "bote",
-            "capsulas",
-            "bolsitas",
-            "bol",
-            "tubo",
-            "raciones",
-            "malla",
-            "vaso",
-            "rebanadas",
-            "bolsas",
-            "lavados",
-            "barritas",
-            "sobre",
-            "packs",
-            "tarrinas",
-            "vasitos",
-            "tarritos",
-            "saco",
-            "botes",
-            "granel",
-            "chicles",
-            "tarrito",
-            "bolsa",
-            "dosis",
-            "rollos",
-            "velas",
-            "bandas",
-            "tiras",
-            "quesitos",
-        ]
         size = size.replace("x", "").replace("apro", "").replace("escurrido", "")  # Replace "x" with space
         size = re.sub(r"[().]", "", size)  # Remove dots and parentheses
         size = re.sub(r"\d+,\d*", lambda x: x.group().replace(",", "."), size)
         tokens = size.split()
         pattern = []
         for token in tokens:
-            if token in containers:
+            if token in PRODUCT_CONTAINERS:
                 pattern.append("container")
             elif is_number(token):
                 pattern.append("x")
