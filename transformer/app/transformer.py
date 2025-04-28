@@ -6,7 +6,6 @@ import unicodedata
 
 import numpy as np
 import pandas as pd
-
 from conf import PRODUCT_CONTAINERS
 from schema import PD_MERC_SCHEMA
 
@@ -137,62 +136,27 @@ def add_is_fake_discount(df: pd.DataFrame) -> pd.DataFrame:
 # NOT IMPLEMENTED: LABELER ####################
 ###############################################
 
+
 def label_deals_with_sma(df: pd.DataFrame, short_term_sma_col: str, mid_term_sma_col: str):
     price_col = "price"
     discount_col = "discount_price"
 
     conditions = [
         # When discount price exists
-        df[discount_col].notna() & (
-                (df[price_col] <= df[short_term_sma_col])
-                & (df[price_col] < df[mid_term_sma_col])
-        ),
-        df[discount_col].notna() & (
-                (df[price_col] > df[short_term_sma_col])
-                & (df[price_col] <= df[mid_term_sma_col])
-        ),
-        df[discount_col].notna() & (
-                (df[price_col] < df[short_term_sma_col])
-                & (df[price_col] > df[mid_term_sma_col])
-        ),
-        df[discount_col].notna() & (
-                (df[price_col] < df[short_term_sma_col])
-                & (df[price_col] == df[mid_term_sma_col])
-        ),
-        df[discount_col].notna() & (
-                (df[price_col] >= df[short_term_sma_col])
-                & (df[price_col] >= df[mid_term_sma_col])
-        ),
-
+        df[discount_col].notna() & ((df[price_col] <= df[short_term_sma_col]) & (df[price_col] < df[mid_term_sma_col])),
+        df[discount_col].notna() & ((df[price_col] > df[short_term_sma_col]) & (df[price_col] <= df[mid_term_sma_col])),
+        df[discount_col].notna() & ((df[price_col] < df[short_term_sma_col]) & (df[price_col] > df[mid_term_sma_col])),
+        df[discount_col].notna() & ((df[price_col] < df[short_term_sma_col]) & (df[price_col] == df[mid_term_sma_col])),
+        df[discount_col].notna()
+        & ((df[price_col] >= df[short_term_sma_col]) & (df[price_col] >= df[mid_term_sma_col])),
         # When discount price does not exist
-        df[discount_col].isna() & (
-                (df[price_col] <= df[short_term_sma_col])
-                & (df[price_col] < df[mid_term_sma_col])
-        ),
-        df[discount_col].isna() & (
-                (df[price_col] > df[short_term_sma_col])
-                & (df[price_col] < df[mid_term_sma_col])
-        ),
-        df[discount_col].isna() & (
-                (df[price_col] > df[short_term_sma_col])
-                & (df[price_col] == df[mid_term_sma_col])
-        ),
-        df[discount_col].isna() & (
-                (df[price_col] == df[short_term_sma_col])
-                & (df[price_col] == df[mid_term_sma_col])
-        ),
-        df[discount_col].isna() & (
-                (df[price_col] < df[short_term_sma_col])
-                & (df[price_col] == df[mid_term_sma_col])
-        ),
-        df[discount_col].isna() & (
-                (df[price_col] < df[short_term_sma_col])
-                & (df[price_col] > df[mid_term_sma_col])
-        ),
-        df[discount_col].isna() & (
-                (df[price_col] >= df[short_term_sma_col])
-                & (df[price_col] > df[mid_term_sma_col])
-        ),
+        df[discount_col].isna() & ((df[price_col] <= df[short_term_sma_col]) & (df[price_col] < df[mid_term_sma_col])),
+        df[discount_col].isna() & ((df[price_col] > df[short_term_sma_col]) & (df[price_col] < df[mid_term_sma_col])),
+        df[discount_col].isna() & ((df[price_col] > df[short_term_sma_col]) & (df[price_col] == df[mid_term_sma_col])),
+        df[discount_col].isna() & ((df[price_col] == df[short_term_sma_col]) & (df[price_col] == df[mid_term_sma_col])),
+        df[discount_col].isna() & ((df[price_col] < df[short_term_sma_col]) & (df[price_col] == df[mid_term_sma_col])),
+        df[discount_col].isna() & ((df[price_col] < df[short_term_sma_col]) & (df[price_col] > df[mid_term_sma_col])),
+        df[discount_col].isna() & ((df[price_col] >= df[short_term_sma_col]) & (df[price_col] > df[mid_term_sma_col])),
     ]
 
     choices = [
@@ -202,7 +166,6 @@ def label_deals_with_sma(df: pd.DataFrame, short_term_sma_col: str, mid_term_sma
         "Recent Discount, Still High",
         "Fake Discount",
         "Fake Discount",
-
         # When discount price does not exist
         "Price Deflated",
         "Recent Price Increase, Still Low",

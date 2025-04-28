@@ -1,23 +1,21 @@
 import numpy as np
 import pandas as pd
-from tests.conf_test import BasicTestCase
-
 from schema import (
     PD_MERC_SCHEMA,
 )
-from transformer import (
-    add_price_column,
-    add_price_moving_average,
-    add_price_var_columns,
-    add_product_prev,
-    cast_price_columns_as_float32,
-    create_size_pattern_column,
-    deduplicate_products_with_diff_prices_per_date,
-    split_category_subcategory,
-    standardize_size_columns,
-    standardize_string_columns,
-    transformer,
-)
+from tests.conf_test import BasicTestCase
+
+from transformer import add_price_column
+from transformer import add_price_moving_average
+from transformer import add_price_var_columns
+from transformer import add_product_prev
+from transformer import cast_price_columns_as_float32
+from transformer import create_size_pattern_column
+from transformer import deduplicate_products_with_diff_prices_per_date
+from transformer import split_category_subcategory
+from transformer import standardize_size_columns
+from transformer import standardize_string_columns
+from transformer import transformer
 
 
 class TestIntegrationTransformer(BasicTestCase):
@@ -198,11 +196,19 @@ class TestTransformer(BasicTestCase):
 
     def test_add_product_prev(self):
         test_col = "test_col"
-        test_df = pd.DataFrame({
-            "name": ["coke zero", "coke zero", "coke", "coke zero", "coke zero", ],
-            "size": ["330 ml", "330 ml", "330 ml", "200 ml", "330 ml"],
-            "test_col": ["1", "2", "1", "1", "test"],
-        })
+        test_df = pd.DataFrame(
+            {
+                "name": [
+                    "coke zero",
+                    "coke zero",
+                    "coke",
+                    "coke zero",
+                    "coke zero",
+                ],
+                "size": ["330 ml", "330 ml", "330 ml", "200 ml", "330 ml"],
+                "test_col": ["1", "2", "1", "1", "test"],
+            }
+        )
 
         expected_df = test_df.copy()
         expected_df["prev_test_col"] = [None, "1", None, None, "2"]
@@ -212,10 +218,12 @@ class TestTransformer(BasicTestCase):
 
     def test_add_price_var_columns(self):
         test_col = "test_price_col"
-        test_df = pd.DataFrame({
-            f"{test_col}": [1.99, 1.99, 2.99],
-            f"prev_{test_col}": [None, 1.99, 1.99],
-        })
+        test_df = pd.DataFrame(
+            {
+                f"{test_col}": [1.99, 1.99, 2.99],
+                f"prev_{test_col}": [None, 1.99, 1.99],
+            }
+        )
 
         expected_df = test_df.copy()
         expected_df[f"{test_col}_var_abs"] = [None, 0.00, 1.00]
