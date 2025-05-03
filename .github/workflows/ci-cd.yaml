@@ -3,13 +3,9 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main  # Trigger on pushes to the main branch
+      - main # Trigger on pushes to the main branch
     paths:
-      - '**'  # Trigger when any file is modified
-
-env:
-  GCS_BUCKET_URI: gs://infass
-  GCP_REGION: europe-southwest1
+      - "**" # Trigger when any file is modified
 
 jobs:
   test:
@@ -17,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [ selenium-ingestor, pandas-transformer ]
+        service: [ingestor, transformer, infass-api, infass-ui]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -32,14 +28,14 @@ jobs:
       - name: Run Tests
         working-directory: ${{ matrix.service }}
         run: docker run --rm test-image
-  
+
   build-and-push:
     name: Build and Push
     runs-on: ubuntu-latest
     needs: test
     strategy:
       matrix:
-        service: [ selenium-ingestor, pandas-transformer ]
+        service: [ingestor, transformer]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -82,7 +78,7 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v2.1.3
         with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
       - name: Set up Terraform
         id: setup-tf
@@ -97,51 +93,15 @@ jobs:
 
       - name: Initialize Terraform
         id: init
-        working-directory: ./tf-infra
+        working-directory: ./infra
         run: terraform init
 
       - name: Plan Terraform changes
         id: plan
-        working-directory: ./tf-infra
+        working-directory: ./infra
         run: terraform plan -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
 
       - name: Apply Terraform changes
         id: apply
-        working-directory: ./tf-infra
+        working-directory: ./infra
         run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
-
-# deploy-pyspark-script:
-#   name: Deploy PySpark Script to GCS
-#   runs-on: ubuntu-latest
-#   needs: test
-#   steps:
-#     - name: Checkout Code
-#       uses: actions/checkout@v4.2.2
-
-#     - name: Authenticate to Google Cloud
-#       uses: google-github-actions/auth@v2.1.7
-#       with:
-#         credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-#     - name: Upload PySpark Script
-#       run: gcloud storage cp spark-jobs/spark_jobs/*.py ${{ env.GCS_BUCKET_URI }}/spark-jobs/
-
-# deploy-workflow:
-#   name: Deploy Google Workflow
-#   runs-on: ubuntu-latest
-#   steps:
-#     - name: Checkout Code
-#       uses: actions/checkout@v4.2.2
-
-#     - name: Authenticate to Google Cloud
-#       uses: google-github-actions/auth@v2.1.7
-#       with:
-#         credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-#     - name: Deploy Workflow
-#       run: |
-#         gcloud workflows deploy merc-workflow --source workflow.yaml \
-#           --service-account ${{ secrets.GCP_COMPUTE_SA }} \
-#           --location ${{ env.GCP_REGION }} \
-#           --set-env-vars GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }},GCP_REGION=${{ env.GCP_REGION }} \
-#           --verbosity=debug

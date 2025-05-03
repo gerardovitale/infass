@@ -1,26 +1,21 @@
 from datetime import date
 
-from pyspark.sql.types import (
-    DateType,
-    DoubleType,
-    IntegerType,
-    StringType,
-    StructField,
-    StructType,
-)
-
-from build_merc_table import (
-    INGESTION_SCHEMA,
-    RESULTING_SCHEMA,
-    add_inflation_columns,
-    add_prev_original_price,
-    cast_price_columns_as_double,
-    deduplicate_products_with_diff_prices_per_date,
-    map_old_categories,
-    process_raw_data,
-    split_category_subcategory,
-    standardize_string_columns,
-)
+from build_merc_table import add_inflation_columns
+from build_merc_table import add_prev_original_price
+from build_merc_table import cast_price_columns_as_double
+from build_merc_table import deduplicate_products_with_diff_prices_per_date
+from build_merc_table import INGESTION_SCHEMA
+from build_merc_table import map_old_categories
+from build_merc_table import process_raw_data
+from build_merc_table import RESULTING_SCHEMA
+from build_merc_table import split_category_subcategory
+from build_merc_table import standardize_string_columns
+from pyspark.sql.types import DateType
+from pyspark.sql.types import DoubleType
+from pyspark.sql.types import IntegerType
+from pyspark.sql.types import StringType
+from pyspark.sql.types import StructField
+from pyspark.sql.types import StructType
 from tests.conf_test import SparkTestCase
 
 
@@ -38,11 +33,76 @@ class TestIntegrationMercadona(SparkTestCase):
 
         expected_data = [
             (date(2024, 11, 20), 1, "aceite", "botella 1 l", "aceite", "aceite", 6.75, None, None, None, None, None),
-            (date(2024, 11, 21), 1, "aceite", "botella 1 l", "aceite", "aceite", 7.75, 6.75, None, None,(7.75 / 6.75) - 1, 1.0),
-            (date(2024, 11, 22), 1, "aceite", "botella 1 l", "aceite", "aceite", 8.75, 7.75, None, None,(8.75 / 7.75) - 1, 1.0),
-            (date(2024, 11, 20), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.79, None, 1.45, None, None,None),
-            (date(2024, 11, 21), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.79, 1.79, True,(1.85 / 1.79) - 1, 1.85 - 1.79),
-            (date(2024, 11, 22), 1, "monster", "lata 500 ml", "refrescos", "isotonico", 1.85, 1.85, 1.79, None, 0.00,0.00),
+            (
+                date(2024, 11, 21),
+                1,
+                "aceite",
+                "botella 1 l",
+                "aceite",
+                "aceite",
+                7.75,
+                6.75,
+                None,
+                None,
+                (7.75 / 6.75) - 1,
+                1.0,
+            ),
+            (
+                date(2024, 11, 22),
+                1,
+                "aceite",
+                "botella 1 l",
+                "aceite",
+                "aceite",
+                8.75,
+                7.75,
+                None,
+                None,
+                (8.75 / 7.75) - 1,
+                1.0,
+            ),
+            (
+                date(2024, 11, 20),
+                1,
+                "monster",
+                "lata 500 ml",
+                "refrescos",
+                "isotonico",
+                1.79,
+                None,
+                1.45,
+                None,
+                None,
+                None,
+            ),
+            (
+                date(2024, 11, 21),
+                1,
+                "monster",
+                "lata 500 ml",
+                "refrescos",
+                "isotonico",
+                1.85,
+                1.79,
+                1.79,
+                True,
+                (1.85 / 1.79) - 1,
+                1.85 - 1.79,
+            ),
+            (
+                date(2024, 11, 22),
+                1,
+                "monster",
+                "lata 500 ml",
+                "refrescos",
+                "isotonico",
+                1.85,
+                1.85,
+                1.79,
+                None,
+                0.00,
+                0.00,
+            ),
         ]
         expected_df = self.spark.createDataFrame(expected_data, RESULTING_SCHEMA)
 
@@ -99,39 +159,35 @@ class TestMercadona(SparkTestCase):
     def test_standardize_string_columns(self):
         string_columns = ["name", "size", "category", "subcategory"]
         test_data = [
-            ("Pechuga de pavo bajo en sal Hacendado finas lonchas",
-             "2 paquetes x 200 g",
-             "Charcutería y quesos",
-             "Aves y jamón cocido"
-             ),
-            ("Edulcorante en pastillas sacarina Hacendado",
-             "Bote 850 pastillas (52 g)",
-             "Azúcar, caramelos y chocolate",
-             "Azúcar y edulcorante"
-             ),
-            ("Cerveza 0,0% sin alcohol Falke",
-             "6 botellines x 250 ml",
-             "Bodega",
-             "Cerveza sin alcohol"
-             ),
+            (
+                "Pechuga de pavo bajo en sal Hacendado finas lonchas",
+                "2 paquetes x 200 g",
+                "Charcutería y quesos",
+                "Aves y jamón cocido",
+            ),
+            (
+                "Edulcorante en pastillas sacarina Hacendado",
+                "Bote 850 pastillas (52 g)",
+                "Azúcar, caramelos y chocolate",
+                "Azúcar y edulcorante",
+            ),
+            ("Cerveza 0,0% sin alcohol Falke", "6 botellines x 250 ml", "Bodega", "Cerveza sin alcohol"),
         ]
         test_df = self.spark.createDataFrame(test_data, string_columns)
         expected_data = [
-            ("pechuga de pavo bajo en sal hacendado finas lonchas",
-             "2 paquetes x 200 g",
-             "charcuteria y quesos",
-             "aves y jamon cocido"
-             ),
-            ("edulcorante en pastillas sacarina hacendado",
-             "bote 850 pastillas (52 g)",
-             "azucar, caramelos y chocolate",
-             "azucar y edulcorante"
-             ),
-            ("cerveza 0,0% sin alcohol falke",
-             "6 botellines x 250 ml",
-             "bodega",
-             "cerveza sin alcohol"
-             ),
+            (
+                "pechuga de pavo bajo en sal hacendado finas lonchas",
+                "2 paquetes x 200 g",
+                "charcuteria y quesos",
+                "aves y jamon cocido",
+            ),
+            (
+                "edulcorante en pastillas sacarina hacendado",
+                "bote 850 pastillas (52 g)",
+                "azucar, caramelos y chocolate",
+                "azucar y edulcorante",
+            ),
+            ("cerveza 0,0% sin alcohol falke", "6 botellines x 250 ml", "bodega", "cerveza sin alcohol"),
         ]
         expected_df = self.spark.createDataFrame(expected_data, string_columns)
         actual_df = standardize_string_columns(test_df)
@@ -150,87 +206,97 @@ class TestMercadona(SparkTestCase):
         )
         test_data = [
             # Old records with old categories
-            (date(2024, 11, 5),
-             "bebida energetica energy drink zero hacendado",
-             "6 latas x 250 ml",
-             "sport-drinks",
-             None,
-             ),
-            (date(2024, 11, 5),
-             "refresco de limon hacendado fresh gas",
-             "lata 330 ml",
-             "soft-drinks",
-             None,
-             ),
-            (date(2024, 11, 5),
-             "aceitunas verdes rellenas de anchoa la alcoyana",
-             "bote 830 g 350 g escurrido",
-             "appetizer",
-             None,
-             ),
-
+            (
+                date(2024, 11, 5),
+                "bebida energetica energy drink zero hacendado",
+                "6 latas x 250 ml",
+                "sport-drinks",
+                None,
+            ),
+            (
+                date(2024, 11, 5),
+                "refresco de limon hacendado fresh gas",
+                "lata 330 ml",
+                "soft-drinks",
+                None,
+            ),
+            (
+                date(2024, 11, 5),
+                "aceitunas verdes rellenas de anchoa la alcoyana",
+                "bote 830 g 350 g escurrido",
+                "appetizer",
+                None,
+            ),
             # New records with new categories
-            (date(2024, 11, 10),
-             "bebida energetica energy drink zero hacendado",
-             "6 latas x 250 ml",
-             "agua y refrescos",
-             "isotonico y energetico",
-             ),
-            (date(2024, 11, 10),
-             "refresco de limon hacendado fresh gas",
-             "lata 330 ml",
-             "agua y refrescos",
-             "refresco de naranja y de limon",
-             ),
-            (date(2024, 11, 10),
-             "aceitunas verdes rellenas de anchoa la alcoyana",
-             "bote 830 g 350 g escurrido",
-             "aperitivos",
-             "aceitunas y encurtidos",
-             ),
+            (
+                date(2024, 11, 10),
+                "bebida energetica energy drink zero hacendado",
+                "6 latas x 250 ml",
+                "agua y refrescos",
+                "isotonico y energetico",
+            ),
+            (
+                date(2024, 11, 10),
+                "refresco de limon hacendado fresh gas",
+                "lata 330 ml",
+                "agua y refrescos",
+                "refresco de naranja y de limon",
+            ),
+            (
+                date(2024, 11, 10),
+                "aceitunas verdes rellenas de anchoa la alcoyana",
+                "bote 830 g 350 g escurrido",
+                "aperitivos",
+                "aceitunas y encurtidos",
+            ),
         ]
         test_df = self.spark.createDataFrame(test_data, test_schema)
 
         expected_data = [
             # Old records with new corrected categories
-            (date(2024, 11, 5),
-             "bebida energetica energy drink zero hacendado",
-             "6 latas x 250 ml",
-             "agua y refrescos",
-             "isotonico y energetico",
-             ),
-            (date(2024, 11, 5),
-             "refresco de limon hacendado fresh gas",
-             "lata 330 ml",
-             "agua y refrescos",
-             "refresco de naranja y de limon",
-             ),
-            (date(2024, 11, 5),
-             "aceitunas verdes rellenas de anchoa la alcoyana",
-             "bote 830 g 350 g escurrido",
-             "aperitivos",
-             "aceitunas y encurtidos",
-             ),
-
+            (
+                date(2024, 11, 5),
+                "bebida energetica energy drink zero hacendado",
+                "6 latas x 250 ml",
+                "agua y refrescos",
+                "isotonico y energetico",
+            ),
+            (
+                date(2024, 11, 5),
+                "refresco de limon hacendado fresh gas",
+                "lata 330 ml",
+                "agua y refrescos",
+                "refresco de naranja y de limon",
+            ),
+            (
+                date(2024, 11, 5),
+                "aceitunas verdes rellenas de anchoa la alcoyana",
+                "bote 830 g 350 g escurrido",
+                "aperitivos",
+                "aceitunas y encurtidos",
+            ),
             # New records with new categories
-            (date(2024, 11, 10),
-             "bebida energetica energy drink zero hacendado",
-             "6 latas x 250 ml",
-             "agua y refrescos",
-             "isotonico y energetico",
-             ),
-            (date(2024, 11, 10),
-             "refresco de limon hacendado fresh gas",
-             "lata 330 ml",
-             "agua y refrescos",
-             "refresco de naranja y de limon",
-             ),
-            (date(2024, 11, 10),
-             "aceitunas verdes rellenas de anchoa la alcoyana",
-             "bote 830 g 350 g escurrido",
-             "aperitivos",
-             "aceitunas y encurtidos",
-             ),
+            (
+                date(2024, 11, 10),
+                "bebida energetica energy drink zero hacendado",
+                "6 latas x 250 ml",
+                "agua y refrescos",
+                "isotonico y energetico",
+            ),
+            (
+                date(2024, 11, 10),
+                "refresco de limon hacendado fresh gas",
+                "lata 330 ml",
+                "agua y refrescos",
+                "refresco de naranja y de limon",
+            ),
+            (
+                date(2024, 11, 10),
+                "aceitunas verdes rellenas de anchoa la alcoyana",
+                "bote 830 g 350 g escurrido",
+                "aperitivos",
+                "aceitunas y encurtidos",
+            ),
         ]
         expected_df = self.spark.createDataFrame(expected_data, test_schema)
 
@@ -250,52 +316,56 @@ class TestMercadona(SparkTestCase):
         )
         test_data = [
             # Same product but different prices on 2024-11-03
-            (date(2024, 11, 3),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.75,
-             ),
-            (date(2024, 11, 3),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.9,
-             ),
-
+            (
+                date(2024, 11, 3),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.75,
+            ),
+            (
+                date(2024, 11, 3),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.9,
+            ),
             # Same product but different prices on 2024-11-04
-            (date(2024, 11, 4),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.75,
-             ),
-            (date(2024, 11, 4),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.9,
-             ),
-            (date(2024, 11, 4),
-             "bebida energetica energy drink zero hacendado",
-             "6 latas x 250 ml",
-             "agua y refrescos",
-             "isotonico y energetico",
-             2.99,
-             ),
-
+            (
+                date(2024, 11, 4),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.75,
+            ),
+            (
+                date(2024, 11, 4),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.9,
+            ),
+            (
+                date(2024, 11, 4),
+                "bebida energetica energy drink zero hacendado",
+                "6 latas x 250 ml",
+                "agua y refrescos",
+                "isotonico y energetico",
+                2.99,
+            ),
             # Just 1 product on 2024-11-05
-            (date(2024, 11, 5),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.9,
-             ),
+            (
+                date(2024, 11, 5),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.9,
+            ),
         ]
         test_df = self.spark.createDataFrame(test_data, test_schema)
 
@@ -311,58 +381,62 @@ class TestMercadona(SparkTestCase):
             ]
         )
         expected_data = [
-            (date(2024, 11, 3),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.75,
-             1,
-             ),
-            (date(2024, 11, 3),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.9,
-             2,
-             ),
-
+            (
+                date(2024, 11, 3),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.75,
+                1,
+            ),
+            (
+                date(2024, 11, 3),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.9,
+                2,
+            ),
             # Same product but different prices on 2024-11-04
-            (date(2024, 11, 4),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.75,
-             1,
-             ),
-            (date(2024, 11, 4),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.9,
-             2,
-             ),
-            (date(2024, 11, 4),
-             "bebida energetica energy drink zero hacendado",
-             "6 latas x 250 ml",
-             "agua y refrescos",
-             "isotonico y energetico",
-             2.99,
-             1,
-             ),
-
+            (
+                date(2024, 11, 4),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.75,
+                1,
+            ),
+            (
+                date(2024, 11, 4),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.9,
+                2,
+            ),
+            (
+                date(2024, 11, 4),
+                "bebida energetica energy drink zero hacendado",
+                "6 latas x 250 ml",
+                "agua y refrescos",
+                "isotonico y energetico",
+                2.99,
+                1,
+            ),
             # Just 1 product on 2024-11-05
-            (date(2024, 11, 5),
-             "estropajo limpieza delicada bosque verde",
-             "paquete 3 ud.",
-             "limpieza y hogar",
-             "estropajo, bayeta y guantes",
-             0.9,
-             1,
-             ),
+            (
+                date(2024, 11, 5),
+                "estropajo limpieza delicada bosque verde",
+                "paquete 3 ud.",
+                "limpieza y hogar",
+                "estropajo, bayeta y guantes",
+                0.9,
+                1,
+            ),
         ]
         expected_df = self.spark.createDataFrame(expected_data, expected_schema)
 
@@ -386,14 +460,12 @@ class TestMercadona(SparkTestCase):
             (date(2024, 11, 4), "coke zero", "12 latas x 330 ml", 9.72, None, 1),
             (date(2024, 11, 8), "coke zero", "12 latas x 330 ml", 10.44, 9.72, 1),
             (date(2024, 11, 9), "coke zero", "12 latas x 330 ml", 10.44, 9.72, 1),
-
             # Sunny Juice
             (date(2024, 11, 5), "sunny delight", "botella 1,25 l", 1.5, None, 1),
             (date(2024, 11, 6), "sunny delight", "botella 1,25 l", 1.5, None, 1),
             (date(2024, 11, 7), "sunny delight", "botella 1,25 l", 1.5, None, 1),
             (date(2024, 11, 8), "sunny delight", "botella 1,25 l", 1.95, 1.5, 1),
             (date(2024, 11, 9), "sunny delight", "botella 1,25 l", 1.95, 1.5, 1),
-
             # Same products with different prices on 1 day
             (date(2024, 11, 3), "estropajo bosque verde", "paquete 3 ud.", 0.75, None, 1),
             (date(2024, 11, 3), "estropajo bosque verde", "paquete 3 ud.", 0.9, None, 2),
@@ -419,22 +491,18 @@ class TestMercadona(SparkTestCase):
             (date(2024, 11, 4), "coke zero", "12 latas x 330 ml", 9.72, None, 1, 10.44),
             (date(2024, 11, 8), "coke zero", "12 latas x 330 ml", 10.44, 9.72, 1, 9.72),
             (date(2024, 11, 9), "coke zero", "12 latas x 330 ml", 10.44, 9.72, 1, 10.44),
-
             # Sunny Juice
             (date(2024, 11, 5), "sunny delight", "botella 1,25 l", 1.5, None, 1, None),
             (date(2024, 11, 6), "sunny delight", "botella 1,25 l", 1.5, None, 1, 1.5),
             (date(2024, 11, 7), "sunny delight", "botella 1,25 l", 1.5, None, 1, 1.5),
             (date(2024, 11, 8), "sunny delight", "botella 1,25 l", 1.95, 1.5, 1, 1.5),
             (date(2024, 11, 9), "sunny delight", "botella 1,25 l", 1.95, 1.5, 1, 1.95),
-
             # Dup product 1
             (date(2024, 11, 3), "estropajo bosque verde", "paquete 3 ud.", 0.75, None, 1, None),
             (date(2024, 11, 4), "estropajo bosque verde", "paquete 3 ud.", 0.75, None, 1, 0.75),
-
             # Dup product 2
             (date(2024, 11, 3), "estropajo bosque verde", "paquete 3 ud.", 0.9, None, 2, None),
             (date(2024, 11, 4), "estropajo bosque verde", "paquete 3 ud.", 0.9, None, 2, 0.9),
-
         ]
         expected_df = self.spark.createDataFrame(expected_data, expected_schema)
 

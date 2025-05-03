@@ -1,0 +1,11 @@
+date,dedup_id,name,size,category,subcategory,price,prev_price,price_ma_7,price_ma_15,price_ma_30,original_price,prev_original_price,discount_price,price_var_abs,price_var_%,original_price_var_abs,original_price_var_%,is_fake_discount
+2024-11-01,1,chocolate negro 72% cacao hacendado con sal rosa,tableta 100 g,,,1.85,,,,,1.85,,,,,,,False
+2025-04-05,1,chocolate negro 72% de cacao hacendado,tableta 100 g,"azucar, caramelos y chocolate",chocolate,1.65,,,,,1.65,,,,,,,False
+2024-11-01,1,refresco coca-cola,12 latas x 330 ml,agua y refrescos,refresco de cola,9.72,,,,,10.44,,9.72,,,,,False
+2025-04-05,1,refresco coca-cola,12 latas x 330 ml,agua y refrescos,refresco de cola,10.80,9.72,,,,10.80,10.44,,1.08,0.1,0.3600000000000012,0.033333333333333444,False
+2024-11-01,1,refresco coca-cola zero zero,12 latas x 330 ml,agua y refrescos,refresco de cola,10.44,,,,,10.44,,,,,,,False
+2025-04-05,1,refresco coca-cola zero zero,12 latas x 330 ml,agua y refrescos,refresco de cola,9.96,10.44,,,,10.80,10.44,9.96,-0.47999999999999865,-0.04819277108433721,0.3600000000000012,0.033333333333333444,False
+2024-11-01,1,"aceite de oliva 0,4º hacendado",botella 1 l,"aceite, especias y salsas","aceite, vinagre y sal",6.75,,,,,7.09,,6.75,,,,,False
+2025-04-05,1,"aceite de oliva 0,4º hacendado",botella 1 l,"aceite, especias y salsas","aceite, vinagre y sal",4.45,6.75,,,,4.95,7.09,4.45,-2.3,-0.5168539325842696,-2.1399999999999997,-0.4323232323232322,False
+2024-11-01,1,aceite de oliva virgen hacendado,botella 1 l,"aceite, especias y salsas","aceite, vinagre y sal",7.75,,,,,8.06,,7.75,,,,,False
+2025-04-05,1,aceite de oliva virgen hacendado,botella 1 l,"aceite, especias y salsas","aceite, vinagre y sal",4.75,7.75,,,,5.30,8.06,4.75,-3.00,-0.631578947368421,-2.7600000000000007,-0.5207547169811322,False

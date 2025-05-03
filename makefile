@@ -6,35 +6,49 @@ include $(ENV)
 export
 
 
-# INGESTOR
-selenium-ingestor.test:
-	cd selenium-ingestor/ && docker buildx build -f Dockerfile.test -t selenium-ingestor-test .
-	docker run --rm selenium-ingestor-test:latest
+test-all:
+	@echo "Running tests for all components..."
+	@$(MAKE) -s ingestor.test
+	@$(MAKE) -s transformer.test
+	@$(MAKE) -s dbt.test
+	@$(MAKE) -s api.test
+	@$(MAKE) -s ui.test
+	@echo "Tests completed for all components."
 
-selenium-ingestor.run:
-	cd selenium-ingestor/ && docker buildx build -f Dockerfile -t selenium-ingestor .
-	docker run --rm --name selenium-ingestor \
-		-v /Users/gerardovitale/Documents/repos/infass/infass-compute-sa-cred-key.json:/app/keyfile.json \
+notebook:
+	docker run -it --rm -p 8888:8888 -v "${PWD}":/home/jovyan/work quay.io/jupyter/scipy-notebook:latest
+
+
+# INGESTOR
+ingestor.test:
+	cd ingestor/ && docker buildx build -f Dockerfile.test -t ingestor-test .
+	docker run --rm ingestor-test:latest
+
+ingestor.run:
+	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
+	docker run --rm --name ingestor \
+		-v $(GCP_INGESTOR_CREDS_PATH):/app/keyfile.json \
    		-e GOOGLE_APPLICATION_CREDENTIALS=/app/keyfile.json \
-		selenium-ingestor:latest
+   		-e TEST_MODE=true \
+		ingestor:latest
 
 
 # PANDAS TRANSFORMER
-pd-transformer.test:
-	cd pandas-transformer/ && docker buildx build -f Dockerfile.test -t pandas-transformer-test .
-	docker run --rm pandas-transformer-test:latest
+transformer.test:
+	cd transformer/ && docker buildx build -f Dockerfile.test -t transformer-test .
+	docker run --rm transformer-test:latest
 
-pd-transformer.local-run:
-	cd pandas-transformer/ && docker buildx build -f Dockerfile -t pandas-transformer .
+transformer.local-run:
+	cd transformer/ && docker buildx build -f Dockerfile -t transformer .
 	docker run --rm \
 		-v $(TRANSFORMER_OUTPUT_PATH):/app/data/ \
-		-v $(GCP_CREDS_PATH):/app/key.json \
+		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		-e DATA_SOURCE=infass-merc \
 		-e DESTINATION=$(GCP_PROJECT_ID).infass.merc \
 		-e TRANSFORMER_LIMIT=7 \
 		-e IS_LOCAL_RUN=true \
-		pandas-transformer:latest
+		transformer:latest
 
 
 # SPARK JOBS
@@ -45,21 +59,39 @@ spark-jobs.test:
 
 # DBT
 dbt.test:
-	cd dbt/ && .dbt_venv/bin/dbt test --profile infass --target dev
+	cd dbt/ && .dbt-venv/bin/dbt test --profile infass --target dev
 
 dbt.run:
-	cd dbt/ && .dbt_venv/bin/dbt run --profile infass --target dev
+	cd dbt/ && .dbt-venv/bin/dbt run --profile infass --target dev
 
 dbt.build:
-	cd dbt/ && .dbt_venv/bin/dbt build --profile infass --target dev
+	cd dbt/ && .dbt-venv/bin/dbt build --profile infass --target dev
 
 
 # TERRAFORM
 tf-init:
-	cd tf-infra/backend_support && terraform init
+	cd infra/backend_support && terraform init
 
 tf-plan:
-	cd tf-infra/backend_support && terraform plan
+	cd infra/backend_support && terraform plan
 
 tf-apply:
-	cd tf-infra/backend_support && terraform apply -auto-approve
+	cd infra/backend_support && terraform apply -auto-approve
+
+
+# API
+api.test:
+	cd infass-api/ && docker buildx build -f Dockerfile.test -t infass-api-test .
+	docker run --rm infass-api-test:latest
+api.run:
+	cd infass-api/ && docker buildx build -t infass-api .
+	docker run -p 8000:8000 --rm infass-api:latest
+
+
+# UI
+ui.test:
+	cd infass-ui/ && docker buildx build -f Dockerfile.test -t infass-ui-test .
+	docker run --rm infass-ui-test:latest
+ui.run:
+	cd infass-ui/ && docker buildx build -t infass-ui .
+	docker run -p 3000:3000 --rm infass-ui:latest
