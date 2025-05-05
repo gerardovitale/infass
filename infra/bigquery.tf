@@ -13,7 +13,7 @@ resource "google_bigquery_dataset" "infass_dataset" {
   }
 
   access {
-    role          = "READER"
+    role          = "OWNER"
     user_by_email = var.GCP_USER
   }
 }

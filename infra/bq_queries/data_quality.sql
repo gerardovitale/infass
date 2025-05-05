@@ -23,12 +23,19 @@ WITH
       COUNTIF (size IS NULL) AS null_size,
       COUNTIF (category IS NULL) AS null_category,
       COUNTIF (subcategory IS NULL) AS null_subcategory,
+      COUNTIF (price IS NULL) AS null_price,
+      COUNTIF (prev_price IS NULL) AS null_prev_price,
+      COUNTIF (price_ma_7 IS NULL) AS null_price_ma_7,
+      COUNTIF (price_ma_15 IS NULL) AS null_price_ma_15,
+      COUNTIF (price_ma_30 IS NULL) AS null_price_ma_30,
       COUNTIF (original_price IS NULL) AS null_original_price,
       COUNTIF (prev_original_price IS NULL) AS null_prev_original_price,
       COUNTIF (discount_price IS NULL) AS null_discount_price,
+      COUNTIF (price_var_abs IS NULL) AS null_price_var_abs,
+      COUNTIF (`price_var_%` IS NULL) AS null_price_var_percent,
+      COUNTIF (original_price_var_abs IS NULL) AS null_original_price_var_abs,
+      COUNTIF (`original_price_var_%` IS NULL) AS null_original_price_var_percent,
       COUNTIF (is_fake_discount IS NULL) AS null_is_fake_discount,
-      COUNTIF (inflation_percent IS NULL) AS null_inflation_percent,
-      COUNTIF (inflation_abs IS NULL) AS null_inflation_abs
     FROM
       `inflation-assistant.infass.merc`
     GROUP BY
@@ -88,24 +95,39 @@ SELECT
   nc.null_size / nc.total_rows AS percent_null_size,
   nc.null_category / nc.total_rows AS percent_null_category,
   nc.null_subcategory / nc.total_rows AS percent_null_subcategory,
+  nc.null_price / nc.total_rows AS percent_null_price,
+  nc.null_prev_price / nc.total_rows AS percent_null_prev_price,
+  nc.null_price_ma_7 / nc.total_rows AS percent_null_price_ma_7,
+  nc.null_price_ma_15 / nc.total_rows AS percent_null_price_ma_15,
+  nc.null_price_ma_30 / nc.total_rows AS percent_null_price_ma_30,
   nc.null_original_price / nc.total_rows AS percent_null_original_price,
   nc.null_prev_original_price / nc.total_rows AS percent_null_prev_original_price,
   nc.null_discount_price / nc.total_rows AS percent_null_discount_price,
+  nc.null_price_var_abs / nc.total_rows AS percent_null_price_var_abs,
+  nc.null_price_var_percent / nc.total_rows AS percent_null_price_var_percent,
+  nc.null_original_price_var_abs / nc.total_rows AS percent_null_original_price_var_abs,
+  nc.null_original_price_var_percent / nc.total_rows AS percent_null_original_price_var_percent,
   nc.null_is_fake_discount / nc.total_rows AS percent_null_is_fake_discount,
-  nc.null_inflation_percent / nc.total_rows AS percent_null_inflation_percent,
-  nc.null_inflation_abs / nc.total_rows AS percent_null_inflation_abs,
+
   -- ABSOLUTE NULL VALUES
   nc.null_dedup_id,
   nc.null_name,
   nc.null_size,
   nc.null_category,
   nc.null_subcategory,
+  nc.null_price,
+  nc.null_prev_price,
+  nc.null_price_ma_7,
+  nc.null_price_ma_15,
+  nc.null_price_ma_30,
   nc.null_original_price,
   nc.null_prev_original_price,
   nc.null_discount_price,
-  nc.null_is_fake_discount,
-  nc.null_inflation_percent,
-  nc.null_inflation_abs
+  nc.null_price_var_abs,
+  nc.null_price_var_percent,
+  nc.null_original_price_var_abs,
+  nc.null_original_price_var_percent,
+  nc.null_is_fake_discount
 FROM
   null_counts nc
   LEFT JOIN duplicate_counts dc ON nc.date = dc.date
