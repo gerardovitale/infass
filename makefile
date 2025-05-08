@@ -58,6 +58,9 @@ spark-jobs.test:
 
 
 # DBT
+dbt.seed:
+	cd dbt/ && .dbt-venv/bin/dbt seed --profile infass --target dev
+
 dbt.test:
 	cd dbt/ && .dbt-venv/bin/dbt test --profile infass --target dev
 
