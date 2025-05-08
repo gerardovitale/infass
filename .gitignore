@@ -4,7 +4,7 @@
 
 # Local Data folder
 data/
-transformer_output/
+data/transformer_output/
 *.duckdb
 
 # Byte-compiled / optimized / DLL files
