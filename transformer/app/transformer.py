@@ -6,6 +6,7 @@ import unicodedata
 
 import numpy as np
 import pandas as pd
+
 from conf import PRODUCT_CONTAINERS
 from schema import PD_MERC_SCHEMA
 
@@ -120,7 +121,7 @@ def add_price_moving_average(df: pd.DataFrame) -> pd.DataFrame:
 def add_price_var_columns(df: pd.DataFrame, target_col: str) -> pd.DataFrame:
     logger.info(f"Adding inflation columns: {target_col}_var_abs, {target_col}_var_percent")
     df[f"{target_col}_var_abs"] = df[f"{target_col}"] - df[f"prev_{target_col}"]
-    df[f"{target_col}_var_%"] = df[f"{target_col}_var_abs"] / df[f"{target_col}"]
+    df[f"{target_col}_var_percent"] = df[f"{target_col}_var_abs"] / df[f"{target_col}"]
     return df
 
 

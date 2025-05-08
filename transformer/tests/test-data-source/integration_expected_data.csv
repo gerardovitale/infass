@@ -1,4 +1,4 @@
-date,dedup_id,name,size,category,subcategory,price,prev_price,price_ma_7,price_ma_15,price_ma_30,original_price,prev_original_price,discount_price,price_var_abs,price_var_%,original_price_var_abs,original_price_var_%,is_fake_discount
+date,dedup_id,name,size,category,subcategory,price,prev_price,price_ma_7,price_ma_15,price_ma_30,original_price,prev_original_price,discount_price,price_var_abs,price_var_percent,original_price_var_abs,original_price_var_percent,is_fake_discount
 2024-11-01,1,chocolate negro 72% cacao hacendado con sal rosa,tableta 100 g,,,1.85,,,,,1.85,,,,,,,False
 2025-04-05,1,chocolate negro 72% de cacao hacendado,tableta 100 g,"azucar, caramelos y chocolate",chocolate,1.65,,,,,1.65,,,,,,,False
 2024-11-01,1,refresco coca-cola,12 latas x 330 ml,agua y refrescos,refresco de cola,9.72,,,,,10.44,,9.72,,,,,False

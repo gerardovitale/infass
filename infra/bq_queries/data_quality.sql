@@ -32,9 +32,9 @@ WITH
       COUNTIF (prev_original_price IS NULL) AS null_prev_original_price,
       COUNTIF (discount_price IS NULL) AS null_discount_price,
       COUNTIF (price_var_abs IS NULL) AS null_price_var_abs,
-      COUNTIF (`price_var_%` IS NULL) AS null_price_var_percent,
+      COUNTIF (price_var_percent IS NULL) AS null_price_var_percent,
       COUNTIF (original_price_var_abs IS NULL) AS null_original_price_var_abs,
-      COUNTIF (`original_price_var_%` IS NULL) AS null_original_price_var_percent,
+      COUNTIF (original_price_var_percent IS NULL) AS null_original_price_var_percent,
       COUNTIF (is_fake_discount IS NULL) AS null_is_fake_discount,
     FROM
       `inflation-assistant.infass.merc`

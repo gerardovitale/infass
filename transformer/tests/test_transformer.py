@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
+from tests.conf_test import BasicTestCase
+
 from schema import (
     PD_MERC_SCHEMA,
 )
-from tests.conf_test import BasicTestCase
-
 from transformer import add_price_column
 from transformer import add_price_moving_average
 from transformer import add_price_var_columns
@@ -227,7 +227,7 @@ class TestTransformer(BasicTestCase):
 
         expected_df = test_df.copy()
         expected_df[f"{test_col}_var_abs"] = [None, 0.00, 1.00]
-        expected_df[f"{test_col}_var_%"] = [None, 0.00, 0.3344481605]
+        expected_df[f"{test_col}_var_percent"] = [None, 0.00, 0.3344481605]
 
         actual_df = add_price_var_columns(test_df, test_col)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
