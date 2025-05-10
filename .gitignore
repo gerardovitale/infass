@@ -139,8 +139,9 @@ ENV/
 env.bak/
 venv.bak/
 .*_venv/
-!/ingestor/.ingestor-venv/
-!/transformer/.transformer-venv/
+dbt/.dbt-venv/
+ingestor/.ingestor-venv/
+transformer/.transformer-venv/
 
 # Spyder project settings
 .spyderproject
