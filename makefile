@@ -24,11 +24,10 @@ ingestor.test:
 	cd ingestor/ && docker buildx build -f Dockerfile.test -t ingestor-test .
 	docker run --rm ingestor-test:latest
 
-ingestor.run:
+ingestor.local-run:
 	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
 	docker run --rm --name ingestor \
-		-v $(GCP_INGESTOR_CREDS_PATH):/app/keyfile.json \
-   		-e GOOGLE_APPLICATION_CREDENTIALS=/app/keyfile.json \
+		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
    		-e TEST_MODE=true \
 		ingestor:latest
 
