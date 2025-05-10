@@ -1,4 +1,5 @@
 import logging
+import os
 from datetime import datetime
 from typing import Generator
 
@@ -14,20 +15,53 @@ GCP_STORAGE_RESUMABLE_UPLOAD_URL = "https://www.googleapis.com/upload/storage/v1
 logger = logging.getLogger(__name__)
 
 
-def write_pandas_to_bucket_as_csv(data_gen: Generator[pd.DataFrame, None, None], bucket_uri: str) -> None:
-    bucket_name, bucket_folder = bucket_uri.replace("gs://", "").split("/")
-    logger.info(f"Writing data to {bucket_uri}, bucket: {bucket_name}, folder: {bucket_folder}")
+def write_data(data_gen: Generator[pd.DataFrame, None, None], destination_bucket: str, test_mode: bool):
+    bucket_name, bucket_key = destination_bucket.replace("gs://", "").split("/")
+    if test_mode:
+        write_pandas_to_local_csv(data_gen, bucket_key)
+    else:
+        write_pandas_to_bucket_as_csv(data_gen, bucket_name, bucket_key)
+
+
+def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], filename_prefix: str = "data") -> None:
+    logger.info("Running in test mode 🧪")
+    os.makedirs("data", exist_ok=True)
+    output_path = f"data/{filename_prefix}_{datetime.now().date().isoformat()}.csv"
+    logger.info(f"Writing data to local file: {output_path}")
+
+    headers_written = False
+    for df_chunk in data_gen:
+        mode = "w" if not headers_written else "a"
+        header = not headers_written
+
+        csv_content = df_chunk.to_csv(index=False, header=header)
+        with open(output_path, mode, encoding="utf-8") as f:
+            f.write(csv_content)
+
+        logger.info(
+            f"Wrote chunk with{'out' if not header else ''} headers of size: {len(csv_content.encode('utf-8'))} bytes"
+        )
+        headers_written = True
+
+    logger.info("Local write completed successfully.")
+
+
+def write_pandas_to_bucket_as_csv(
+    data_gen: Generator[pd.DataFrame, None, None], bucket_name: str, bucket_key: str
+) -> None:
+    logger.info(f"Writing data to bucket: {bucket_name}, key: {bucket_key}")
+
     storage_client = Client()
 
     logger.info("Getting bucket")
     bucket = storage_client.get_bucket(bucket_name)
     if not bucket:
-        logger.error(f"Couln't get the bucket: {bucket_uri}")
+        logger.error(f"Couldn't get the bucket: {bucket_name}")
         raise Exception
 
     logger.info(f"Got bucket with name: {bucket.name}")
     with StorageStreamUploader(
-        storage_client, bucket.name, f"{bucket_folder}/{datetime.now().date().isoformat()}.csv"
+        storage_client, bucket.name, f"{bucket_key}/{datetime.now().date().isoformat()}.csv"
     ) as uploader:
         headers_written = False
 

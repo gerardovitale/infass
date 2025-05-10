@@ -78,6 +78,14 @@ def get_subcategories(driver: webdriver.Chrome) -> List[str]:
     return [subcat.text for subcat in subcategories]
 
 
+def get_image_url(soup: BeautifulSoup) -> str | None:
+    image = soup.find("img")
+    if not image:
+        return None
+    src = image.get("src")
+    return src.strip().split("?")[0] if src else None
+
+
 def extract_product_data(page_source: str, category: str) -> Generator[Dict[str, Any], None, None] | None:
     logger.info(f"Extracting product data for category: {category}")
     if not page_source:
@@ -92,6 +100,7 @@ def extract_product_data(page_source: str, category: str) -> Generator[Dict[str,
             "discount_price": (prices[1].text.strip() if len(prices) > 1 else None),
             "size": product.find("div", class_="product-format").text.strip(),
             "category": category,
+            "image": get_image_url(product),
         }
         for product in products
         if (prices := product.find_all("p", {"data-testid": "product-price"}))
@@ -151,7 +160,7 @@ def get_page_sources(test_mode: bool):
                     )
 
             if test_mode:  # Stop after the first category in test mode
-                logger.info("Test mode: Stopping after the first category")
+                logger.info("Running in test mode 🧪: Stopping after the first category")
                 break
 
         return product_gen_list
