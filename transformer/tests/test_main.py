@@ -27,6 +27,10 @@ class TestRunDataTransformation(TestCase):
         self.addCleanup(bigquery_writer_patch.stop)
         self.mock_bigquery_writer = bigquery_writer_patch.start()
 
+        check_destination_table_patch = patch(f"{TEST_MODULE}.check_destination_table")
+        self.addCleanup(check_destination_table_patch.stop)
+        self.mock_check_destination_table = check_destination_table_patch.start()
+
     def test_remote_run_with_limit(self):
         test_params = {
             "bucket_data_source": "my_bucket_name",
@@ -44,6 +48,7 @@ class TestRunDataTransformation(TestCase):
         self.mock_csv_reader.assert_called_once_with("my_bucket_name", 5)
         self.mock_transformer.assert_called_once_with(mock_df)
         self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table")
+        self.mock_check_destination_table.assert_called_once_with("myproject", "dataset", "table")
 
     def test_local_run_with_limit_should_save_csv(self):
         test_params = {
@@ -63,6 +68,7 @@ class TestRunDataTransformation(TestCase):
         self.mock_csv_reader.assert_called_once_with("my_bucket_name", 5)
         self.mock_transformer.assert_called_once_with(mock_df)
         self.mock_bigquery_writer.assert_not_called()
+        self.mock_check_destination_table.assert_not_called()
 
         # Check if the DataFrame is saved as a CSV file
         assert os.path.exists(expected_csv_dest_path)
@@ -86,6 +92,7 @@ class TestRunDataTransformation(TestCase):
         self.mock_csv_reader.assert_called_once_with("my_bucket_name", None)
         self.mock_transformer.assert_called_once_with(mock_df)
         self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table")
+        self.mock_check_destination_table.assert_called_once_with("myproject", "dataset", "table")
 
     def test_run_with_invalid_limit(self):
         test_params = {
@@ -101,3 +108,4 @@ class TestRunDataTransformation(TestCase):
         self.mock_csv_reader.assert_not_called()
         self.mock_transformer.assert_not_called()
         self.mock_bigquery_writer.assert_not_called()
+        self.mock_check_destination_table.assert_not_called()

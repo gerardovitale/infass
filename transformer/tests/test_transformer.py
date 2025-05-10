@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
+from schema import PD_MERC_SCHEMA
 from tests.conf_test import BasicTestCase
 
-from schema import (
-    PD_MERC_SCHEMA,
-)
 from transformer import add_price_column
 from transformer import add_price_moving_average
 from transformer import add_price_var_columns

@@ -1,6 +1,7 @@
 import logging
 import os
 
+from bigquery_writer import check_destination_table
 from bigquery_writer import write_to_bigquery
 from bucket_reader import read_csv_as_pd_df
 
@@ -20,6 +21,10 @@ def run_data_transformation(bucket_data_source: str, destination_table: str, tra
     if transformer_limit:
         logging.info(f"Running transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
         limit = int(transformer_limit)
+
+    if not is_local_run:
+        logging.info(f"Checking destination table: {destination_table}")
+        check_destination_table(*destination_table.split("."))
 
     raw_data = read_csv_as_pd_df(bucket_data_source, limit)
     data = transformer(raw_data)
