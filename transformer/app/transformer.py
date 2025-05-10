@@ -6,14 +6,13 @@ import unicodedata
 
 import numpy as np
 import pandas as pd
-
 from conf import PRODUCT_CONTAINERS
 from schema import PD_MERC_SCHEMA
 
 logger = logging.getLogger(__name__)
 
 
-def transformer(df: pd.DataFrame) -> pd.DataFrame:
+def transform(df: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"Starting data transformation with df shape {df.shape}")
     df = cats_date_column(df)
     df = cast_price_columns_as_float32(df)

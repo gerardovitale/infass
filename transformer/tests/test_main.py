@@ -19,7 +19,7 @@ class TestRunDataTransformation(TestCase):
         self.addCleanup(csv_reader_patch.stop)
         self.mock_csv_reader = csv_reader_patch.start()
 
-        transformer_patch = patch(f"{TEST_MODULE}.transformer")
+        transformer_patch = patch(f"{TEST_MODULE}.transform")
         self.addCleanup(transformer_patch.stop)
         self.mock_transformer = transformer_patch.start()
 

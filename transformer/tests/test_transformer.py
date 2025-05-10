@@ -13,7 +13,7 @@ from transformer import deduplicate_products_with_diff_prices_per_date
 from transformer import split_category_subcategory
 from transformer import standardize_size_columns
 from transformer import standardize_string_columns
-from transformer import transformer
+from transformer import transform
 
 
 class TestIntegrationTransformer(BasicTestCase):
@@ -21,7 +21,7 @@ class TestIntegrationTransformer(BasicTestCase):
     def test_transformer(self):
         test_df = pd.read_csv("tests/test-data-source/integration_input_data.csv")
         expected_df = pd.read_csv("tests/test-data-source/integration_expected_data.csv").astype(PD_MERC_SCHEMA)
-        actual_df = transformer(test_df)
+        actual_df = transform(test_df)
         self.assert_pandas_dataframe_almost_equal(expected_df, actual_df)
 
 
