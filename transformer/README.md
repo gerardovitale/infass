@@ -128,11 +128,11 @@ The module uses the following environment variables for configuration:
 
 If `LOCAL_RUN` is set to `true`, the module will write the output to local files instead of BigQuery.
 
-| Variable Name              | Description                                       |
-|----------------------------|---------------------------------------------------|
-| TRANSFORMER_OUTPUT_PATH    | Local path where fetched data will be written     |
-| GCP_TRANSFORMER_CREDS_PATH | Creds to fetch data from Google Cloud Storage     |
-| GCP_PROJECT_ID             | Google Cloud Project ID where the data is located |
+| Variable Name                | Description                                       |
+|------------------------------|---------------------------------------------------|
+| `TRANSFORMER_OUTPUT_PATH`    | Local path where fetched data will be written     |
+| `GCP_TRANSFORMER_CREDS_PATH` | Creds to fetch data from Google Cloud Storage     |
+| `GCP_PROJECT_ID`             | Google Cloud Project ID where the data is located |
 
 ---
 
