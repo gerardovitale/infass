@@ -33,6 +33,7 @@ describe('ProductDetail', () => {
     it('renders chart placeholder', () => {
         render(<ProductDetail product={mockProduct} />);
 
-        expect(screen.getByText('Chart will go here')).toBeInTheDocument();
+        expect(screen.getByText('SMA 15')).toBeInTheDocument();
+        expect(screen.getByText('SMA 30')).toBeInTheDocument();
     });
 });
