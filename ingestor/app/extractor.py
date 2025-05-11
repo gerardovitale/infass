@@ -100,7 +100,7 @@ def extract_product_data(page_source: str, category: str) -> Generator[Dict[str,
             "discount_price": (prices[1].text.strip() if len(prices) > 1 else None),
             "size": product.find("div", class_="product-format").text.strip(),
             "category": category,
-            "image": get_image_url(product),
+            "image_url": get_image_url(product),
         }
         for product in products
         if (prices := product.find_all("p", {"data-testid": "product-price"}))

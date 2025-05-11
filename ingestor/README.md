@@ -51,6 +51,7 @@ The processed data is uploaded to a Google Cloud Storage bucket in CSV format. T
 | `category`       | `string`  | The category of the product.          |
 | `original_price` | `string`  | The original price of the product.    |
 | `discount_price` | `string`  | The discounted price of the product.  |
+| `image`          | `string`  | The product image url.                |
 
 ---
 
@@ -77,7 +78,6 @@ The module uses the following environment variables for configuration:
 |---------------------------|----------------------------------------------------------------|
 | `TEST_MODE`               | Enables test mode to limit the number of categories processed. |
 | `INGESTION_MERC_PATH`     | The Google Cloud Storage bucket URI for data upload.           |
-| `GCP_INGESTOR_CREDS_PATH` | The path to the Google Cloud service account key file.         |
 
 ---
 
@@ -93,10 +93,9 @@ The module uses the following environment variables for configuration:
 2. Run the container:
     ```shell
     docker run --rm --name ingestor \
-      -v $(GCP_TRANSFORMER_CREDS_PATH):/app/keyfile.json \
-      -e GOOGLE_APPLICATION_CREDENTIALS=/app/keyfile.json \
-      -e TEST_MODE=true \
-      ingestor:latest
+		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
+   		-e TEST_MODE=true \
+		ingestor:latest
     ```
 
 ### Local Unit Test

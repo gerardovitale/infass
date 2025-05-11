@@ -60,7 +60,7 @@ class TestExtractor(BasicTestCase):
             "discount_price": "1,53 €",
             "size": "Paquete 1 kg",
             "category": category,
-            "image": "sample.jpg",
+            "image_url": "sample.jpg",
         }
         actual_output = extract_product_data(self.test_html, category)
         self.assertEqual(next(actual_output), expected_output)
@@ -101,7 +101,7 @@ class TestExtractor(BasicTestCase):
             "discount_price": None,
             "size": "Unidad 500 ml",
             "category": category,
-            "image": "https://prod-merc.imgix.net/images/c1788076223b499bd260c6a03d89b087.jpg",
+            "image_url": "https://prod-merc.imgix.net/images/c1788076223b499bd260c6a03d89b087.jpg",
         }
         actual_output = extract_product_data(no_discount_html, category)
         self.assertEqual(next(actual_output), expected_output)
@@ -135,7 +135,7 @@ class TestExtractor(BasicTestCase):
             "discount_price": None,
             "size": "Unidad 500 ml",
             "category": category,
-            "image": None,
+            "image_url": None,
         }
         actual_output = extract_product_data(no_image_html, category)
         self.assertEqual(next(actual_output), expected_output)
