@@ -42,7 +42,7 @@ def run_data_transformation(
 
 
 def run_remotely(bucket_data_source: str, destination_table: str, limit: int) -> None:
-    logging.info("💻 Running locally 💻")
+    logging.info("☁️ Running remotely ☁️")
     project_id, dataset_id, table_id = destination_table.split(".")
 
     logging.info(f"Checking destination table: {destination_table}")
@@ -56,7 +56,7 @@ def run_remotely(bucket_data_source: str, destination_table: str, limit: int) ->
 
 
 def run_locally(bucket_data_source: str, destination_table: str, limit: int) -> None:
-    logging.info("☁️ Running remotely ☁️")
+    logging.info("💻 Running locally 💻")
 
     raw_data = read_csv_as_pd_df(bucket_data_source, limit)
     data = transform(raw_data)
