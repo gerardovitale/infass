@@ -30,7 +30,14 @@ export const ProductDetail = ({ product }: Props) => {
                 </div>
 
                 <div className="md:col-span-8 flex items-center justify-center">
-                    <ProductDetailChart />
+                    {product.priceDetails.length > 0 && (
+                        <ProductDetailChart data={product.priceDetails} />
+                    )}
+                    {product.priceDetails.length == 0 && (
+                        <div className="w-full h-64 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+                            No data available
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

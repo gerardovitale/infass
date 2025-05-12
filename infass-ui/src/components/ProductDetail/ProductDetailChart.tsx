@@ -10,19 +10,13 @@ import {
     CartesianGrid,
 } from 'recharts';
 import { useState } from 'react';
+import { PriceDetail } from '@/types';
 
-// Example mock data
-const data = [
-    { date: 'Jan 2023', max_available: 4200, sma15: 2100, sma30: 1400 },
-    { date: 'Feb 2023', max_available: 3500, sma15: 2000, sma30: 1350 },
-    { date: 'Mar 2023', max_available: 5000, sma15: 2500, sma30: 1500 },
-    { date: 'Apr 2023', max_available: 4800, sma15: 2400, sma30: 1450 },
-    { date: 'May 2023', max_available: 4700, sma15: 2400, sma30: 1450 },
-    { date: 'Jun 2023', max_available: 5000, sma15: 2800, sma30: 1450 },
-    { date: 'Jul 2023', max_available: 5100, sma15: 2400, sma30: 1450 },
-];
+type Props = {
+    data: PriceDetail[];
+};
 
-export const ProductDetailChart = () => {
+export const ProductDetailChart = ({ data }: Props) => {
     const [showSMA15, setShowSMA15] = useState(true);
     const [showSMA30, setShowSMA30] = useState(true);
 

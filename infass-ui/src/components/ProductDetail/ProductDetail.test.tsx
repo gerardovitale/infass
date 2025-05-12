@@ -11,6 +11,7 @@ describe('ProductDetail', () => {
         size: 'Large',
         category: 'Electronics',
         price: 99.99,
+        priceDetails: [],
     };
 
     it('renders product name, size, category, and price', () => {
@@ -32,6 +33,23 @@ describe('ProductDetail', () => {
 
     it('renders chart placeholder', () => {
         render(<ProductDetail product={mockProduct} />);
+        expect(screen.getByText('No data available')).toBeInTheDocument();
+    });
+
+    it('renders chart with data', () => {
+        const productWithData: Product = {
+            ...mockProduct,
+            priceDetails: [
+                {
+                    date: '2023-01-01',
+                    max_available: 100,
+                    sma15: 90,
+                    sma30: 80,
+                },
+            ],
+        };
+
+        render(<ProductDetail product={productWithData} />);
 
         expect(screen.getByText('SMA 15')).toBeInTheDocument();
         expect(screen.getByText('SMA 30')).toBeInTheDocument();
