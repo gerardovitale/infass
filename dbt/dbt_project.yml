@@ -35,10 +35,10 @@ models:
     reports:
       +materialized: view
 
-seeds:
-  infass:
-    merc:
-      +enabled: "{{ target.name == 'dev' }}"
+#seeds:
+#  infass:
+#    merc:
+#      +enabled: "{{ target.name == 'local' }}"
 
 vars:
   default_round_precision: 4

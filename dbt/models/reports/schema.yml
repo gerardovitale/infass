@@ -1,11 +1,14 @@
-
 version: 2
 
 models:
 
-  - name: dbt_product_inflation
-    description: "Product level inflation report"
+  - name: dbt_merc_products
+    description: "Merc product level inflation report per year-month period"
     columns:
+      - name: year_month_period
+        description: "The name of the product"
+        data_type: date
+
       - name: name
         description: "The name of the product"
         data_type: string
@@ -18,46 +21,50 @@ models:
         description: "The category of the product"
         data_type: string
 
+      - name: subcategory
+        description: "The subcategory of the product"
+        data_type: string
+
       - name: processing_date
         description: "The date when the data was processed"
         data_type: date
 
       - name: earliest_date
-        description: "The earliest date of the product price"
+        description: "The earliest date available of the product price in the year-month period"
         data_type: date
 
       - name: latest_date
-        description: "The latest date of the product price"
+        description: "The latest date available of the product price in the year-month period"
         data_type: date
 
       - name: earliest_price
-        description: "The earliest price of the product"
+        description: "The earliest price of the product in the year-month period"
         data_type: float
 
       - name: latest_price
-        description: "The latest price of the product"
+        description: "The latest price of the product in the year-month period"
         data_type: float
 
       - name: min_price
-        description: "The minimum price of the product"
+        description: "The minimum price of the product in the year-month period"
         data_type: float
 
       - name: max_price
-        description: "The maximum price of the product"
+        description: "The maximum price of the product in the year-month period"
         data_type: float
 
-      - name: inflation_abs
-        description: "The absolute inflation of the product (earliest_price - latest_price)"
+      - name: price_var_abs
+        description: "The absolute price variation of the product (earliest_price - latest_price)"
         data_type: float
 
-      - name: inflation_percent
-        description: "The percentage inflation of the product ((earliest_price - latest_price) / earliest_price * 100)"
+      - name: price_var_percent
+        description: "The percentage price variation of the product ((earliest_price - latest_price) / earliest_price * 100)"
         data_type: float
 
-      - name: max_price_variation_abs
+      - name: max_price_var_abs
         description: "The absolute maximum price variation of the product (max_price - min_price)"
         data_type: float
 
-      - name: max_price_variation_percent
+      - name: max_price_var_percent
         description: "The percentage maximum price variation of the product ((max_price - min_price) / min_price * 100)"
         data_type: float

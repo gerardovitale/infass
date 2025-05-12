@@ -1,0 +1,5 @@
+year_month_period,name,size,category,subcategory,processing_date,earliest_date,latest_date,earliest_price,latest_price,price_variation_abs,price_variation_percent,earliest_orig_price,latest_orig_price,orig_price_variation_abs,orig_price_variation_percent
+2025-04-01,naranjas,malla 5 kg,fruta y verdura,fruta,2025-04-19,2025-04-16,2025-04-19,5.75,4.75,-1.00,-0.1739,5.75,5.75,0.00,0.00
+2025-04-01,cerveza doble malta voll-damm,6 latas x 330 ml,bodega,cerveza,2025-04-19,2025-04-16,2025-04-19,4.74,4.74,0.00,0.00,6.12,6.12,0.00,0.00
+2025-04-01,refresco te sabor limon fuze tea,"botella 1,5 l",agua y refrescos,refresco de te y sin gas,2025-04-19,2025-04-13,2025-04-19,1.99,1.49,-0.50,-0.2513,1.99,1.99,0.00,0.00
+2025-04-01,cerveza 2,500 ml,bodega,cerveza,2025-04-19,2025-04-16,2025-04-18,3.55,4.55,1.00,0.2817,3.55,4.55,1.00,0.2817

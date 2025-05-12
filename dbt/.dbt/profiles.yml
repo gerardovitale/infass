@@ -1,11 +1,11 @@
 infass:
   target: dev
   outputs:
-    dev:
+    local:
       type: duckdb
       path: "inflation-assistant.duckdb"
       schema: infass
-    staging:
+    dev:
       dataset: infass
       job_execution_timeout_seconds: 300
       job_retries: 1
