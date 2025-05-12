@@ -33,7 +33,7 @@ models:
   infass:
     # Config indicated by + and applies to all files under models/example/
     reports:
-      +materialized: view
+      +materialized: table
 
 #seeds:
 #  infass:
