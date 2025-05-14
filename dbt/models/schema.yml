@@ -68,3 +68,38 @@ models:
       - name: max_price_var_percent
         description: "The percentage maximum price variation of the product ((max_price - min_price) / min_price * 100)"
         data_type: float
+
+
+  - name: dbt_unique_products
+    description: "Unique products in the Merc database"
+    columns:
+      - name: product_id
+        description: "The unique identifier for the product"
+        data_type: string
+        tests:
+          - not_null
+          - unique
+
+      - name: name
+        description: "The name of the product"
+        data_type: string
+        tests:
+          - not_null
+
+      - name: size
+        description: "The size of the product"
+        data_type: string
+        tests:
+          - not_null
+
+      - name: categories
+        description: "One or more categories of the product separated by pipe"
+        data_type: string
+        tests:
+          - not_null
+
+      - name: subcategories
+        description: "One or more subcategories of the product separated by pipe"
+        data_type: string
+        tests:
+          - not_null

@@ -34,6 +34,8 @@ models:
     # Config indicated by + and applies to all files under models/example/
     reports:
       +materialized: table
+    references:
+      +materialized: materialized_view
 
 #seeds:
 #  infass:

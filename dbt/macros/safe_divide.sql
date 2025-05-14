@@ -1,4 +1,4 @@
-{% macro divide(numerator, denominator) %}
+{% macro safe_divide(numerator, denominator) %}
     {% if target.type == 'bigquery' %}
         SAFE_DIVIDE({{ numerator }}, {{ denominator }})
     {% else %}

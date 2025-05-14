@@ -7,11 +7,11 @@ unit_tests:
     given:
       - input: source('infass', 'merc')
         format: csv
-        fixture: merc
+        fixture: report_products_input
 
     expect:
       format: csv
-      fixture: expected_dbt_merc_products
+      fixture: report_products_expected
 
     overrides:
       macros:

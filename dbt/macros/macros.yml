@@ -1,6 +1,6 @@
 macros:
 
-  - name: divide
+  - name: safe_divide
     description: cross db safe divide macro
     arguments:
       - name: numerator
@@ -9,3 +9,6 @@ macros:
       - name: denominator
         type: number
         description: The name of the column you want to convert
+
+  - name: get_last_saturday_date
+    description: Get the last Saturday date from the execution date
