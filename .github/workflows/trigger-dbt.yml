@@ -1,0 +1,41 @@
+name: Trigger dbt transformations
+
+on:
+  schedule:
+    - cron: "0 8 * * 6"
+  workflow_dispatch:
+
+env:
+  DBT_PROFILES_DIR: ./dbt
+  DBT_PROFILE: infass
+  DBT_TARGET: dev
+
+jobs:
+  trigger-dbt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up Python3
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.9.19'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.7
+        with:
+          credentials_json: ${{ secrets.GCP_DBT_CREDENTIALS }}
+
+      - name: Build dbt transformations
+        working-directory: ${{ env.DBT_PROFILES_DIR }}
+        run: |
+          dbt build \
+          --profiles-dir ${{ env.DBT_PROFILES_DIR }} \
+          --profile ${{ env.INFASS }} \
+          --target ${{ env.DEV }}
