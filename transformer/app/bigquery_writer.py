@@ -21,7 +21,7 @@ def check_destination_table(project_id: str, dataset_id: str, table_id: str):
     try:
         table = client.get_table(table_id)
     except NotFound:
-        raise RuntimeError(f"❌ Table '{table_id}' not found")
+        logger.warning(f"Table {table_id} not found.")
 
     partitioning_type = table.time_partitioning.type_ if table.time_partitioning else "NONE"
     partitioning_field = table.time_partitioning.field if table.time_partitioning else None
