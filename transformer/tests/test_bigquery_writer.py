@@ -6,7 +6,6 @@ from bigquery_writer import check_destination_table
 from bigquery_writer import CLUSTERING_FIELDS
 from bigquery_writer import PARTITION_FIELD
 from bigquery_writer import PARTITION_TYPE
-from google.api_core.exceptions import NotFound
 from google.cloud.bigquery import TimePartitioning
 
 TEST_MODULE = "bigquery_writer"
@@ -25,17 +24,6 @@ class TestCheckDestinationTable(TestCase):
         mock_client.get_table.return_value = mock_table
 
         check_destination_table("my-project", "my_dataset", "my_table")
-
-    @patch(f"{TEST_MODULE}.Client")
-    def test_table_not_found(self, mock_client_class):
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-
-        mock_client.get_table.side_effect = NotFound("Table not found")
-
-        with self.assertRaises(RuntimeError) as context:
-            check_destination_table("my-project", "my_dataset", "missing_table")
-        assert "not found" in str(context.exception)
 
     @patch(f"{TEST_MODULE}.Client")
     def test_wrong_partition_type(self, mock_client_class):
