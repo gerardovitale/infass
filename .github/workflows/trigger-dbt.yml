@@ -9,7 +9,7 @@ env:
   DBT_PROFILES_DIR: ./.dbt
   DBT_DIRECTORY: ./dbt
   DBT_PROFILE: infass
-  DBT_TARGET: dev
+  DBT_TARGET: prod
 
 jobs:
   trigger-dbt:
