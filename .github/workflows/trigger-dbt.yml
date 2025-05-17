@@ -39,5 +39,5 @@ jobs:
         run: |
           dbt build \
           --profiles-dir ${{ env.DBT_PROFILES_DIR }} \
-          --profile ${{ env.INFASS }} \
-          --target ${{ env.DEV }}
+          --profile ${{ env.DBT_PROFILE }} \
+          --target ${{ env.DBT_TARGET }}
