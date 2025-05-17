@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 env:
-  DBT_PROFILES_DIR: ./dbt
+  DBT_PROFILES_DIR: ./.dbt
+  DBT_DIRECTORY: ./dbt
   DBT_PROFILE: infass
   DBT_TARGET: dev
 
@@ -23,7 +24,7 @@ jobs:
           python-version: '3.9.19'
 
       - name: Install dependencies
-        working-directory: ${{ env.DBT_PROFILES_DIR }}
+        working-directory: ${{ env.DBT_DIRECTORY }}
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
@@ -34,7 +35,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_DBT_CREDENTIALS }}
 
       - name: Build dbt transformations
-        working-directory: ${{ env.DBT_PROFILES_DIR }}
+        working-directory: ${{ env.DBT_DIRECTORY }}
         run: |
           dbt build \
           --profiles-dir ${{ env.DBT_PROFILES_DIR }} \
