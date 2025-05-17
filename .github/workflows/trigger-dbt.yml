@@ -23,6 +23,7 @@ jobs:
           python-version: '3.9.19'
 
       - name: Install dependencies
+        working-directory: ${{ env.DBT_PROFILES_DIR }}
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
