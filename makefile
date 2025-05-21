@@ -5,6 +5,8 @@ ENV := $(PWD)/.env
 include $(ENV)
 export
 
+setup:
+	scripts/setup.sh
 
 test-all:
 	@echo "Running tests for all components..."
@@ -16,13 +18,14 @@ test-all:
 	@echo "Tests completed for all components."
 
 notebook:
-	docker run -it --rm -p 8888:8888 -v "${PWD}":/home/jovyan/work quay.io/jupyter/scipy-notebook:latest
+	docker run -it --rm -p 8888:8888 \
+		-v "${PWD}":/home/jovyan/work \
+		quay.io/jupyter/scipy-notebook:latest
 
 
 # INGESTOR
 ingestor.test:
-	cd ingestor/ && docker buildx build -f Dockerfile.test -t ingestor-test .
-	docker run --rm ingestor-test:latest
+	scripts/run-docker-test.sh ingestor
 
 ingestor.local-run:
 	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
@@ -34,8 +37,7 @@ ingestor.local-run:
 
 # PANDAS TRANSFORMER
 transformer.test:
-	cd transformer/ && docker buildx build -f Dockerfile.test -t transformer-test .
-	docker run --rm transformer-test:latest
+	scripts/run-docker-test.sh transformer
 
 transformer.local-run:
 	cd transformer/ && docker buildx build -f Dockerfile -t transformer .
@@ -57,17 +59,11 @@ spark-jobs.test:
 
 
 # DBT
-dbt.seed:
-	cd dbt/ && .dbt-venv/bin/dbt seed --profile infass --target dev
-
 dbt.test:
-	cd dbt/ && .dbt-venv/bin/dbt test --profile infass --target dev
-
-dbt.run:
-	cd dbt/ && .dbt-venv/bin/dbt run --profile infass --target dev
+	cd dbt/ && venv/bin/dbt test --profile infass --target dev
 
 dbt.build:
-	cd dbt/ && .dbt-venv/bin/dbt build --profile infass --target dev
+	cd dbt/ && venv/bin/dbt build --profile infass --target dev
 
 
 # TERRAFORM
@@ -83,8 +79,7 @@ tf-apply:
 
 # API
 api.test:
-	cd infass-api/ && docker buildx build -f Dockerfile.test -t infass-api-test .
-	docker run --rm infass-api-test:latest
+	scripts/run-docker-test.sh infass-api
 
 api.run:
 	cd infass-api/ && docker buildx build -t infass-api .
@@ -93,8 +88,7 @@ api.run:
 
 # UI
 ui.test:
-	cd infass-ui/ && docker buildx build -f Dockerfile.test -t infass-ui-test .
-	docker run --rm infass-ui-test:latest
+	scripts/run-docker-test.sh infass-ui
 
 ui.run:
 	cd infass-ui/ && docker buildx build -t infass-ui .
