@@ -1,4 +1,0 @@
-dbt-core==1.9.2
-dbt-bigquery==1.9.1
-dbt-duckdb==1.9.2
-duckdb==1.2.2
