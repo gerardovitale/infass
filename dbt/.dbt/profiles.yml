@@ -7,7 +7,7 @@ infass:
       schema: infass
 
     dev:
-      dataset: infass
+      dataset: test_infass
       job_execution_timeout_seconds: 300
       job_retries: 1
       keyfile: infass-dbt-sa-cred-key.json
