@@ -59,11 +59,17 @@ spark-jobs.test:
 
 
 # DBT
-dbt.test:
+dbt.test: dbt.deps
 	cd dbt/ && venv/bin/dbt test --profile infass --target dev
 
-dbt.build:
+dbt.build: dbt.deps
 	cd dbt/ && venv/bin/dbt build --profile infass --target dev
+
+dbt.deps:
+	cd dbt/ && venv/bin/dbt deps
+
+dbt.clean:
+	cd dbt/ && venv/bin/dbt clean
 
 
 # TERRAFORM
