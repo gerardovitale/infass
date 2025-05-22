@@ -1,0 +1,189 @@
+version: 2
+
+models:
+  - name: dbt_data_quality
+    description: "Data quality report for the Merc table"
+    columns:
+      - name: date
+        description: "Date of the report"
+        data_type: date
+
+      - name: total_rows
+        description: "Total number of rows in the table"
+        data_type: integer
+
+      - name: duplicate_rows
+        description: "Number of duplicate rows in the table"
+        data_type: integer
+
+      - name: percent_duplicate_rows
+        description: "Percentage of duplicate rows in the table"
+        data_type: float
+
+      - name: category_count
+        description: "Number of unique categories in the table"
+        data_type: integer
+
+      - name: subcategory_count
+        description: "Number of unique subcategories in the table"
+        data_type: integer
+
+      - name: discount_product_count
+        description: "Number of products with a discount in the table"
+        data_type: integer
+
+      - name: fake_discount_product_count
+        description: "Number of products with a fake discount in the table"
+        data_type: integer
+
+      - name: total_rows_change_percentage
+        description: "Percentage change in total rows per day"
+        data_type: float
+
+      - name: discount_product_count_change_percentage
+        description: "Percentage change in discount product count per day"
+        data_type: float
+
+      - name: percent_null_dedup_id
+        description: "Percentage of null values in the dedup_id column"
+        data_type: float
+
+      - name: percent_null_name
+        description: "Percentage of null values in the name column"
+        data_type: float
+
+      - name: percent_null_size
+        description: "Percentage of null values in the size column"
+        data_type: float
+
+      - name: percent_null_category
+        description: "Percentage of null values in the category column"
+        data_type: float
+
+      - name: percent_null_subcategory
+        description: "Percentage of null values in the subcategory column"
+        data_type: float
+
+      - name: percent_null_price
+        description: "Percentage of null values in the price column"
+        data_type: float
+
+      - name: percent_null_prev_price
+        description: "Percentage of null values in the prev_price column"
+        data_type: float
+
+      - name: percent_null_price_ma_7
+        description: "Percentage of null values in the price_ma_7 column"
+        data_type: float
+
+      - name: percent_null_price_ma_15
+        description: "Percentage of null values in the price_ma_15 column"
+        data_type: float
+
+      - name: percent_null_price_ma_30
+        description: "Percentage of null values in the price_ma_30 column"
+        data_type: float
+
+      - name: percent_null_original_price
+        description: "Percentage of null values in the original_price column"
+        data_type: float
+
+      - name: percent_null_prev_original_price
+        description: "Percentage of null values in the prev_original_price column"
+        data_type: float
+
+      - name: percent_null_discount_price
+        description: "Percentage of null values in the discount_price column"
+        data_type: float
+
+      - name: percent_null_price_var_abs
+        description: "Percentage of null values in the price_var_abs column"
+        data_type: float
+
+      - name: percent_null_price_var_percent
+        description: "Percentage of null values in the price_var_percent column"
+        data_type: float
+
+      - name: percent_null_original_price_var_abs
+        description: "Percentage of null values in the original_price_var_abs column"
+        data_type: float
+
+      - name: percent_null_original_price_var_percent
+        description: "Percentage of null values in the original_price_var_percent column"
+        data_type: float
+
+      - name: percent_null_is_fake_discount
+        description: "Percentage of null values in the is_fake_discount column"
+        data_type: float
+
+      - name: null_dedup_id
+        description: "Number of null values in the dedup_id column"
+        data_type: integer
+
+      - name: null_name
+        description: "Number of null values in the name column"
+        data_type: integer
+
+      - name: null_size
+        description: "Number of null values in the size column"
+        data_type: integer
+
+      - name: null_category
+        description: "Number of null values in the category column"
+        data_type: integer
+
+      - name: null_subcategory
+        description: "Number of null values in the subcategory column"
+        data_type: integer
+
+      - name: null_price
+        description: "Number of null values in the price column"
+        data_type: integer
+
+      - name: null_prev_price
+        description: "Number of null values in the prev_price column"
+        data_type: integer
+
+      - name: null_price_ma_7
+        description: "Number of null values in the price_ma_7 column"
+        data_type: integer
+
+      - name: null_price_ma_15
+        description: "Number of null values in the price_ma_15 column"
+        data_type: integer
+
+      - name: null_price_ma_30
+        description: "Number of null values in the price_ma_30 column"
+        data_type: integer
+
+      - name: null_original_price
+        description: "Number of null values in the original_price column"
+        data_type: integer
+
+      - name: null_prev_original_price
+        description: "Number of null values in the prev_original_price column"
+        data_type: integer
+
+      - name: null_discount_price
+        description: "Number of null values in the discount_price column"
+        data_type: integer
+
+      - name: null_price_var_abs
+        description: "Number of null values in the price_var_abs column"
+        data_type: integer
+
+      - name: null_price_var_percent
+        description: "Number of null values in the price_var_percent column"
+        data_type: integer
+
+      - name: null_original_price_var_abs
+        description: "Number of null values in the original_price_var_abs column"
+        data_type: integer
+
+      - name: null_original_price_var_percent
+        description: "Number of null values in the original_price_var_percent column"
+        data_type: integer
+
+      - name: null_is_fake_discount
+        description: "Number of null values in the is_fake_discount column"
+        data_type: integer

@@ -34,6 +34,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_DBT_CREDENTIALS }}
 
+      - name: Install dependencies
+        working-directory: ${{ env.DBT_DIRECTORY }}
+        run: dbt deps
+
       - name: Build dbt transformations
         working-directory: ${{ env.DBT_DIRECTORY }}
         run: |
