@@ -6,9 +6,20 @@ from unittest import TestCase
 from sqlglot import transpile
 
 MODELS_DIR = "dbt/models"
+READ_DIALECT = "bigquery"
 TARGET_DIALECT = "bigquery"
+
+# Regex patterns to match Jinja blocks
 CONFIG_JINJA_PATTERN = re.compile(r"\{\{\s*config\s*\(.*?\)\s*\}\}", re.DOTALL)
 GENERAL_JINJA_PATTERN = re.compile(r"(\{\{.*?\}\}|\{%-?.*?-%\}|\{%.*?%\})", re.DOTALL)
+
+# Pattern to split consecutive CTEs with a newline
+CTE_SEPARATOR_PATTERN = r"\),\s*(?=\w+\s+AS\s+\()"
+CTE_SEPARATOR_REPLACEMENT = "),\n\n"
+
+# Pattern to insert a blank line before the final SELECT after last CTE
+FINAL_SELECT_SPACING_PATTERN = r"\)\s*\n\s*SELECT"
+FINAL_SELECT_SPACING_REPLACEMENT = ")\n\nSELECT"
 
 
 def mask_jinja(sql):
@@ -18,7 +29,7 @@ def mask_jinja(sql):
     # Step 1: Mask top-level config blocks with SQL comments
     def config_replacer(match):
         config_blocks.append(match.group(0))
-        return f"/* JINJA_CONFIG_EXPRESSION_{len(config_blocks) - 1} */ "
+        return f"/* JINJA_CONFIG_EXPRESSION_{len(config_blocks) - 1} */"
 
     sql = CONFIG_JINJA_PATTERN.sub(config_replacer, sql)
 
@@ -46,8 +57,9 @@ def unmask_jinja(sql, config_blocks, general_blocks):
 
 def transpile_sql(sql):
     try:
-        formatted_sql = transpile(sql, read="bigquery", write=TARGET_DIALECT, pretty=True)[0]
-        return formatted_sql
+        formatted_sql = transpile(sql, read=READ_DIALECT, write=TARGET_DIALECT, pretty=True)[0]
+        return add_cte_break_line(formatted_sql)
+
     except Exception as e:
         print(f"Error transpiling SQL: {e}")
         print(f"Original SQL: {sql}")
@@ -55,17 +67,10 @@ def transpile_sql(sql):
         raise e
 
 
-def add_cte_break_line(formatted_sql):
-    lines = formatted_sql.splitlines()
-    result_lines = []
-    for i, line in enumerate(lines):
-        result_lines.append(line)
-        if line.strip().endswith("),") and i + 1 < len(lines):
-            next_line = lines[i + 1].strip().lower()
-            if next_line.startswith("(") or next_line.endswith("as ("):
-                result_lines.append("")
-
-    return "\n".join(result_lines)
+def add_cte_break_line(sql):
+    sql = re.sub(CTE_SEPARATOR_PATTERN, CTE_SEPARATOR_REPLACEMENT, sql)
+    sql = re.sub(FINAL_SELECT_SPACING_PATTERN, FINAL_SELECT_SPACING_REPLACEMENT, sql)
+    return sql
 
 
 def format_sql_file(file_path):
@@ -176,11 +181,14 @@ WITH cte1 AS (
   SELECT
     id
   FROM users
-), cte2 AS (
+),
+
+cte2 AS (
   SELECT
     id
   FROM orders
 )
+
 SELECT
   *
 FROM cte1
@@ -208,14 +216,50 @@ WITH cte1 AS (
   SELECT
     id
   FROM users
-), cte2 AS (
+),
+
+cte2 AS (
   SELECT
     id
   FROM orders
 )
+
 SELECT
   *
 FROM cte1
+JOIN cte2
+  USING (id)
+"""
+        actual = transpile_sql(sql)
+        self.assertEqual(expected.strip(), actual)
+
+    def test_query_with_jinja_placeholder_should_be_formatted(self):
+        sql = """
+              WITH cte1 AS (SELECT id
+                            FROM users),
+                   cte2 AS (SELECT id
+                            FROM orders)
+              SELECT *
+              FROM __JINJA_EXPRESSION_0__
+                       JOIN cte2 USING (id) \
+              """
+
+        expected = """
+WITH cte1 AS (
+  SELECT
+    id
+  FROM users
+),
+
+cte2 AS (
+  SELECT
+    id
+  FROM orders
+)
+
+SELECT
+  *
+FROM __JINJA_EXPRESSION_0__
 JOIN cte2
   USING (id)
 """
