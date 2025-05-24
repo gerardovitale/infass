@@ -4,8 +4,13 @@ models:
   - name: dbt_merc_products
     description: "Merc product level inflation report per year-month period"
     tests:
-      - unique:
-          column_name: "(year_month_period || '-' || name || '-' || size || '-' || category || '-' || subcategory)"
+      - dbt_utils.unique_combination_of_columns:
+            combination_of_columns:
+              - year_month_period
+              - name
+              - size
+              - category
+              - subcategory
 
     columns:
       - name: year_month_period
