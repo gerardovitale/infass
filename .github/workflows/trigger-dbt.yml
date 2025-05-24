@@ -10,6 +10,7 @@ env:
   DBT_DIRECTORY: ./dbt
   DBT_PROFILE: infass
   DBT_TARGET: prod
+  PYTHONWARNINGS: ignore::FutureWarning
 
 jobs:
   trigger-dbt:
