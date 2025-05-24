@@ -10,7 +10,6 @@ env:
   DBT_DIRECTORY: ./dbt
   DBT_PROFILE: infass
   DBT_TARGET: prod
-  PYTHONWARNINGS: ignore::FutureWarning
 
 jobs:
   trigger-dbt:
@@ -41,6 +40,8 @@ jobs:
 
       - name: Build dbt transformations
         working-directory: ${{ env.DBT_DIRECTORY }}
+        env:
+          PYTHONWARNINGS: ignore::FutureWarning
         run: |
           dbt build \
           --profiles-dir ${{ env.DBT_PROFILES_DIR }} \
