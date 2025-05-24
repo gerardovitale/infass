@@ -5,7 +5,7 @@ models:
     description: "Merc product level inflation report per year-month period"
     tests:
       - unique:
-          column_name: "(year_month_period || '-' || name || '-' || size)"
+          column_name: "(year_month_period || '-' || name || '-' || size || '-' || category || '-' || subcategory)"
 
     columns:
       - name: year_month_period
