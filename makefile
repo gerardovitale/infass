@@ -85,11 +85,11 @@ tf-apply:
 
 # API
 api.test:
-	scripts/run-docker-test.sh infass-api
+	scripts/run-docker-test.sh api
 
 api.run:
-	cd infass-api/ && docker buildx build -t infass-api .
-	docker run -p 8000:8000 --rm infass-api:latest
+	cd api/ && docker buildx build -t api .
+	docker run -p 8000:8000 --rm api:latest
 
 
 # UI

@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [ingestor, transformer, infass-api, infass-ui]
+        service: [ingestor, transformer, api, infass-ui]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
