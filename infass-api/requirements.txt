@@ -1,1 +1,3 @@
 fastapi[standard]==0.115.12
+google-cloud-bigquery==3.33.0
+pyarrow==20.0.0
