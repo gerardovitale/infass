@@ -89,7 +89,12 @@ api.test:
 
 api.run:
 	cd api/ && docker buildx build -t api .
-	docker run -p 8000:8000 --rm api:latest
+	docker run --rm -p 8000:8000 \
+		-e PROJECT_ID=$(GCP_PROJECT_ID) \
+		-e PRODUCT_DATASET_ID=$(PRODUCT_DATASET_ID) \
+		-v $(GCP_API_CREDS_PATH):/app/key.json \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
+		api:latest
 
 
 # UI
