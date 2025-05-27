@@ -1,16 +1,4 @@
-{{ config(materialized='view') }}
-
-WITH distinct_prod_cat_comb AS (
-    SELECT DISTINCT
-        name,
-        size,
-        category,
-        subcategory
-    FROM {{ source('infass', 'merc') }}
-    WHERE date = {{ get_last_saturday_date() }}
-        AND category IS NOT NULL
-        AND subcategory IS NOT NULL
-)
+{{ config(materialized='table') }}
 
 SELECT
     GENERATE_UUID() AS product_id,
@@ -18,6 +6,13 @@ SELECT
     size,
     STRING_AGG(category, " | ") AS categories,
     STRING_AGG(subcategory, " | ") AS subcategories,
-    count(*) as category_count
-FROM distinct_prod_cat_comb
+    MAX_BY(price, date) AS price,
+    NULL AS image_url,
+    MIN_BY(date, date) AS earliest_date,
+    MAX_BY(date, date) AS latest_date,
+    count(*) AS category_count
+FROM {{ source('infass', 'merc') }}
+WHERE date = {{ get_last_saturday_date() }}
+    AND category IS NOT NULL
+    AND subcategory IS NOT NULL
 GROUP BY name, size
