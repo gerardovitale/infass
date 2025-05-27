@@ -24,15 +24,15 @@ class BigQueryProductRepository(ProductRepository):
                 product_id,
                 name,
                 size,
-                category,
-                subcategory,
+                categories,
+                subcategories,
                 price,
                 image_url
             FROM `{self.project_id}.{self.dataset_id}.dbt_unique_products`
             WHERE LOWER(name) LIKE '%{search_term}%'
                OR LOWER(size) LIKE '%{search_term}%'
-               OR LOWER(category) LIKE '%{search_term}%'
-               OR LOWER(subcategory) LIKE '%{search_term}%'
+               OR LOWER(categories) LIKE '%{search_term}%'
+               OR LOWER(subcategories) LIKE '%{search_term}%'
             """
         rows = self.bq.query(query).result()
         return [dict(row.items()) for row in rows]

@@ -1,4 +1,5 @@
 from typing import List
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -7,10 +8,10 @@ class Product(BaseModel):
     product_id: str
     name: str
     size: str
-    category: str
-    subcategory: str
+    categories: str
+    subcategories: str
     price: float
-    image_url: str
+    image_url: Optional[str]
 
 
 class ProductSearchResponse(BaseModel):
