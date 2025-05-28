@@ -9,6 +9,14 @@ MODELS_DIR = "dbt/models"
 READ_DIALECT = "bigquery"
 TARGET_DIALECT = "bigquery"
 
+TRANSPILE_PARAMS = {
+    "read": READ_DIALECT,
+    "write": TARGET_DIALECT,
+    "pretty": True,
+    "indent": 4,
+    "pad": 4,
+}
+
 # Regex patterns to match Jinja blocks
 CONFIG_JINJA_PATTERN = re.compile(r"\{\{\s*config\s*\(.*?\)\s*\}\}", re.DOTALL)
 GENERAL_JINJA_PATTERN = re.compile(r"(\{\{.*?\}\}|\{%-?.*?-%\}|\{%.*?%\})", re.DOTALL)
@@ -57,7 +65,7 @@ def unmask_jinja(sql, config_blocks, general_blocks):
 
 def transpile_sql(sql):
     try:
-        formatted_sql = transpile(sql, read=READ_DIALECT, write=TARGET_DIALECT, pretty=True)[0]
+        formatted_sql = transpile(sql, **TRANSPILE_PARAMS)[0]
         return add_cte_break_line(formatted_sql)
 
     except Exception as e:
@@ -157,10 +165,10 @@ class TestTranspileSQL(TestCase):
 
         expected = """
 SELECT
-  *
+    *
 FROM `bigquery-like.exmple.users`
 WHERE
-  id = 1
+    id = 1
 """
         actual = transpile_sql(sql)
         self.assertEqual(expected.strip(), actual)
@@ -178,22 +186,22 @@ WHERE
 
         expected = """
 WITH cte1 AS (
-  SELECT
-    id
-  FROM users
+    SELECT
+        id
+    FROM users
 ),
 
 cte2 AS (
-  SELECT
-    id
-  FROM orders
+    SELECT
+        id
+    FROM orders
 )
 
 SELECT
-  *
+    *
 FROM cte1
 JOIN cte2
-  USING (id)
+    USING (id)
 """
         actual = transpile_sql(sql)
         self.assertEqual(expected.strip(), actual)
@@ -213,22 +221,22 @@ JOIN cte2
         expected = """
 /* JINJA_CONFIG_EXPRESSION_0 */
 WITH cte1 AS (
-  SELECT
-    id
-  FROM users
+    SELECT
+        id
+    FROM users
 ),
 
 cte2 AS (
-  SELECT
-    id
-  FROM orders
+    SELECT
+        id
+    FROM orders
 )
 
 SELECT
-  *
+    *
 FROM cte1
 JOIN cte2
-  USING (id)
+    USING (id)
 """
         actual = transpile_sql(sql)
         self.assertEqual(expected.strip(), actual)
@@ -246,22 +254,22 @@ JOIN cte2
 
         expected = """
 WITH cte1 AS (
-  SELECT
-    id
-  FROM users
+    SELECT
+        id
+    FROM users
 ),
 
 cte2 AS (
-  SELECT
-    id
-  FROM orders
+    SELECT
+        id
+    FROM orders
 )
 
 SELECT
-  *
+    *
 FROM __JINJA_EXPRESSION_0__
 JOIN cte2
-  USING (id)
+    USING (id)
 """
         actual = transpile_sql(sql)
         self.assertEqual(expected.strip(), actual)
