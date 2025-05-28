@@ -7,10 +7,7 @@ SELECT
     STRING_AGG(category, " | ") AS categories,
     STRING_AGG(subcategory, " | ") AS subcategories,
     MAX_BY(price, date) AS price,
-    NULL AS image_url,
-    MIN_BY(date, date) AS earliest_date,
-    MAX_BY(date, date) AS latest_date,
-    count(*) AS category_count
+    NULL AS image_url
 FROM {{ source('infass', 'merc') }}
 WHERE date = {{ get_last_saturday_date() }}
     AND category IS NOT NULL
