@@ -65,7 +65,7 @@ def unmask_jinja(sql, config_blocks, general_blocks):
 
 def transpile_sql(sql):
     try:
-        formatted_sql = transpile(sql, **TRANSPILE_PARAMS)[0]
+        formatted_sql = transpile(sql, **TRANSPILE_PARAMS)[0].rstrip() + "\n"
         return add_cte_break_line(formatted_sql)
 
     except Exception as e:
@@ -163,15 +163,14 @@ class TestTranspileSQL(TestCase):
         WHERE id = 1
         """
 
-        expected = """
-SELECT
+        expected = """SELECT
     *
 FROM `bigquery-like.exmple.users`
 WHERE
     id = 1
 """
         actual = transpile_sql(sql)
-        self.assertEqual(expected.strip(), actual)
+        self.assertEqual(expected, actual)
 
     def test_query_with_cte_should_be_formatted(self):
         sql = """
@@ -184,8 +183,7 @@ WHERE
                 JOIN cte2 USING (id)
         """
 
-        expected = """
-WITH cte1 AS (
+        expected = """WITH cte1 AS (
     SELECT
         id
     FROM users
@@ -204,7 +202,7 @@ JOIN cte2
     USING (id)
 """
         actual = transpile_sql(sql)
-        self.assertEqual(expected.strip(), actual)
+        self.assertEqual(expected, actual)
 
     def test_query_with_jinja_config_placeholder_should_be_formatted(self):
         sql = """
@@ -218,8 +216,7 @@ JOIN cte2
                 JOIN cte2 USING (id)
         """
 
-        expected = """
-/* JINJA_CONFIG_EXPRESSION_0 */
+        expected = """/* JINJA_CONFIG_EXPRESSION_0 */
 WITH cte1 AS (
     SELECT
         id
@@ -239,7 +236,7 @@ JOIN cte2
     USING (id)
 """
         actual = transpile_sql(sql)
-        self.assertEqual(expected.strip(), actual)
+        self.assertEqual(expected, actual)
 
     def test_query_with_jinja_placeholder_should_be_formatted(self):
         sql = """
@@ -252,8 +249,7 @@ JOIN cte2
                        JOIN cte2 USING (id) \
               """
 
-        expected = """
-WITH cte1 AS (
+        expected = """WITH cte1 AS (
     SELECT
         id
     FROM users
@@ -272,7 +268,7 @@ JOIN cte2
     USING (id)
 """
         actual = transpile_sql(sql)
-        self.assertEqual(expected.strip(), actual)
+        self.assertEqual(expected, actual)
 
 
 if __name__ == "__main__":
