@@ -5,7 +5,7 @@ source scripts/logger.sh
 # List of python module subdirectories
 SUBDIRS=(
   "dbt"
-  "infass-api"
+  "api"
   "ingestor"
   "transformer"
 )
