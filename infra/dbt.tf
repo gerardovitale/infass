@@ -10,6 +10,7 @@ resource "google_project_iam_member" "dbt_permissions" {
   for_each = toset([
     "roles/bigquery.jobUser",
     "roles/bigquery.dataEditor",
+    "roles/bigquery.metadataViewer",
   ])
   project = var.PROJECT
   member  = "serviceAccount:${google_service_account.dbt_sa.email}"
