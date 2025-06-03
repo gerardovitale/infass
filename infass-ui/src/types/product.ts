@@ -4,7 +4,7 @@ export type Product = {
     size: string;
     price: number;
     category: string;
-    priceDetails: PriceDetail[];
+    priceDetails?: PriceDetail[];
 };
 
 export type PriceDetail = {
@@ -12,4 +12,9 @@ export type PriceDetail = {
     max_available: number;
     sma15: number;
     sma30: number;
+};
+
+export type ProductResponse = {
+    results: Product[];
+    total_results: number;
 };
