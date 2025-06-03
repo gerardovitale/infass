@@ -29,7 +29,7 @@ def test_search_products_returns_expected_results(mock_bigquery_client):
 
     expected_results = [
         {
-            "product_id": "test_product_id",
+            "id": "test_product_id",
             "name": "test_name",
             "size": "test_size",
             "categories": "test_categories",

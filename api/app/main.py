@@ -2,6 +2,7 @@ import os
 
 from fastapi import Depends
 from fastapi import FastAPI
+from fastapi import HTTPException
 from models import ProductSearchResponse
 from repositories import BigQueryProductRepository
 from services import ProductService
@@ -33,4 +34,6 @@ def get_product_service() -> ProductService:
 
 @app.get("/products/search", response_model=ProductSearchResponse)
 def search_products(search_term: str, service: ProductService = Depends(get_product_service)):
+    if not search_term:
+        raise HTTPException(status_code=400, detail="Search term cannot be empty")
     return service.search(search_term)

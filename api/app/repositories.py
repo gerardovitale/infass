@@ -21,7 +21,7 @@ class BigQueryProductRepository(ProductRepository):
     def search_products(self, search_term: str) -> list[dict]:
         query = f"""
             SELECT
-                product_id,
+                product_id as id,
                 name,
                 size,
                 categories,
