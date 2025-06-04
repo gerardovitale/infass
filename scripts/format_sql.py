@@ -1,14 +1,17 @@
+import logging
 import os
 import re
 import sys
+from pathlib import Path
 from unittest import TestCase
 
 from sqlglot import transpile
 
-MODELS_DIR = "dbt/models"
+DIRECTORY_LIST = [
+    "dbt/models",
+]
 READ_DIALECT = "bigquery"
 TARGET_DIALECT = "bigquery"
-
 TRANSPILE_PARAMS = {
     "read": READ_DIALECT,
     "write": TARGET_DIALECT,
@@ -28,6 +31,72 @@ CTE_SEPARATOR_REPLACEMENT = "),\n\n"
 # Pattern to insert a blank line before the final SELECT after last CTE
 FINAL_SELECT_SPACING_PATTERN = r"\)\s*\n\s*SELECT"
 FINAL_SELECT_SPACING_REPLACEMENT = ")\n\nSELECT"
+
+
+#######################################################################################################################
+# MAIN
+#######################################################################################################################
+
+
+def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
+    logging.info("Starting SQL formatting process.")
+    for directory in DIRECTORY_LIST:
+        format_all_models(Path(directory))
+    logging.info("SQL formatting process completed.")
+
+
+def format_all_models(directory: Path):
+    logging.info(f"Scanning directory: {directory}")
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".sql"):
+                file_path = os.path.join(root, file)
+                logging.info(f"Formatting file: {file_path}")
+                format_sql_file(file_path)
+
+
+#######################################################################################################################
+# SQL FORMATTING
+#######################################################################################################################
+
+
+def format_sql_file(file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        sql = f.read()
+
+    masked_sql, jinja_config_blocks, jinja_general_blocks = mask_jinja(sql)
+    formatted_sql = transpile_sql(masked_sql)
+    final_sql = unmask_jinja(formatted_sql, jinja_config_blocks, jinja_general_blocks)
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(final_sql)
+
+
+def transpile_sql(sql):
+    try:
+        formatted_sql = transpile(sql, **TRANSPILE_PARAMS)[0].rstrip() + "\n"
+        return add_cte_break_line(formatted_sql)
+
+    except Exception as e:
+        logging.error(f"Error transpiling SQL: {e}")
+        logging.error(f"Original SQL: {sql}")
+        e.with_traceback(sys.exc_info()[2])
+        raise e
+
+
+def add_cte_break_line(sql):
+    sql = re.sub(CTE_SEPARATOR_PATTERN, CTE_SEPARATOR_REPLACEMENT, sql)
+    sql = re.sub(FINAL_SELECT_SPACING_PATTERN, FINAL_SELECT_SPACING_REPLACEMENT, sql)
+    return sql
+
+
+#######################################################################################################################
+# JINJA MASKING AND UNMASKING
+#######################################################################################################################
 
 
 def mask_jinja(sql):
@@ -63,41 +132,9 @@ def unmask_jinja(sql, config_blocks, general_blocks):
     return sql
 
 
-def transpile_sql(sql):
-    try:
-        formatted_sql = transpile(sql, **TRANSPILE_PARAMS)[0].rstrip() + "\n"
-        return add_cte_break_line(formatted_sql)
-
-    except Exception as e:
-        print(f"Error transpiling SQL: {e}")
-        print(f"Original SQL: {sql}")
-        e.with_traceback(sys.exc_info()[2])
-        raise e
-
-
-def add_cte_break_line(sql):
-    sql = re.sub(CTE_SEPARATOR_PATTERN, CTE_SEPARATOR_REPLACEMENT, sql)
-    sql = re.sub(FINAL_SELECT_SPACING_PATTERN, FINAL_SELECT_SPACING_REPLACEMENT, sql)
-    return sql
-
-
-def format_sql_file(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
-        sql = f.read()
-
-    masked_sql, jinja_config_blocks, jinja_general_blocks = mask_jinja(sql)
-    formatted_sql = transpile_sql(masked_sql)
-    final_sql = unmask_jinja(formatted_sql, jinja_config_blocks, jinja_general_blocks)
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        f.write(final_sql)
-
-
-def format_all_models():
-    for root, _, files in os.walk(MODELS_DIR):
-        for file in files:
-            if file.endswith(".sql"):
-                format_sql_file(os.path.join(root, file))
+#######################################################################################################################
+# UNIT TESTS
+#######################################################################################################################
 
 
 class TestMaskJinja(TestCase):
@@ -272,4 +309,4 @@ JOIN cte2
 
 
 if __name__ == "__main__":
-    format_all_models()
+    main()
