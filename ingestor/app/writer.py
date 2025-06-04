@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def write_data(data_gen: Generator[pd.DataFrame, None, None], destination_bucket: str, test_mode: bool):
-    bucket_name, bucket_key = destination_bucket.replace("gs://", "").split("/")
+    bucket_name, bucket_key = destination_bucket.replace("gs://", "").split("/", 1)
     if test_mode:
         write_pandas_to_local_csv(data_gen, bucket_key)
     else:
