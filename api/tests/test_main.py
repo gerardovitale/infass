@@ -32,7 +32,7 @@ def override_product_service():
         total_results=1,
         results=[
             Product(
-                product_id="123",
+                id="123",
                 name="Coca-Cola",
                 size="330ml",
                 categories="Beverages",
@@ -52,4 +52,12 @@ def test_search_endpoint(client):
     response = client.get("/products/search", params={"search_term": "cola"})
     assert response.status_code == 200
     assert response.json()["query"] == "cola"
+    app.dependency_overrides.clear()
+
+
+def test_search_endpoint_empty(client):
+    app.dependency_overrides[get_product_service] = override_product_service
+    response = client.get("/products/search", params={"search_term": ""})
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Search term cannot be empty"}
     app.dependency_overrides.clear()

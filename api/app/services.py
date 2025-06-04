@@ -8,6 +8,7 @@ class ProductService:
         self.repo = product_repository
 
     def search(self, query: str) -> ProductSearchResponse:
+        query = query.lower()
         products = self.repo.search_products(query)
         return ProductSearchResponse(
             query=query, total_results=len(products), results=[Product(**product) for product in products]

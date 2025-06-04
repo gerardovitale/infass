@@ -1,22 +1,25 @@
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
 import SearchResult from './SearchResult';
-import { Product } from '@/types';
+import { ProductResponse } from '@/types';
 
-const mockedProducts = [
-    { id: '1', name: 'Milk', size: '1L', price: 2.5, category: 'Drinks' },
-    {
-        id: '2',
-        name: 'Almond Milk',
-        size: '1L',
-        price: 3.0,
-        category: 'Drinks',
-    },
-];
+const mockedProducts = {
+    results: [
+        { id: '1', name: 'Milk', size: '1L', price: 2.5, category: 'Drinks' },
+        {
+            id: '2',
+            name: 'Almond Milk',
+            size: '1L',
+            price: 3.0,
+            category: 'Drinks',
+        },
+    ],
+    total_results: 2,
+};
 const fetchMock = jest.fn(() =>
     Promise.resolve({
         ok: true,
-        json: () => Promise.resolve<Product[]>(mockedProducts),
+        json: () => Promise.resolve<ProductResponse>(mockedProducts),
     })
 );
 global.fetch = fetchMock as unknown as typeof fetch;
@@ -37,12 +40,11 @@ describe('SearchResult', () => {
     it('should render an empty list if no search results are found', async () => {
         fetchMock.mockResolvedValueOnce({
             ok: true,
-            json: () => Promise.resolve([]),
+            json: () => Promise.resolve({ results: [], total_results: 0 }),
         });
-        const { queryByRole } = await renderSearchPage();
-        const list = queryByRole('list');
+        const { queryByText } = await renderSearchPage();
+        const noResults = queryByText('No products found');
+        expect(noResults).toBeInTheDocument();
 
-        // Check if the list is not rendered
-        expect(list).toBeEmptyDOMElement();
     });
 });
