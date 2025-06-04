@@ -6,7 +6,7 @@ include $(ENV)
 export
 
 setup:
-	scripts/setup.sh
+	scripts/setup-venv.sh
 
 test-all:
 	@echo "Running tests for all components..."
