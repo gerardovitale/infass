@@ -15,6 +15,7 @@ test-all:
 	@$(MAKE) -s dbt.test
 	@$(MAKE) -s api.test
 	@$(MAKE) -s ui.test
+	@$(MAKE) -s sql-format.test
 	@echo "Tests completed for all components."
 
 notebook:
@@ -104,3 +105,11 @@ ui.test:
 ui.run:
 	cd infass-ui/ && docker buildx build -t infass-ui .
 	docker run -p 3000:3000 --rm infass-ui:latest
+
+
+# SQL Formatter
+sql-format.run:
+	python3 scripts/format_sql.py
+
+sql-format.test:
+	python3 -m unittest scripts/format_sql.py
