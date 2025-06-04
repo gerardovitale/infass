@@ -48,5 +48,5 @@ repos:
     hooks:
       - id: sql-format
         name: SQL formatting
-        entry: python scripts/format_sql.py
+        entry: make sql-format.run
         language: system
