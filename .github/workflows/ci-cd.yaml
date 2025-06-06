@@ -56,9 +56,9 @@ jobs:
       - name: Push Docker Image
         working-directory: ${{ matrix.service }}
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${GITHUB_SHA::7}
-          docker tag ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7}
+          docker tag ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
 
   terraform-deploy:
     name: Deploy infra using terraform
