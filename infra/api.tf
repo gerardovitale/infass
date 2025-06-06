@@ -31,9 +31,10 @@ resource "google_storage_bucket_iam_member" "run_bucket_access" {
 # Cloud Run API Service
 # ------------------------------
 resource "google_cloud_run_v2_service" "api_service" {
-  name     = "${var.APP_NAME}-api-service"
-  location = var.REGION
-  ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  name                = "${var.APP_NAME}-api-service"
+  location            = var.REGION
+  ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  deletion_protection = false
 
   template {
     timeout         = "5s"
@@ -65,8 +66,9 @@ resource "google_cloud_run_v2_service" "api_service" {
 # Cloud Run Job (Reversed ETL)
 # ------------------------------
 resource "google_cloud_run_v2_job" "reversed_etl_job" {
-  name     = "${var.APP_NAME}-reversed-etl-job"
-  location = var.REGION
+  name                = "${var.APP_NAME}-reversed-etl-job"
+  location            = var.REGION
+  deletion_protection = false
 
   template {
     template {
