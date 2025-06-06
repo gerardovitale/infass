@@ -62,7 +62,7 @@ resource "google_cloud_run_v2_service" "api_service" {
 }
 
 # ------------------------------
-# Cloud Run Job (ETL)
+# Cloud Run Job (Reversed ETL)
 # ------------------------------
 resource "google_cloud_run_v2_job" "reversed_etl_job" {
   name     = "${var.APP_NAME}-reversed-etl-job"
@@ -75,7 +75,8 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
       service_account = google_service_account.cloud_run_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-reversed_etl:${var.DOCKER_IMAGE_TAG}"
+        # image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-reversed_etl:${var.DOCKER_IMAGE_TAG}"
+        image = "alpine:latest"
         volume_mounts {
           name       = "sqlite-vol"
           mount_path = "/mnt/sqlite"
