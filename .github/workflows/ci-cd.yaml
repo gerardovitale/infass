@@ -26,8 +26,7 @@ jobs:
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
           key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile.test', matrix.service)) }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.service }}-
+          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
 
       - name: Build Test Container
         working-directory: ${{ matrix.service }}
@@ -60,8 +59,7 @@ jobs:
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
           key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile', matrix.service)) }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.service }}-
+          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
 
       - name: Log in to Docker Registry
         uses: docker/login-action@v3.3.0
@@ -81,7 +79,8 @@ jobs:
         working-directory: ${{ matrix.service }}
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7}
-          docker tag ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
+          docker tag ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} \
+            ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
 
   terraform-deploy:
@@ -93,6 +92,7 @@ jobs:
       TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_REGION: europe-southwest1
       TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      TF_VAR_DOCKER_IMAGE_TAG: latest
       TF_VAR_GCP_USER: ${{ secrets.GCP_USER }}
     steps:
       - name: Checkout repository
@@ -123,9 +123,9 @@ jobs:
       - name: Plan Terraform changes
         id: plan
         working-directory: ./infra
-        run: terraform plan -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+        run: terraform plan
 
       - name: Apply Terraform changes
         id: apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+        run: terraform apply -auto-approve
