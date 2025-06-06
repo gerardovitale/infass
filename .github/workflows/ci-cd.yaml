@@ -35,7 +35,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        service: [ingestor, transformer]
+        service: [ingestor, transformer, api]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -51,13 +51,13 @@ jobs:
 
       - name: Build Docker Image
         working-directory: ${{ matrix.service }}
-        run: docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${GITHUB_SHA::7} .
+        run: docker buildx build --load -t ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} .
 
       - name: Push Docker Image
         working-directory: ${{ matrix.service }}
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${GITHUB_SHA::7}
-          docker tag ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
+          docker tag ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:${GITHUB_SHA::7} ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}:latest
 
   terraform-deploy:
@@ -68,7 +68,7 @@ jobs:
       TF_VAR_APP_NAME: infass
       TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_REGION: europe-southwest1
-      TF_VAR_DOCKER_HUB_USERNAME: gerardovitale
+      TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       TF_VAR_GCP_USER: ${{ secrets.GCP_USER }}
     steps:
       - name: Checkout repository

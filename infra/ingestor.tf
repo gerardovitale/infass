@@ -1,23 +1,48 @@
-# Service Account for Cloud Run job
-resource "google_service_account" "selenium_ingestor_sa" {
-  account_id   = "${var.APP_NAME}-ingestor"
-  description  = "Selenium Ingestor Service Account created by terraform"
-  display_name = "Cloud Run Job Service Account for Selenium Ingestor"
+# ------------------------------
+# Ingestor Bucket
+# ------------------------------
+resource "google_storage_bucket" "infass_bucket" {
+  name          = "${var.APP_NAME}-merc"
+  force_destroy = true
+  location      = var.REGION
+  storage_class = "STANDARD"
+
+  versioning {
+    enabled = true
+  }
+
+  labels = local.labels
 }
 
-# Grant necessary permissions
+resource "google_storage_bucket_iam_member" "bucket_permissions" {
+  bucket = google_storage_bucket.infass_bucket.name
+  member = "serviceAccount:${google_service_account.ingestor_sa.email}"
+  role   = "roles/storage.legacyBucketWriter"
+}
+
+# ------------------------------
+# Cloud Run job Service Account
+# ------------------------------
+resource "google_service_account" "ingestor_sa" {
+  account_id   = "${var.APP_NAME}-ingestor"
+  description  = "Ingestor Service Account created by terraform"
+  display_name = "Cloud Run Job Service Account for Ingestor"
+}
+
 resource "google_project_iam_member" "cloud_run_job_ingestor_storage_permissions" {
   for_each = toset([
     "roles/storage.objectCreator",
     "roles/storage.objectViewer",
   ])
   project = var.PROJECT
-  member  = "serviceAccount:${google_service_account.selenium_ingestor_sa.email}"
+  member  = "serviceAccount:${google_service_account.ingestor_sa.email}"
   role    = each.value
 }
 
-# Job Definition
-resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
+# ------------------------------
+# Cloud Run Job for Ingestor
+# ------------------------------
+resource "google_cloud_run_v2_job" "ingestor_job" {
   name                = "${var.APP_NAME}-ingestor-job"
   location            = var.REGION
   deletion_protection = false
@@ -27,10 +52,10 @@ resource "google_cloud_run_v2_job" "selenium_ingestor_job" {
     template {
       timeout         = "1200s"
       max_retries     = 0
-      service_account = google_service_account.selenium_ingestor_sa.email
+      service_account = google_service_account.ingestor_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/ingestor:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG}"
         resources {
           limits = {
             cpu    = "1"

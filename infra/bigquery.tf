@@ -9,7 +9,7 @@ resource "google_bigquery_dataset" "infass_dataset" {
 
   access {
     role          = "OWNER"
-    user_by_email = google_service_account.pandas_transformer_sa.email
+    user_by_email = google_service_account.transformer_sa.email
   }
 
   access {
@@ -28,7 +28,7 @@ resource "google_bigquery_dataset" "infass_test_dataset" {
 
   access {
     role          = "OWNER"
-    user_by_email = google_service_account.pandas_transformer_sa.email
+    user_by_email = google_service_account.transformer_sa.email
   }
 
   access {

@@ -1,13 +1,14 @@
 resource "google_monitoring_notification_channel" "email" {
-  display_name = "Cloud Run Job Failure Alert"
+  display_name = "${var.APP_NAME} Cloud Run Job Failure Alert"
   type         = "email"
-  labels = {
-    email_address = var.GCP_USER
-  }
+  labels = merge(
+    { email_address = var.GCP_USER },
+    local.labels
+  )
 }
 
-resource "google_monitoring_alert_policy" "clour_run_job_failure_alert" {
-  display_name = "Cloud Run Job Failure Alert"
+resource "google_monitoring_alert_policy" "cloud_run_job_failure_alert" {
+  display_name = "${var.APP_NAME} Cloud Run Job Failure Alert"
   combiner     = "OR"
   severity     = "ERROR"
 
