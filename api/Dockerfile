@@ -16,5 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=python-build /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 COPY --from=python-build /usr/local/bin /usr/local/bin
 COPY ./app/ ./
-EXPOSE 8000
-ENTRYPOINT ["fastapi", "run"]
+
+EXPOSE 8080
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
