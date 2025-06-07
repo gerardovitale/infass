@@ -41,7 +41,7 @@ resource "google_cloud_run_v2_service" "api_service" {
     service_account = google_service_account.cloud_run_sa.email
 
     containers {
-      name  = "infass-api:${var.DOCKER_IMAGE_TAG}"
+      name  = "infass-api"
       image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-api:${var.DOCKER_IMAGE_TAG}"
       ports {
         container_port = 8080
