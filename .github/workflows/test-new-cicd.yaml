@@ -1,148 +1,148 @@
-name: New CI/CD Pipeline
-
-on:
-  push:
-    branches:
-      - main # Trigger on pushes to the main branch
-    paths:
-      - "**" # Trigger when any file is modified
-
-jobs:
-  detect-changes:
-    name: Detect Changed Modules
-    runs-on: ubuntu-latest
-
-    outputs:
-      ingestor: ${{ steps.filter.outputs.ingestor }}
-      transformer: ${{ steps.filter.outputs.transformer }}
-      api: ${{ steps.filter.outputs.api }}
-      infass-ui: ${{ steps.filter.outputs.infass-ui }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4.2.2
-
-      - name: Get changed files
-        id: changed-files
-        run: |
-          echo "CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
-
-      - name: Filter changed modules
-        id: filter
-        run: |
-          changed="${{ steps.changed-files.outputs.CHANGED }}"
-          for svc in ingestor transformer api infass-ui; do
-            if echo "$changed" | grep -q "^$svc/"; then
-              echo "$svc=true" >> $GITHUB_OUTPUT
-            else
-              echo "$svc=false" >> $GITHUB_OUTPUT
-            fi
-          done
-
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-    needs: detect-changes
-
-    strategy:
-      matrix:
-        service: [ ingestor, transformer, api, infass-ui ]
-        include:
-          - service: ingestor
-            changed: ${{ needs.detect-changes.outputs.ingestor }}
-          - service: transformer
-            changed: ${{ needs.detect-changes.outputs.transformer }}
-          - service: api
-            changed: ${{ needs.detect-changes.outputs.api }}
-          - service: infass-ui
-            changed: ${{ needs.detect-changes.outputs.infass-ui }}
-      fail-fast: false
-
-    steps:
-      - name: Skip if service not changed
-        if: matrix.changed != 'true'
-        run: echo "Service not changed, skipping job." && exit 0
-
-      - name: Checkout Code
-        if: matrix.changed == 'true'
-        uses: actions/checkout@v4.2.2
-
-      - name: Set up Docker Buildx
-        if: matrix.changed == 'true'
-        uses: docker/setup-buildx-action@v3.7.1
-
-      - name: Cache Docker layers
-        if: matrix.changed == 'true'
-        uses: actions/cache@v4.2.3
-        with:
-          path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile.test', matrix.service)) }}
-          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
-
-      - name: Build Test Container
-        if: matrix.changed == 'true'
-        working-directory: ${{ matrix.service }}
-        run: |
-          docker buildx build --load \
-            --cache-from=type=local,src=/tmp/.buildx-cache-${{ matrix.service }} \
-            --cache-to=type=local,dest=/tmp/.buildx-cache-${{ matrix.service }} \
-            -f Dockerfile.test -t test-image .
-
-      - name: Run Tests
-        if: matrix.changed == 'true'
-        working-directory: ${{ matrix.service }}
-        run: docker run --rm test-image
-
-  build-and-push:
-    name: Build and Push
-    runs-on: ubuntu-latest
-    needs: test
-
-    strategy:
-      matrix:
-        service: [ ingestor, transformer, api ]
-        include:
-          - service: ingestor
-            changed: ${{ needs.detect-changes.outputs.ingestor }}
-          - service: transformer
-            changed: ${{ needs.detect-changes.outputs.transformer }}
-          - service: api
-            changed: ${{ needs.detect-changes.outputs.api }}
-      fail-fast: false
-
-    steps:
-      - name: Skip if service not changed
-        if: matrix.changed != 'true'
-        run: echo "Service not changed, skipping job." && exit 0
-
-      - name: Checkout Code
-        if: matrix.changed == 'true'
-        uses: actions/checkout@v4.2.2
-
-      - name: Set up Docker Buildx
-        if: matrix.changed == 'true'
-        uses: docker/setup-buildx-action@v3.7.1
-
-      - name: Cache Docker layers
-        if: matrix.changed == 'true'
-        uses: actions/cache@v4.2.3
-        with:
-          path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile', matrix.service)) }}
-          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
-
-      - name: Log in to Docker Registry
-        if: matrix.changed == 'true'
-        uses: docker/login-action@v3.3.0
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build Docker Image
-        if: matrix.changed == 'true'
-        working-directory: ${{ matrix.service }}
-        run: |
-          docker buildx build --load \
-            --cache-from=type=local,src=/tmp/.buildx-cache-${{ matrix.service }} \
-            --cache-to=type=local,dest=/tmp/.buildx-cache-${{ matrix.service }} \
-            -t ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} .
+#name: New CI/CD Pipeline
+#
+#on:
+#  push:
+#    branches:
+#      - main # Trigger on pushes to the main branch
+#    paths:
+#      - "**" # Trigger when any file is modified
+#
+#jobs:
+#  detect-changes:
+#    name: Detect Changed Modules
+#    runs-on: ubuntu-latest
+#
+#    outputs:
+#      ingestor: ${{ steps.filter.outputs.ingestor }}
+#      transformer: ${{ steps.filter.outputs.transformer }}
+#      api: ${{ steps.filter.outputs.api }}
+#      infass-ui: ${{ steps.filter.outputs.infass-ui }}
+#
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v4.2.2
+#
+#      - name: Get changed files
+#        id: changed-files
+#        run: |
+#          echo "CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | xargs)" >> $GITHUB_OUTPUT
+#
+#      - name: Filter changed modules
+#        id: filter
+#        run: |
+#          changed="${{ steps.changed-files.outputs.CHANGED }}"
+#          for svc in ingestor transformer api infass-ui; do
+#            if echo "$changed" | grep -q "^$svc/"; then
+#              echo "$svc=true" >> $GITHUB_OUTPUT
+#            else
+#              echo "$svc=false" >> $GITHUB_OUTPUT
+#            fi
+#          done
+#
+#  test:
+#    name: Tests
+#    runs-on: ubuntu-latest
+#    needs: detect-changes
+#
+#    strategy:
+#      matrix:
+#        service: [ ingestor, transformer, api, infass-ui ]
+#        include:
+#          - service: ingestor
+#            changed: ${{ needs.detect-changes.outputs.ingestor }}
+#          - service: transformer
+#            changed: ${{ needs.detect-changes.outputs.transformer }}
+#          - service: api
+#            changed: ${{ needs.detect-changes.outputs.api }}
+#          - service: infass-ui
+#            changed: ${{ needs.detect-changes.outputs.infass-ui }}
+#      fail-fast: false
+#
+#    steps:
+#      - name: Skip if service not changed
+#        if: matrix.changed != 'true'
+#        run: echo "Service not changed, skipping job." && exit 0
+#
+#      - name: Checkout Code
+#        if: matrix.changed == 'true'
+#        uses: actions/checkout@v4.2.2
+#
+#      - name: Set up Docker Buildx
+#        if: matrix.changed == 'true'
+#        uses: docker/setup-buildx-action@v3.7.1
+#
+#      - name: Cache Docker layers
+#        if: matrix.changed == 'true'
+#        uses: actions/cache@v4.2.3
+#        with:
+#          path: /tmp/.buildx-cache-${{ matrix.service }}
+#          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile.test', matrix.service)) }}
+#          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
+#
+#      - name: Build Test Container
+#        if: matrix.changed == 'true'
+#        working-directory: ${{ matrix.service }}
+#        run: |
+#          docker buildx build --load \
+#            --cache-from=type=local,src=/tmp/.buildx-cache-${{ matrix.service }} \
+#            --cache-to=type=local,dest=/tmp/.buildx-cache-${{ matrix.service }} \
+#            -f Dockerfile.test -t test-image .
+#
+#      - name: Run Tests
+#        if: matrix.changed == 'true'
+#        working-directory: ${{ matrix.service }}
+#        run: docker run --rm test-image
+#
+#  build-and-push:
+#    name: Build and Push
+#    runs-on: ubuntu-latest
+#    needs: test
+#
+#    strategy:
+#      matrix:
+#        service: [ ingestor, transformer, api ]
+#        include:
+#          - service: ingestor
+#            changed: ${{ needs.detect-changes.outputs.ingestor }}
+#          - service: transformer
+#            changed: ${{ needs.detect-changes.outputs.transformer }}
+#          - service: api
+#            changed: ${{ needs.detect-changes.outputs.api }}
+#      fail-fast: false
+#
+#    steps:
+#      - name: Skip if service not changed
+#        if: matrix.changed != 'true'
+#        run: echo "Service not changed, skipping job." && exit 0
+#
+#      - name: Checkout Code
+#        if: matrix.changed == 'true'
+#        uses: actions/checkout@v4.2.2
+#
+#      - name: Set up Docker Buildx
+#        if: matrix.changed == 'true'
+#        uses: docker/setup-buildx-action@v3.7.1
+#
+#      - name: Cache Docker layers
+#        if: matrix.changed == 'true'
+#        uses: actions/cache@v4.2.3
+#        with:
+#          path: /tmp/.buildx-cache-${{ matrix.service }}
+#          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile', matrix.service)) }}
+#          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
+#
+#      - name: Log in to Docker Registry
+#        if: matrix.changed == 'true'
+#        uses: docker/login-action@v3.3.0
+#        with:
+#          username: ${{ secrets.DOCKER_USERNAME }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#
+#      - name: Build Docker Image
+#        if: matrix.changed == 'true'
+#        working-directory: ${{ matrix.service }}
+#        run: |
+#          docker buildx build --load \
+#            --cache-from=type=local,src=/tmp/.buildx-cache-${{ matrix.service }} \
+#            --cache-to=type=local,dest=/tmp/.buildx-cache-${{ matrix.service }} \
+#            -t ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} .
