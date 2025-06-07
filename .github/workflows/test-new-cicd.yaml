@@ -58,15 +58,21 @@ jobs:
             changed: ${{ needs.detect-changes.outputs.infass-ui }}
       fail-fast: false
 
-    if: matrix.changed == 'true'
     steps:
+      - name: Skip if service not changed
+        if: matrix.changed != 'true'
+        run: echo "Service not changed, skipping job." && exit 0
+
       - name: Checkout Code
+        if: matrix.changed == 'true'
         uses: actions/checkout@v4.2.2
 
       - name: Set up Docker Buildx
+        if: matrix.changed == 'true'
         uses: docker/setup-buildx-action@v3.7.1
 
       - name: Cache Docker layers
+        if: matrix.changed == 'true'
         uses: actions/cache@v4.2.3
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
@@ -74,6 +80,7 @@ jobs:
           restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
 
       - name: Build Test Container
+        if: matrix.changed == 'true'
         working-directory: ${{ matrix.service }}
         run: |
           docker buildx build --load \
@@ -82,6 +89,7 @@ jobs:
             -f Dockerfile.test -t test-image .
 
       - name: Run Tests
+        if: matrix.changed == 'true'
         working-directory: ${{ matrix.service }}
         run: docker run --rm test-image
 
@@ -102,15 +110,21 @@ jobs:
             changed: ${{ needs.detect-changes.outputs.api }}
       fail-fast: false
 
-    if: matrix.changed == 'true'
     steps:
+      - name: Skip if service not changed
+        if: matrix.changed != 'true'
+        run: echo "Service not changed, skipping job." && exit 0
+
       - name: Checkout Code
+        if: matrix.changed == 'true'
         uses: actions/checkout@v4.2.2
 
       - name: Set up Docker Buildx
+        if: matrix.changed == 'true'
         uses: docker/setup-buildx-action@v3.7.1
 
       - name: Cache Docker layers
+        if: matrix.changed == 'true'
         uses: actions/cache@v4.2.3
         with:
           path: /tmp/.buildx-cache-${{ matrix.service }}
@@ -118,12 +132,14 @@ jobs:
           restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
 
       - name: Log in to Docker Registry
+        if: matrix.changed == 'true'
         uses: docker/login-action@v3.3.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker Image
+        if: matrix.changed == 'true'
         working-directory: ${{ matrix.service }}
         run: |
           docker buildx build --load \
