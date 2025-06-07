@@ -33,7 +33,7 @@ resource "google_storage_bucket_iam_member" "run_bucket_access" {
 resource "google_cloud_run_v2_service" "api_service" {
   name                = "${var.APP_NAME}-api-service"
   location            = var.REGION
-  ingress             = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  ingress             = "INGRESS_TRAFFIC_ALL"
   deletion_protection = false
 
   template {
