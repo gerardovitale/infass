@@ -33,6 +33,12 @@ resource "google_project_iam_member" "cloud_run_sa_bigquery_jobuser" {
   member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
 }
 
+resource "google_bigquery_dataset_iam_member" "cloud_run_sa_dataset_viewer" {
+  dataset_id = google_bigquery_dataset.infass_test_dataset.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
 # ------------------------------
 # Cloud Run API Service
 # ------------------------------
