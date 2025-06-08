@@ -92,7 +92,6 @@ jobs:
       TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_REGION: europe-southwest1
       TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      TF_VAR_DOCKER_IMAGE_TAG: latest
       TF_VAR_GCP_USER: ${{ secrets.GCP_USER }}
     steps:
       - name: Checkout repository
@@ -123,9 +122,9 @@ jobs:
       - name: Plan Terraform changes
         id: plan
         working-directory: ./infra
-        run: terraform plan
+        run: terraform plan -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
 
       - name: Apply Terraform changes
         id: apply
         working-directory: ./infra
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
