@@ -81,7 +81,7 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
 
       containers {
         name  = "infass-reversed-etl"
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-reversed-etl:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG}"
         volume_mounts {
           name       = "sqlite-vol"
           mount_path = "/mnt/sqlite"
