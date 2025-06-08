@@ -10,6 +10,7 @@ SUBDIRS=(
   "api"
   "ingestor"
   "transformer"
+  "retl"
 )
 
 setup_global_tools() {
@@ -72,7 +73,7 @@ install_requirements() {
 
 logger "INFO" "🔧 Setting up Python environments"
 
-setup_global_tools
+#setup_global_tools
 
 for dir in "${SUBDIRS[@]}"; do
   if [ -d "$dir" ]; then
