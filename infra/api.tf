@@ -27,6 +27,12 @@ resource "google_storage_bucket_iam_member" "run_bucket_access" {
   member = "serviceAccount:${google_service_account.cloud_run_sa.email}"
 }
 
+resource "google_project_iam_member" "cloud_run_sa_bigquery_jobuser" {
+  project = var.PROJECT
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
 # ------------------------------
 # Cloud Run API Service
 # ------------------------------
