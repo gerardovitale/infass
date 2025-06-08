@@ -80,11 +80,31 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
       service_account = google_service_account.cloud_run_sa.email
 
       containers {
-        # image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-reversed_etl:${var.DOCKER_IMAGE_TAG}"
-        image = "alpine:latest"
+        name  = "infass-reversed-etl"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-reversed-etl:${var.DOCKER_IMAGE_TAG}"
         volume_mounts {
           name       = "sqlite-vol"
           mount_path = "/mnt/sqlite"
+        }
+        env {
+          name  = "PROJECT_ID"
+          value = var.PROJECT
+        }
+        env {
+          name  = "DATASET_ID"
+          value = google_bigquery_dataset.infass_test_dataset.dataset_id
+        }
+        env {
+          name  = "BQ_TABLE"
+          value = "dbt_unique_products"
+        }
+        env {
+          name  = "GCS_BUCKET"
+          value = google_storage_bucket.sqlite_bucket.name
+        }
+        env {
+          name  = "GCS_OBJECT"
+          value = "${var.APP_NAME}-sqlite-api.db"
         }
       }
 

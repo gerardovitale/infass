@@ -36,7 +36,7 @@ ingestor.local-run:
 		ingestor:latest
 
 
-# PANDAS TRANSFORMER
+# TRANSFORMER
 transformer.test:
 	scripts/run-docker-test.sh transformer
 
@@ -113,3 +113,8 @@ sql-format.run:
 
 sql-format.test:
 	python3 -m unittest scripts/format_sql.py
+
+
+# Reverse ETL (retl)
+retl.test:
+	scripts/run-docker-test.sh retl
