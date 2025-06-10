@@ -27,6 +27,9 @@ sources:
           - name: subcategory
             data_type: string
 
+          - name: image_url
+            data_type: string
+
           - name: price
             data_type: float
 

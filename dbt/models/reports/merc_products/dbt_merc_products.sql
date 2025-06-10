@@ -13,11 +13,11 @@ WITH merc_with_year_month_agg AS (
         MAX_BY(original_price, date) AS latest_orig_price
     FROM {{ source('infass', 'merc') }}
     GROUP BY
-        1,
-        2,
-        3,
-        4,
-        5
+        year_month_period,
+        name,
+        size,
+        category,
+        subcategory
 )
 
 SELECT
@@ -34,18 +34,11 @@ SELECT
     (
         latest_price - earliest_price
     ) AS price_variation_abs,
-    ROUND(SAFE_DIVIDE((
-        latest_price - earliest_price
-    ), earliest_price), 4) AS price_variation_percent,
+    {{ get_variation_percent('latest_price', 'earliest_price') }} AS price_variation_percent,
     earliest_orig_price,
     latest_orig_price,
     (
         latest_orig_price - earliest_orig_price
     ) AS orig_price_variation_abs,
-    ROUND(
-        SAFE_DIVIDE((
-            latest_orig_price - earliest_orig_price
-        ), earliest_orig_price),
-        4
-    ) AS orig_price_variation_percent
+    {{ get_variation_percent('latest_orig_price', 'earliest_orig_price') }} AS orig_price_variation_percent
 FROM merc_with_year_month_agg
