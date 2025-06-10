@@ -1,3 +1,9 @@
+locals {
+  volume_name       = "sqlite-vol"
+  volume_mount_path = "/mnt/sqlite"
+  sqlite_db_name    = "${var.APP_NAME}-sqlite-api.db"
+}
+
 # ------------------------------
 # Cloud Storage Bucket
 # ------------------------------
@@ -59,13 +65,17 @@ resource "google_cloud_run_v2_service" "api_service" {
         container_port = 8080
       }
       volume_mounts {
-        name       = "sqlite-vol"
-        mount_path = "/mnt/sqlite"
+        name       = local.volume_name
+        mount_path = local.volume_mount_path
+      }
+      env {
+        name  = "SQLITE_DB_PATH"
+        value = local.sqlite_db_name
       }
     }
 
     volumes {
-      name = "sqlite-vol"
+      name = local.volume_name
       gcs {
         bucket    = google_storage_bucket.sqlite_bucket.name
         read_only = true
@@ -95,8 +105,8 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
         name  = "infass-reversed-etl"
         image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG}"
         volume_mounts {
-          name       = "sqlite-vol"
-          mount_path = "/mnt/sqlite"
+          name       = local.volume_name
+          mount_path = local.volume_mount_path
         }
         env {
           name  = "PROJECT_ID"
@@ -116,12 +126,12 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
         }
         env {
           name  = "GCS_OBJECT"
-          value = "${var.APP_NAME}-sqlite-api.db"
+          value = local.sqlite_db_name
         }
       }
 
       volumes {
-        name = "sqlite-vol"
+        name = local.volume_name
         gcs {
           bucket = google_storage_bucket.sqlite_bucket.name
         }
