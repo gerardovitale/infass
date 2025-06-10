@@ -24,7 +24,7 @@ class BigQueryProductRepository(ProductRepository):
                 subcategories,
                 price,
                 image_url
-            FROM `{self.project_id}.{self.dataset_id}.dbt_unique_products`
+            FROM `{self.project_id}.{self.dataset_id}.dbt_ref_products`
             WHERE LOWER(name) LIKE '%{search_term}%'
                OR LOWER(size) LIKE '%{search_term}%'
                OR LOWER(categories) LIKE '%{search_term}%'

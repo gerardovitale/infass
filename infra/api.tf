@@ -118,7 +118,7 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
         }
         env {
           name  = "BQ_TABLE"
-          value = "dbt_unique_products"
+          value = "dbt_ref_products"
         }
         env {
           name  = "GCS_BUCKET"
