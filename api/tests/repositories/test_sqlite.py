@@ -1,4 +1,6 @@
-from unittest import skip
+import os
+import sqlite3
+from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -12,7 +14,9 @@ def mock_sqlite_connect():
         yield mock_connect
 
 
-@skip("WIP - Skipping test for now")
+# ----------------------------------------
+# search_products tests
+# ----------------------------------------
 def test_search_products_returns_expected_results(mock_sqlite_connect):
     # Arrange
     test_db_path = "fake_path.db"
@@ -59,10 +63,12 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
         ("image_url",),
     ]
 
-    repo = SQLiteProductRepository(test_db_path)
+    # Patch check_db_path_exist to avoid FileNotFoundError
+    with patch.object(SQLiteProductRepository, "check_db_path_exist", return_value=None):
+        repo = SQLiteProductRepository(test_db_path)
 
-    # Act
-    results = repo.search_products(test_search_term)
+        # Act
+        results = repo.search_products(test_search_term)
 
     # Assert
     assert results == expected_dicts
@@ -70,3 +76,51 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
     mock_conn.cursor.assert_called_once()
     mock_cursor.execute.assert_called_once()
     mock_conn.close.assert_called_once()
+
+
+# ----------------------------------------
+# check_db_path_exist tests
+# ----------------------------------------
+def test_check_db_path_exist_raises_when_file_not_found(monkeypatch):
+    fake_path = "/tmp/nonexistent_file_12345.db"
+    # Ensure the file does not exist
+    if Path(fake_path).exists():
+        os.remove(fake_path)
+    with pytest.raises(FileNotFoundError):
+        SQLiteProductRepository.check_db_path_exist(fake_path)
+
+
+def test_check_db_path_exist_passes_when_file_exists(tmp_path):
+    db_file = tmp_path / "test.db"
+    db_file.write_text("dummy content")
+    # Should not raise
+    SQLiteProductRepository.check_db_path_exist(str(db_file))
+
+
+# ----------------------------------------
+# get_connection tests
+# ----------------------------------------
+def test_get_connection_calls_sqlite_connect(monkeypatch):
+    test_db_path = "some_path.db"
+
+    # Create an instance of the repository without calling __init__
+    repo = SQLiteProductRepository.__new__(SQLiteProductRepository)
+    repo.db_path = test_db_path
+
+    mock_conn = MagicMock()
+    with patch("repositories.sqlite3.connect", return_value=mock_conn) as mock_connect:
+        conn = repo.get_connection()
+        mock_connect.assert_called_once_with(test_db_path)
+        assert conn == mock_conn
+
+
+def test_get_connection_raises_on_operational_error(monkeypatch):
+    test_db_path = "bad_path.db"
+
+    # Create an instance of the repository without calling __init__
+    repo = SQLiteProductRepository.__new__(SQLiteProductRepository)
+    repo.db_path = test_db_path
+
+    with patch("repositories.sqlite3.connect", side_effect=sqlite3.OperationalError):
+        with pytest.raises(sqlite3.OperationalError):
+            repo.get_connection()
