@@ -4,7 +4,7 @@ from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import HTTPException
 from models import ProductSearchResponse
-from repositories import BigQueryProductRepository
+from repositories import SQLiteProductRepository
 from services import ProductService
 
 app = FastAPI(
@@ -24,12 +24,8 @@ def read_item(item_id: int, q: str = None):
 
 
 def get_product_service() -> ProductService:
-    return ProductService(
-        BigQueryProductRepository(
-            project_id=os.environ["PROJECT_ID"],
-            dataset_id=os.environ["PRODUCT_DATASET_ID"],
-        )
-    )
+    product_repo = SQLiteProductRepository(os.environ["SQLITE_DB_PATH"])
+    return ProductService(product_repo)
 
 
 @app.get("/products/search", response_model=ProductSearchResponse)

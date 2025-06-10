@@ -91,10 +91,7 @@ api.test:
 api.run:
 	cd api/ && docker buildx build -t api .
 	docker run --rm -p 8080:8080 \
-		-e PROJECT_ID=$(GCP_PROJECT_ID) \
-		-e PRODUCT_DATASET_ID=$(PRODUCT_DATASET_ID) \
-		-v $(GCP_API_CREDS_PATH):/app/key.json \
-		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
+		-v $(SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-sqlite-api.db \
 		api:latest
 
 
