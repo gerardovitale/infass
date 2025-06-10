@@ -70,7 +70,7 @@ resource "google_cloud_run_v2_service" "api_service" {
       }
       env {
         name  = "SQLITE_DB_PATH"
-        value = local.sqlite_db_name
+        value = "${local.volume_mount_path}/${local.sqlite_db_name}"
       }
     }
 
