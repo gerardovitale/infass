@@ -31,14 +31,10 @@ SELECT
     latest_date,
     earliest_price,
     latest_price,
-    (
-        latest_price - earliest_price
-    ) AS price_variation_abs,
+    latest_price - earliest_price AS price_variation_abs,
     {{ get_variation_percent('latest_price', 'earliest_price') }} AS price_variation_percent,
     earliest_orig_price,
     latest_orig_price,
-    (
-        latest_orig_price - earliest_orig_price
-    ) AS orig_price_variation_abs,
+    latest_orig_price - earliest_orig_price AS orig_price_variation_abs,
     {{ get_variation_percent('latest_orig_price', 'earliest_orig_price') }} AS orig_price_variation_percent
 FROM merc_with_year_month_agg
