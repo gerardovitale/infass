@@ -1,0 +1,19 @@
+unit_tests:
+  - name: test_dbt_ref_products
+    model: dbt_ref_products
+    description: >
+      basic test for dbt_ref_products model which should return a unique product based table given product history
+      transaction table
+
+    given:
+      - input: source('infass', 'merc')
+        format: csv
+        fixture: input_infass_merc
+
+    expect:
+      format: csv
+      fixture: expected_ref_products
+
+    overrides:
+      macros:
+        get_last_saturday_date: "'2025-04-19'"

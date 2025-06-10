@@ -32,10 +32,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   infass:
     # Config indicated by + and applies to all files under models/example/
-    reports:
+    dev:
       +materialized: table
-    references:
-      +materialized: materialized_view
+    report:
+      +materialized: table
+    reference:
+      +materialized: table
 
 #seeds:
 #  infass:
