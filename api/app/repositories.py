@@ -1,9 +1,12 @@
+import logging
 import sqlite3
 from abc import ABC
 from abc import abstractmethod
 from sqlite3 import Cursor
 
 from google.cloud.bigquery import Client
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class ProductRepository(ABC):
@@ -23,6 +26,7 @@ class SQLiteProductRepository(ProductRepository):
         return [column[0] for column in cursor.description]
 
     def search_products(self, search_term: str) -> list[dict]:
+        logger.info(f"SQLite: Searching products with term '{search_term}'")
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         query = """
@@ -42,6 +46,7 @@ class SQLiteProductRepository(ProductRepository):
                 """
         search_term = f"%{search_term.lower()}%"
         rows = cursor.execute(query, {"search": search_term}).fetchall()
+        logger.info(f"SQLite: Found {len(rows)} products for term '{search_term}'")
         conn.close()
         return [dict(zip(self._get_column_names(cursor), row)) for row in rows]
 
@@ -54,6 +59,7 @@ class BigQueryProductRepository(ProductRepository):
         self.bq = Client(project=project_id)
 
     def search_products(self, search_term: str) -> list[dict]:
+        logger.info(f"BigQuery: Searching products with term '{search_term}'")
         query = f"""
             SELECT
                 product_id as id,
@@ -70,4 +76,6 @@ class BigQueryProductRepository(ProductRepository):
                OR LOWER(subcategories) LIKE '%{search_term}%'
             """
         rows = self.bq.query(query).result()
-        return [dict(row.items()) for row in rows]
+        results = [dict(row.items()) for row in rows]
+        logger.info(f"BigQuery: Found {len(results)} products for term '{search_term}'")
+        return results
