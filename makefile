@@ -91,6 +91,7 @@ api.test:
 api.run:
 	cd api/ && docker buildx build -t api .
 	docker run --rm -p 8080:8080 \
+		-e SQLITE_DB_PATH=/mnt/sqlite/infass-sqlite-api.db \
 		-v $(SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-sqlite-api.db \
 		api:latest
 
