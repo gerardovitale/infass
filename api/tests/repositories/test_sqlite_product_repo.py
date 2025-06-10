@@ -5,12 +5,12 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from repositories import SQLiteProductRepository
+from repositories.sqlite_product_repo import SQLiteProductRepository
 
 
 @pytest.fixture
 def mock_sqlite_connect():
-    with patch("repositories.sqlite3.connect") as mock_connect:
+    with patch("repositories.sqlite_product_repo.sqlite3.connect") as mock_connect:
         yield mock_connect
 
 
@@ -108,7 +108,7 @@ def test_get_connection_calls_sqlite_connect(monkeypatch):
     repo.db_path = test_db_path
 
     mock_conn = MagicMock()
-    with patch("repositories.sqlite3.connect", return_value=mock_conn) as mock_connect:
+    with patch("repositories.sqlite_product_repo.sqlite3.connect", return_value=mock_conn) as mock_connect:
         conn = repo.get_connection()
         mock_connect.assert_called_once_with(test_db_path)
         assert conn == mock_conn
@@ -121,6 +121,6 @@ def test_get_connection_raises_on_operational_error(monkeypatch):
     repo = SQLiteProductRepository.__new__(SQLiteProductRepository)
     repo.db_path = test_db_path
 
-    with patch("repositories.sqlite3.connect", side_effect=sqlite3.OperationalError):
+    with patch("repositories.sqlite_product_repo.sqlite3.connect", side_effect=sqlite3.OperationalError):
         with pytest.raises(sqlite3.OperationalError):
             repo.get_connection()

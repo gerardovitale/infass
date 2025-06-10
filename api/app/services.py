@@ -2,7 +2,7 @@ import logging
 
 from models import Product
 from models import ProductSearchResponse
-from repositories import ProductRepository
+from repositories.product_repo import ProductRepository
 
 logger = logging.getLogger("uvicorn.error")
 

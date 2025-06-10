@@ -5,7 +5,7 @@ from fastapi import Depends
 from fastapi import FastAPI
 from fastapi import HTTPException
 from models import ProductSearchResponse
-from repositories import SQLiteProductRepository
+from repositories.sqlite_product_repo import SQLiteProductRepository
 from services import ProductService
 
 # Configure logging to be compatible with Uvicorn/FastAPI
@@ -15,18 +15,6 @@ app = FastAPI(
     title="Infass API",
     description="API for Infass, a product search service",
 )
-
-
-@app.get("/")
-def read_root():
-    logger.info("Root endpoint called")
-    return {"message": "Hello, FastAPI!"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: str = None):
-    logger.info(f"Read item endpoint called with item_id={item_id}, q={q}")
-    return {"item_id": item_id, "query": q}
 
 
 def get_product_service() -> ProductService:

@@ -2,9 +2,9 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pytest
-from repositories import BigQueryProductRepository
+from repositories.bq_product_repo import BigQueryProductRepository
 
-TEST_MODULE = "repositories"
+TEST_MODULE = "repositories.bq_product_repo"
 
 
 @pytest.fixture
