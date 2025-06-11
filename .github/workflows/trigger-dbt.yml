@@ -5,15 +5,14 @@ on:
     - cron: "0 8 * * 6"
   workflow_dispatch:
 
-env:
-  DBT_PROFILES_DIR: ./.dbt
-  DBT_DIRECTORY: ./dbt
-  DBT_PROFILE: infass
-  DBT_TARGET: prod
-
 jobs:
   trigger-dbt:
     runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: ./.dbt
+      DBT_DIRECTORY: ./dbt
+      DBT_PROFILE: infass
+      DBT_TARGET: prod
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -47,3 +46,19 @@ jobs:
           --profiles-dir ${{ env.DBT_PROFILES_DIR }} \
           --profile ${{ env.DBT_PROFILE }} \
           --target ${{ env.DBT_TARGET }}
+
+
+  trigger-reversed-etl:
+    runs-on: ubuntu-latest
+    needs: trigger-dbt
+    env:
+      GCP_RUN_JOB_NAME: infass-reversed-etl-job
+      GCP_REGION: europe-southwest1
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.7
+        with:
+          credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
+
+      - name: Trigger Reversed ETL Cloud Run Job
+        run: gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} --region ${{ env.GCP_REGION }}
