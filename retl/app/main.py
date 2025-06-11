@@ -1,5 +1,8 @@
 import logging
 import os
+from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor
+from typing import Sequence
 
 from pydantic import BaseModel
 from sinks import BigQuerySink
@@ -18,11 +21,27 @@ class TaskConfig(BaseModel):
     destination: Sink
 
 
+def _run_task(task: TaskConfig) -> None:
+    df = task.data_source.fetch_data()
+    task.destination.write_data(df)
+
+
 def run_tasks(tasks: list[TaskConfig]) -> None:
     logging.info("Starting Reversed ETL process")
     for task in tasks:
-        df = task.data_source.fetch_data()
-        task.destination.write_data(df)
+        _run_task(task)
+    logging.info("Reversed ETL process completed")
+
+
+def parallel_run_tasks(tasks: Sequence[TaskConfig]) -> None:
+    logging.info("Starting Reversed ETL process")
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(_run_task, task) for task in tasks]
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                logging.error(f"Task failed: {e}")
     logging.info("Reversed ETL process completed")
 
 
