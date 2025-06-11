@@ -45,16 +45,16 @@ def main():
     project_id = os.environ["PROJECT_ID"]
     dataset_id = os.environ["DATASET_ID"]
     table_name = os.environ["BQ_TABLE"]
-    bucket_name = os.environ["GCS_BUCKET"]
-    blob_name = os.environ["GCS_OBJECT"]
-    local_path = "/tmp/api.db"
+    # bucket_name = os.environ["GCS_BUCKET"]
+    # blob_name = os.environ["GCS_OBJECT"]
+    sqlite_path = "/mnt/sqlite/infass-sqlite-api.db"
 
     logger.info("Step 1: Fetching data from BigQuery")
     df = fetch_from_bigquery(project_id, dataset_id, table_name)
     logger.info("Step 2: Writing data to SQLite")
-    write_to_sqlite(df, local_path)
-    logger.info("Step 3: Uploading SQLite DB to GCS")
-    upload_to_gcs(bucket_name, blob_name, local_path)
+    write_to_sqlite(df, sqlite_path)
+    # logger.info("Step 3: Uploading SQLite DB to GCS")
+    # upload_to_gcs(bucket_name, blob_name, local_path)
     logger.info("ETL process completed successfully")
 
 
