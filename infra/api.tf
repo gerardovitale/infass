@@ -109,24 +109,16 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
           mount_path = local.volume_mount_path
         }
         env {
-          name  = "PROJECT_ID"
+          name  = "BQ_PROJECT_ID"
           value = var.PROJECT
         }
         env {
-          name  = "DATASET_ID"
+          name  = "BQ_DATASET_ID"
           value = google_bigquery_dataset.infass_test_dataset.dataset_id
         }
         env {
-          name  = "BQ_TABLE"
-          value = "dbt_ref_products"
-        }
-        env {
-          name  = "GCS_BUCKET"
-          value = google_storage_bucket.sqlite_bucket.name
-        }
-        env {
-          name  = "GCS_OBJECT"
-          value = local.sqlite_db_name
+          name  = "SQLITE_DB_PATH"
+          value = "${local.volume_mount_path}/${local.sqlite_db_name}"
         }
       }
 
