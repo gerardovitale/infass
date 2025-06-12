@@ -23,7 +23,7 @@ def ingest_data(destination_path: str) -> None:
     sources = get_page_sources(is_test_mode)
     data_gen = build_data_gen(sources)
     write_data(data_gen, destination_path, is_test_mode)
-    logging.info("✅ Successfully ingested data}")
+    logging.info("✅ Successfully ingested data")
 
 
 if __name__ == "__main__":
