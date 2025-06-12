@@ -114,7 +114,7 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
         }
         env {
           name  = "BQ_DATASET_ID"
-          value = google_bigquery_dataset.infass_test_dataset.dataset_id
+          value = google_bigquery_dataset.infass_dataset.dataset_id
         }
         env {
           name  = "SQLITE_DB_PATH"
