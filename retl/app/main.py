@@ -59,6 +59,7 @@ def main():
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
                 table="products",
+                index_columns=["product_id"],
             ),
         ),
         TaskConfig(
@@ -70,6 +71,7 @@ def main():
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
                 table="product_price_details",
+                index_columns=["date", "product_id"],
             ),
         ),
     ]
