@@ -26,6 +26,6 @@ fi
 
 # Build and run Docker test image
 logger "INFO" "🐳 Building Docker image for $SUBDIR"
-cd "$SUBDIR" && docker buildx build -f Dockerfile.test -t "$IMAGE_NAME" . && cd -
+cd "$SUBDIR" && docker buildx build -f Dockerfile.test -t "$IMAGE_NAME" . && cd - || exit
 logger "INFO" "🚀 Running Docker container for $IMAGE_NAME"
 docker run --rm "$IMAGE_NAME":latest
