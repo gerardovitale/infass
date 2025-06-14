@@ -34,7 +34,7 @@ def test_search_products_returns_expected_results(mock_bigquery_client):
             "size": "test_size",
             "categories": "test_categories",
             "subcategories": "test_subcategories",
-            "price": "test_price",
+            "current_price": "test_price",
             "image_url": "test_image_url",
         },
     ]

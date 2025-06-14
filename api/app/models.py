@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List
 from typing import Optional
 
@@ -10,8 +11,20 @@ class Product(BaseModel):
     size: str
     categories: str
     subcategories: str
-    price: float
+    current_price: float
     image_url: Optional[str]
+
+
+class ProductPriceDetails(BaseModel):
+    date: date
+    price: float
+    sma7: Optional[float]
+    sma15: Optional[float]
+    sma30: Optional[float]
+
+
+class EnrichedProduct(Product):
+    price_details: List[ProductPriceDetails]
 
 
 class ProductSearchResponse(BaseModel):
