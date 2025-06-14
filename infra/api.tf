@@ -22,7 +22,7 @@ resource "google_storage_bucket" "sqlite_bucket" {
 # ------------------------------
 # Service Account for Cloud Run
 # ------------------------------
-resource "google_service_account" "cloud_run_sa" {
+resource "google_service_account" "api_service_account" {
   account_id   = "${var.APP_NAME}-cloud-run-sa"
   display_name = "Cloud Run Service Account for ${var.APP_NAME}"
 }
@@ -30,19 +30,23 @@ resource "google_service_account" "cloud_run_sa" {
 resource "google_storage_bucket_iam_member" "run_bucket_access" {
   bucket = google_storage_bucket.sqlite_bucket.name
   role   = "roles/storage.objectAdmin"
-  member = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+  member = "serviceAccount:${google_service_account.api_service_account.email}"
 }
 
-resource "google_project_iam_member" "cloud_run_sa_bigquery_jobuser" {
+resource "google_project_iam_member" "api_service_account_bigquery_jobuser" {
   project = var.PROJECT
   role    = "roles/bigquery.jobUser"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+  member  = "serviceAccount:${google_service_account.api_service_account.email}"
 }
 
-resource "google_bigquery_dataset_iam_member" "cloud_run_sa_dataset_viewer" {
-  dataset_id = google_bigquery_dataset.infass_test_dataset.dataset_id
+resource "google_bigquery_dataset_iam_member" "api_service_account_dataset_viewer" {
+  for_each = toset([
+    google_bigquery_dataset.infass_dataset.dataset_id,
+    google_bigquery_dataset.infass_test_dataset.dataset_id,
+  ])
+  dataset_id = each.value
   role       = "roles/bigquery.dataViewer"
-  member     = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+  member     = "serviceAccount:${google_service_account.api_service_account.email}"
 }
 
 # ------------------------------
@@ -56,7 +60,7 @@ resource "google_cloud_run_v2_service" "api_service" {
 
   template {
     timeout         = "5s"
-    service_account = google_service_account.cloud_run_sa.email
+    service_account = google_service_account.api_service_account.email
 
     containers {
       name  = "infass-api"
@@ -99,7 +103,7 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
     template {
       timeout         = "300s"
       max_retries     = 0
-      service_account = google_service_account.cloud_run_sa.email
+      service_account = google_service_account.api_service_account.email
 
       containers {
         name  = "infass-reversed-etl"
