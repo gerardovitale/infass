@@ -20,7 +20,7 @@ app = FastAPI(
 
 def get_product_service() -> ProductService:
     db_path = os.environ["SQLITE_DB_PATH"]
-    logger.info(f"Creating ProductService with SQLite DB at {db_path}")
+    logger.info(f"Initializing ProductService with SQLite database path: '{db_path}'")
     product_repo = SQLiteProductRepository(db_path)
     return ProductService(product_repo)
 
