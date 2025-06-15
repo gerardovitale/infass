@@ -108,6 +108,12 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
       containers {
         name  = "infass-reversed-etl"
         image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG}"
+        resources {
+          limits = {
+            cpu    = "1"
+            memory = "2Gi"
+          }
+        }
         volume_mounts {
           name       = local.volume_name
           mount_path = local.volume_mount_path
