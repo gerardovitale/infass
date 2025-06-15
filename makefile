@@ -95,6 +95,17 @@ api.run:
 		-v $(SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-sqlite-api.db \
 		api:latest
 
+api.local-integration-test:
+	cd api/ && docker buildx build -t api .
+	docker run -d --rm -p 8080:8080 \
+		--name infass-api \
+		-e SQLITE_DB_PATH=/mnt/sqlite/infass-sqlite-api.db \
+		-v $(SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-sqlite-api.db \
+		api:latest
+	sleep 5
+	scripts/test_api_locally.sh
+	docker stop infass-api
+
 
 # UI
 ui.test:
