@@ -22,6 +22,7 @@ class TaskConfig(BaseModel):
 
 
 def _run_task(task: TaskConfig) -> None:
+    logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
     df = task.data_source.fetch_data()
     task.destination.write_data(df)
 

@@ -29,6 +29,7 @@ class BigQuerySink(BaseModel, Sink):
         query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{self.table}`"
         df = client.query(query).to_dataframe()
         logger.info(f"Fetched {len(df)} rows from BigQuery")
+        logger.info(f"DataFrame size: {df.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB")
         return df
 
 
