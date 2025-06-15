@@ -1,7 +1,7 @@
 import { Navbar } from '@/components/Navbar/Navbar';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { initMocks } from '../../lib/initMocks';
+import { initMocks } from '../../mocks/initMocks';
 import './globals.css';
 
 const geistSans = Geist({
