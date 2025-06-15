@@ -1,0 +1,69 @@
+{
+    "results": [
+        {
+            "id": "1",
+            "name": "Product 1",
+            "size": "Size M",
+            "price": 19.99,
+            "category": "Category 1",
+            "priceDetails": [
+                {
+                    "date": "Jan 2023",
+                    "max_available": 4200,
+                    "sma15": 2100,
+                    "sma30": 1400
+                },
+                {
+                    "date": "Feb 2023",
+                    "max_available": 3500,
+                    "sma15": 2000,
+                    "sma30": 1350
+                },
+                {
+                    "date": "Mar 2023",
+                    "max_available": 5000,
+                    "sma15": 2500,
+                    "sma30": 1500
+                },
+                {
+                    "date": "Apr 2023",
+                    "max_available": 4800,
+                    "sma15": 2400,
+                    "sma30": 1450
+                },
+                {
+                    "date": "May 2023",
+                    "max_available": 4700,
+                    "sma15": 2400,
+                    "sma30": 1450
+                },
+                {
+                    "date": "Jun 2023",
+                    "max_available": 5000,
+                    "sma15": 2800,
+                    "sma30": 1450
+                },
+                {
+                    "date": "Jul 2023",
+                    "max_available": 5100,
+                    "sma15": 2400,
+                    "sma30": 1450
+                }
+            ]
+        },
+        {
+            "id": "2",
+            "name": "Product 2",
+            "size": "Size L",
+            "price": 29.99,
+            "category": "Category 1"
+        },
+        {
+            "id": "3",
+            "name": "Product 3",
+            "size": "Size S",
+            "price": 39.99,
+            "category": "Category 1"
+        }
+    ]
+}

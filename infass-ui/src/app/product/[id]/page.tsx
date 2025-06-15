@@ -5,7 +5,7 @@ import { PageProps } from '../../../../.next/types/app/layout';
 
 export default async function ProductPage({ params }: PageProps) {
     const { id } = await params;
-    const URL = `${process.env.GET_PRODUCT_BY_ID_URL}/${id}.json`;
+    const URL = `${process.env.API_BASE_URL}/products/${id}`;
     const res = await fetch(URL);
     if (!res.ok) {
         switch (res.status) {
