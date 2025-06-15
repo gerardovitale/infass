@@ -11,6 +11,7 @@ SUBDIRS=(
   "ingestor"
   "transformer"
   "retl"
+  "scripts"
 )
 
 setup_global_tools() {
