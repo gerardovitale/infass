@@ -4,6 +4,7 @@ from pathlib import Path
 from sqlite3 import Connection
 from sqlite3 import Cursor
 
+from fastapi import HTTPException
 from repositories.product_repo import ProductRepository
 
 logger = logging.getLogger("uvicorn.error")
@@ -70,6 +71,10 @@ class SQLiteProductRepository(ProductRepository):
                 """
         rows = cursor.execute(query, {"product_id": product_id}).fetchall()
         logger.info(f"SQLiteRepo - Found {len(rows)} records for product_id '{product_id}'")
+        if not rows:
+            logger.warning(f"SQLiteRepo - No product found for id: '{product_id}'")
+            conn.close()
+            raise HTTPException(status_code=404, detail="Product not found or no price details available")
         conn.close()
         return map_enriched_product(self.map_rows(rows, cursor))
 
