@@ -14,6 +14,11 @@ resource "google_bigquery_dataset" "infass_dataset" {
 
   access {
     role          = "READER"
+    user_by_email = google_service_account.api_service_account.email
+  }
+
+  access {
+    role          = "READER"
     user_by_email = var.GCP_USER
   }
 }
@@ -29,6 +34,11 @@ resource "google_bigquery_dataset" "infass_test_dataset" {
   access {
     role          = "OWNER"
     user_by_email = google_service_account.transformer_sa.email
+  }
+
+  access {
+    role          = "READER"
+    user_by_email = google_service_account.api_service_account.email
   }
 
   access {
