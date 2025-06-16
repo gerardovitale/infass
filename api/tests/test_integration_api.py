@@ -28,7 +28,7 @@ def setup_test_db():
     cur.execute(
         """
         CREATE TABLE products (
-            product_id TEXT PRIMARY KEY,
+            id TEXT PRIMARY KEY,
             name TEXT,
             size TEXT,
             categories TEXT,
@@ -41,7 +41,7 @@ def setup_test_db():
     cur.execute(
         """
         CREATE TABLE product_price_details (
-            product_id TEXT,
+            id TEXT,
             date TEXT,
             price REAL,
             sma7 REAL,
@@ -131,7 +131,7 @@ def test_search_no_results_returns_empty(client):
 test_cases = [
     {
         "description": "Get enriched product with valid ID",
-        "product_id": 1,
+        "id": 1,
         "expected_status": 200,
         "expected_response": {
             "id": "1",
@@ -161,7 +161,7 @@ test_cases = [
     },
     {
         "description": "Get enriched product with another valid ID",
-        "product_id": 2,
+        "id": 2,
         "expected_status": 200,
         "expected_response": {
             "id": "2",
@@ -184,7 +184,7 @@ test_cases = [
     },
     {
         "description": "Get enriched product with non-existent ID",
-        "product_id": 999,
+        "id": 999,
         "expected_status": 404,
         "expected_response": {"detail": "Product not found or no price details available"},
     },
@@ -193,6 +193,6 @@ test_cases = [
 
 @pytest.mark.parametrize("test_case", test_cases, ids=[tc["description"] for tc in test_cases])
 def test_get_enriched_product_integration(client, test_case):
-    resp = client.get(f"/products/{test_case['product_id']}")
+    resp = client.get(f"/products/{test_case['id']}")
     assert resp.status_code == test_case["expected_status"]
     assert resp.json() == test_case["expected_response"]
