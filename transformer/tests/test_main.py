@@ -47,7 +47,7 @@ class TestRunDataTransformation(TestCase):
 
         self.mock_csv_reader.assert_called_once_with("my_bucket_name", 5)
         self.mock_transformer.assert_called_once_with(mock_df)
-        self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table")
+        self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table", "WRITE_TRUNCATE")
         self.mock_check_destination_table.assert_called_once_with("myproject", "dataset", "table")
 
     def test_local_run_with_limit_should_save_csv(self):
@@ -91,7 +91,7 @@ class TestRunDataTransformation(TestCase):
 
         self.mock_csv_reader.assert_called_once_with("my_bucket_name", None)
         self.mock_transformer.assert_called_once_with(mock_df)
-        self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table")
+        self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table", "WRITE_TRUNCATE")
         self.mock_check_destination_table.assert_called_once_with("myproject", "dataset", "table")
 
     def test_run_with_invalid_limit(self):

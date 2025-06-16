@@ -37,11 +37,11 @@ def check_destination_table(project_id: str, dataset_id: str, table_id: str):
         raise RuntimeError(f"❌ Incompatible clustering: expected {CLUSTERING_FIELDS}, got {actual_clustering_fields}")
 
 
-def write_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_id: str):
+def write_to_bigquery(df: pd.DataFrame, project_id: str, dataset_id: str, table_id: str, write_disposition: str):
     client = Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     job_config = LoadJobConfig(
-        write_disposition="WRITE_TRUNCATE",
+        write_disposition=write_disposition,
         schema=BQ_MERC_SCHEMA,
         autodetect=False,
         time_partitioning=TimePartitioning(
