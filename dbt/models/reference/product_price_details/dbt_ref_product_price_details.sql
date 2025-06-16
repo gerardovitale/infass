@@ -6,12 +6,12 @@
       "data_type": "date",
       "granularity": "day"
     },
-    cluster_by = ["product_id"]
+    cluster_by = ["id"]
   )
 }}
 SELECT
     merc.date,
-    products.product_id,
+    products.id,
     merc.price,
     merc.price_ma_7 AS sma7,
     merc.price_ma_15 AS sma15,

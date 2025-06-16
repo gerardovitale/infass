@@ -1,6 +1,6 @@
 {{ config(materialized='table') }}
 SELECT
-    GENERATE_UUID() AS product_id,
+    TO_HEX(MD5(CONCAT(name, size))) AS id,
     name,
     size,
     STRING_AGG(category, ' | ') AS categories,
