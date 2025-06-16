@@ -25,7 +25,10 @@ def run_data_transformation(
     limit = None
     if transformer_limit:
         logging.info(f"Running transformer job with: TRANSFORMER_LIMIT = {transformer_limit}")
-        limit = int(transformer_limit)
+        if transformer_limit.isdigit():
+            limit = int(transformer_limit)
+        else:
+            logging.warning(f"Invalid TRANSFORMER_LIMIT value: {transformer_limit}. Using default None limit.")
     params = {
         "bucket_data_source": bucket_data_source,
         "destination_table": destination_table,
@@ -65,7 +68,7 @@ def run_locally(bucket_data_source: str, destination_table: str, limit: int) -> 
 if __name__ == "__main__":
     data_source = os.getenv("DATA_SOURCE")
     destination = os.getenv("DESTINATION")
-    read_limit = os.getenv("TRANSFORMER_LIMIT")
+    read_limit = os.getenv("LIMIT")  # -1 to take the last one
     write_disposition = os.getenv("WRITE_DISPOSITION")  # WRITE_TRUNCATE or WRITE_APPEND
     is_local_run = os.getenv("IS_LOCAL_RUN")
 
