@@ -1,8 +1,8 @@
 'use client';
 
-import {Product} from '@/types';
+import { Product } from '@/types';
 import Image from 'next/image';
-import {ProductDetailChart} from './ProductDetailChart';
+import { ProductDetailChart } from './ProductDetailChart';
 
 type Props = {
     product: Product;
@@ -16,13 +16,13 @@ export const ProductDetail = ({ product }: Props) => {
                 <div className="md:col-span-4 space-y-2">
                     <h1 className="text-2xl font-bold">{product.name}</h1>
                     <p className="text-gray-500">
-                        {product.size} - {product.category}
+                        {product.size} - {product.categories}
                     </p>
                     <p className="text-xl font-bold text-blue-600">
-                        {product.price.toFixed(2)}€
+                        {product.current_price.toFixed(2)}€
                     </p>
                     <Image
-                        src={fallbackImage}
+                        src={product.image_url || fallbackImage}
                         alt={product.name}
                         width={200}
                         height={200}
@@ -30,8 +30,8 @@ export const ProductDetail = ({ product }: Props) => {
                 </div>
 
                 <div className="md:col-span-8 flex items-center justify-center">
-                    {product.priceDetails?.length ? (
-                        <ProductDetailChart data={product.priceDetails} />
+                    {product.price_details?.length ? (
+                        <ProductDetailChart data={product.price_details} />
                     ) : (
                         <div className="w-full h-64 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
                             No data available

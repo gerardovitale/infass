@@ -6,6 +6,8 @@ type Props = {
 };
 
 export default async function SearchResult(props: Props) {
+    console.log('About to fetch search results for:', props.productSearched);
+    console.log('API Base URL:', process.env.API_BASE_URL);
     const data = await fetch(
         `${process.env.API_BASE_URL}/products/search?search_term=${props.productSearched}`
     );

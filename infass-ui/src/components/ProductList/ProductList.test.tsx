@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
 
+import { Product } from '@/types';
 import { render, screen } from '@testing-library/react';
 import { ProductList } from './ProductList';
-import { Product } from '@/types';
 
 describe('ProductList', () => {
     const mockProducts: Product[] = [
@@ -10,15 +10,15 @@ describe('ProductList', () => {
             id: '1',
             name: 'Product 1',
             size: 'Large',
-            price: 19.99,
-            category: 'Category 1',
+            current_price: 19.99,
+            categories: 'Category 1',
         },
         {
             id: '2',
             name: 'Product 2',
             size: 'Medium',
-            price: 9.99,
-            category: 'Category 2',
+            current_price: 9.99,
+            categories: 'Category 2',
         },
     ];
 
