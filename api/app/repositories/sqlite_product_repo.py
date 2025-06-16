@@ -21,7 +21,7 @@ class SQLiteProductRepository(ProductRepository):
         conn = self.get_connection()
         cursor = conn.cursor()
         query = """
-                SELECT product_id as id,
+                SELECT id,
                        name,
                        size,
                        categories,
@@ -52,7 +52,7 @@ class SQLiteProductRepository(ProductRepository):
         conn = self.get_connection()
         cursor = conn.cursor()
         query = """
-                SELECT p.product_id AS id,
+                SELECT p.id,
                        p.name,
                        p.size,
                        p.categories,
@@ -66,8 +66,8 @@ class SQLiteProductRepository(ProductRepository):
                        ppd.sma30
                 FROM products AS p
                          JOIN product_price_details AS ppd
-                              ON p.product_id = ppd.product_id
-                WHERE p.product_id = :product_id
+                              ON p.id = ppd.id
+                WHERE p.id = :product_id
                 """
         rows = cursor.execute(query, {"product_id": product_id}).fetchall()
         logger.info(f"SQLiteRepo - Found {len(rows)} records for product_id '{product_id}'")
