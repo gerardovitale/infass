@@ -1,22 +1,16 @@
 unit_tests:
   - name: test_dbt_ref_product_price_details
     model: dbt_ref_product_price_details
-    description: >
-      basic test for dbt_ref_product_price_details model to ensure it processes the input data correctly.
-
+    overrides:
+      macros:
+        is_incremental: false
     given:
       - input: source('infass', 'merc')
         format: csv
         fixture: input_infass_merc
-
       - input: ref('dbt_ref_products')
         format: csv
         fixture: input_ref_products
-
     expect:
       format: csv
       fixture: expected_ref_product_price_details
-
-    overrides:
-      macros:
-        get_last_saturday_date: "'2025-04-19'" # date before 6 months ==> '2024-10-19'
