@@ -143,3 +143,47 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
 
   labels = local.labels
 }
+
+resource "google_cloud_run_v2_job" "test_reversed_etl_job" {
+  name                = "${var.APP_NAME}-test-reversed-etl-job"
+  location            = var.REGION
+  deletion_protection = false
+
+  template {
+    template {
+      timeout         = "300s"
+      max_retries     = 0
+      service_account = google_service_account.api_service_account.email
+
+      containers {
+        name  = "infass-reversed-etl"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG}"
+        volume_mounts {
+          name       = local.volume_name
+          mount_path = local.volume_mount_path
+        }
+        env {
+          name  = "BQ_PROJECT_ID"
+          value = var.PROJECT
+        }
+        env {
+          name  = "BQ_DATASET_ID"
+          value = google_bigquery_dataset.infass_test_dataset.dataset_id
+        }
+        env {
+          name  = "SQLITE_DB_PATH"
+          value = "${local.volume_mount_path}/${var.APP_NAME}-test-sqlite-api.db"
+        }
+      }
+
+      volumes {
+        name = local.volume_name
+        gcs {
+          bucket = google_storage_bucket.sqlite_bucket.name
+        }
+      }
+    }
+  }
+
+  labels = local.labels
+}
