@@ -7,6 +7,7 @@ INGESTION_SCHEMA = [
     "category",
     "original_price",
     "discount_price",
+    "image_url",
 ]
 
 PD_MERC_SCHEMA = {
@@ -18,18 +19,11 @@ PD_MERC_SCHEMA = {
     "subcategory": "category",
     "image_url": "object",
     "price": "float32",
-    "prev_price": "float32",
     "price_ma_7": "float32",
     "price_ma_15": "float32",
     "price_ma_30": "float32",
     "original_price": "float32",
-    "prev_original_price": "float32",
     "discount_price": "float32",
-    "price_var_abs": "float32",
-    "price_var_percent": "float32",
-    "original_price_var_abs": "float32",
-    "original_price_var_percent": "float32",
-    "is_fake_discount": "boolean",
 }
 
 BQ_MERC_SCHEMA = [
@@ -41,16 +35,9 @@ BQ_MERC_SCHEMA = [
     SchemaField("subcategory", "STRING"),
     SchemaField("image_url", "STRING"),
     SchemaField("price", "FLOAT"),
-    SchemaField("prev_price", "FLOAT"),
     SchemaField("price_ma_7", "FLOAT"),
     SchemaField("price_ma_15", "FLOAT"),
     SchemaField("price_ma_30", "FLOAT"),
     SchemaField("original_price", "FLOAT"),
-    SchemaField("prev_original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),
-    SchemaField("price_var_abs", "FLOAT"),
-    SchemaField("price_var_percent", "FLOAT"),
-    SchemaField("original_price_var_abs", "FLOAT"),
-    SchemaField("original_price_var_percent", "FLOAT"),
-    SchemaField("is_fake_discount", "BOOLEAN"),
 ]
