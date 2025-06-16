@@ -48,7 +48,7 @@ transformer.local-run:
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		-e DATA_SOURCE=infass-merc \
 		-e DESTINATION=$(GCP_PROJECT_ID).infass.merc \
-		-e TRANSFORMER_LIMIT=7 \
+		-e LIMIT=7 \
 		-e IS_LOCAL_RUN=true \
 		transformer:latest
 
