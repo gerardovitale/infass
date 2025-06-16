@@ -33,9 +33,6 @@ sources:
           - name: price
             data_type: float
 
-          - name: prev_price
-            data_type: float
-
           - name: price_ma_7
             data_type: float
 
@@ -48,23 +45,5 @@ sources:
           - name: original_price
             data_type: float
 
-          - name: prev_original_price
-            data_type: float
-
           - name: discount_price
             data_type: float
-
-          - name: price_var_abs
-            data_type: float
-
-          - name: price_var_percent
-            data_type: float
-
-          - name: original_price_var_abs
-            data_type: float
-
-          - name: original_price_var_percent
-            data_type: float
-
-          - name: is_fake_discount
-            data_type: boolean

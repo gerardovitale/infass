@@ -32,10 +32,6 @@ models:
         description: "Number of products with a discount in the table"
         data_type: integer
 
-      - name: fake_discount_product_count
-        description: "Number of products with a fake discount in the table"
-        data_type: integer
-
       - name: total_rows_change_percentage
         description: "Percentage change in total rows per day"
         data_type: float
@@ -68,10 +64,6 @@ models:
         description: "Percentage of null values in the price column"
         data_type: float
 
-      - name: percent_null_prev_price
-        description: "Percentage of null values in the prev_price column"
-        data_type: float
-
       - name: percent_null_price_ma_7
         description: "Percentage of null values in the price_ma_7 column"
         data_type: float
@@ -88,32 +80,8 @@ models:
         description: "Percentage of null values in the original_price column"
         data_type: float
 
-      - name: percent_null_prev_original_price
-        description: "Percentage of null values in the prev_original_price column"
-        data_type: float
-
       - name: percent_null_discount_price
         description: "Percentage of null values in the discount_price column"
-        data_type: float
-
-      - name: percent_null_price_var_abs
-        description: "Percentage of null values in the price_var_abs column"
-        data_type: float
-
-      - name: percent_null_price_var_percent
-        description: "Percentage of null values in the price_var_percent column"
-        data_type: float
-
-      - name: percent_null_original_price_var_abs
-        description: "Percentage of null values in the original_price_var_abs column"
-        data_type: float
-
-      - name: percent_null_original_price_var_percent
-        description: "Percentage of null values in the original_price_var_percent column"
-        data_type: float
-
-      - name: percent_null_is_fake_discount
-        description: "Percentage of null values in the is_fake_discount column"
         data_type: float
 
       - name: null_dedup_id
@@ -140,10 +108,6 @@ models:
         description: "Number of null values in the price column"
         data_type: integer
 
-      - name: null_prev_price
-        description: "Number of null values in the prev_price column"
-        data_type: integer
-
       - name: null_price_ma_7
         description: "Number of null values in the price_ma_7 column"
         data_type: integer
@@ -160,30 +124,6 @@ models:
         description: "Number of null values in the original_price column"
         data_type: integer
 
-      - name: null_prev_original_price
-        description: "Number of null values in the prev_original_price column"
-        data_type: integer
-
       - name: null_discount_price
         description: "Number of null values in the discount_price column"
-        data_type: integer
-
-      - name: null_price_var_abs
-        description: "Number of null values in the price_var_abs column"
-        data_type: integer
-
-      - name: null_price_var_percent
-        description: "Number of null values in the price_var_percent column"
-        data_type: integer
-
-      - name: null_original_price_var_abs
-        description: "Number of null values in the original_price_var_abs column"
-        data_type: integer
-
-      - name: null_original_price_var_percent
-        description: "Number of null values in the original_price_var_percent column"
-        data_type: integer
-
-      - name: null_is_fake_discount
-        description: "Number of null values in the is_fake_discount column"
         data_type: integer
