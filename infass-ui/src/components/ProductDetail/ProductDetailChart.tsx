@@ -56,7 +56,7 @@ export const ProductDetailChart = ({ data }: Props) => {
                 <Legend />
                 <Line
                     type="monotone"
-                    dataKey="max_available"
+                    dataKey="price"
                     stroke="#2563eb"
                     strokeWidth={2}
                     dot={false}

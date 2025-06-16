@@ -1,17 +1,17 @@
 import '@testing-library/jest-dom';
 
+import { Product } from '@/types';
 import { render, screen } from '@testing-library/react';
 import { ProductDetail } from './ProductDetail';
-import { Product } from '@/types';
 
 describe('ProductDetail', () => {
     const mockProduct: Product = {
         id: '1',
         name: 'Test Product',
         size: 'Large',
-        category: 'Electronics',
-        price: 99.99,
-        priceDetails: [],
+        categories: 'Electronics',
+        current_price: 99.99,
+        price_details: [],
     };
 
     it('renders product name, size, category, and price', () => {
@@ -39,10 +39,10 @@ describe('ProductDetail', () => {
     it('renders chart with data', () => {
         const productWithData: Product = {
             ...mockProduct,
-            priceDetails: [
+            price_details: [
                 {
                     date: '2023-01-01',
-                    max_available: 100,
+                    price: 100,
                     sma15: 90,
                     sma30: 80,
                 },

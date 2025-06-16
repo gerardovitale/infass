@@ -1,16 +1,16 @@
 import '@testing-library/jest-dom';
 
+import { Product } from '@/types';
 import { render, screen } from '@testing-library/react';
 import { ProductCard } from './ProductCard';
-import { Product } from '@/types';
 
 describe('ProductCard', () => {
     const mockProduct: Product = {
         id: '1',
         name: 'Milk',
         size: '1L',
-        category: 'Test Category',
-        price: 19.9923,
+        categories: 'Test Category',
+        current_price: 19.9923,
     };
 
     it('renders the product name', () => {

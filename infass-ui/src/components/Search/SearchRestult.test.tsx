@@ -1,17 +1,23 @@
+import { ProductResponse } from '@/types';
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
 import SearchResult from './SearchResult';
-import { ProductResponse } from '@/types';
 
 const mockedProducts = {
     results: [
-        { id: '1', name: 'Milk', size: '1L', price: 2.5, category: 'Drinks' },
+        {
+            id: '1',
+            name: 'Milk',
+            size: '1L',
+            current_price: 2.5,
+            categories: 'Drinks',
+        },
         {
             id: '2',
             name: 'Almond Milk',
             size: '1L',
-            price: 3.0,
-            category: 'Drinks',
+            current_price: 3.0,
+            categories: 'Drinks',
         },
     ],
     total_results: 2,
@@ -45,6 +51,5 @@ describe('SearchResult', () => {
         const { queryByText } = await renderSearchPage();
         const noResults = queryByText('No products found');
         expect(noResults).toBeInTheDocument();
-
     });
 });

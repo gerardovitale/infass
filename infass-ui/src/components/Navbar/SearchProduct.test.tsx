@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { SearchProduct } from './SearchProduct';
 
 describe('SearchProduct', () => {
@@ -29,7 +29,7 @@ describe('SearchProduct', () => {
 
         expect(button).toHaveAttribute(
             'href',
-            expect.stringContaining('/search?product=eggs')
+            expect.stringContaining('/search?search_term=eggs')
         );
     });
 
@@ -43,7 +43,7 @@ describe('SearchProduct', () => {
 
         expect(button).toHaveAttribute(
             'href',
-            expect.stringContaining('/search?product=eggs')
+            expect.stringContaining('/search?search_term=eggs')
         );
     });
 
@@ -57,7 +57,7 @@ describe('SearchProduct', () => {
 
         expect(button).toHaveAttribute(
             'href',
-            expect.stringContaining('/search?product=eggs')
+            expect.stringContaining('/search?search_term=eggs')
         );
     });
 });

@@ -15,7 +15,7 @@ export const ProductCard = ({ product }: Props) => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Image
-                        src={fallbackImage}
+                        src={product.image_url || fallbackImage}
                         alt="Product Image"
                         width={100}
                         height={100}
@@ -28,7 +28,7 @@ export const ProductCard = ({ product }: Props) => {
                     </div>
                 </div>
                 <span className="text-blue-600 font-bold text-lg">
-                    €{product.price.toFixed(2)}
+                    €{product.current_price.toFixed(2)}
                 </span>
             </div>
         </Link>
