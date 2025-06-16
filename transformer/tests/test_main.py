@@ -33,9 +33,9 @@ class TestRunDataTransformation(TestCase):
 
     def test_remote_run_with_limit(self):
         test_params = {
-            "bucket_data_source": "my_bucket_name",
-            "destination_table": "myproject.dataset.table",
-            "transformer_limit": "5",
+            "data_source": "my_bucket_name",
+            "destination": "myproject.dataset.table",
+            "read_limit": "5",
             "is_local_run": None,
         }
 
@@ -52,9 +52,9 @@ class TestRunDataTransformation(TestCase):
 
     def test_local_run_with_limit_should_save_csv(self):
         test_params = {
-            "bucket_data_source": "my_bucket_name",
-            "destination_table": "myproject.dataset.table",
-            "transformer_limit": "5",
+            "data_source": "my_bucket_name",
+            "destination": "myproject.dataset.table",
+            "read_limit": "5",
             "is_local_run": True,
         }
         expected_csv_dest_path = "data/myproject_dataset_table.csv"
@@ -77,9 +77,9 @@ class TestRunDataTransformation(TestCase):
 
     def test_remote_run_without_limit(self):
         test_params = {
-            "bucket_data_source": "my_bucket_name",
-            "destination_table": "myproject.dataset.table",
-            "transformer_limit": None,
+            "data_source": "my_bucket_name",
+            "destination": "myproject.dataset.table",
+            "read_limit": None,
             "is_local_run": None,
         }
 
@@ -94,18 +94,21 @@ class TestRunDataTransformation(TestCase):
         self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table", "WRITE_TRUNCATE")
         self.mock_check_destination_table.assert_called_once_with("myproject", "dataset", "table")
 
-    def test_run_with_invalid_limit(self):
+    def test_run_with_invalid_limit_run_with_no_limit(self):
         test_params = {
-            "bucket_data_source": "my_bucket_name",
-            "destination_table": "myproject.dataset.table",
-            "transformer_limit": "invalid_limit",
+            "data_source": "my_bucket_name",
+            "destination": "myproject.dataset.table",
+            "read_limit": "invalid_limit",
             "is_local_run": None,
         }
 
-        with self.assertRaises(ValueError):
-            run_data_transformation(**test_params)
+        mock_df = pd.DataFrame({"col": [1, 2, 3]})
+        self.mock_csv_reader.return_value = mock_df
+        self.mock_transformer.return_value = mock_df
 
-        self.mock_csv_reader.assert_not_called()
-        self.mock_transformer.assert_not_called()
-        self.mock_bigquery_writer.assert_not_called()
-        self.mock_check_destination_table.assert_not_called()
+        run_data_transformation(**test_params)
+
+        self.mock_csv_reader.assert_called_once_with("my_bucket_name", None)
+        self.mock_transformer.assert_called_once_with(mock_df)
+        self.mock_bigquery_writer.assert_called_once_with(mock_df, "myproject", "dataset", "table", "WRITE_TRUNCATE")
+        self.mock_check_destination_table.assert_called_once_with("myproject", "dataset", "table")
