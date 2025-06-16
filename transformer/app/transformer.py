@@ -22,6 +22,7 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     # below operations that need the df to be sorted
     df = sort_by_name_size_and_date(df)
     df = add_price_moving_average(df)
+    df = round_price_columns(df)
     return df[PD_MERC_SCHEMA.keys()]
 
 
@@ -101,4 +102,11 @@ def add_price_moving_average(df: pd.DataFrame) -> pd.DataFrame:
         df[f"price_ma_{days}"] = (
             df.groupby(["name", "size"])["price"].rolling(days).mean().reset_index(drop=True).astype("float32")
         )
+    return df
+
+
+def round_price_columns(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Rounding price columns to 2 decimal places")
+    price_columns = ["original_price", "discount_price", "price"]
+    df[price_columns] = df[price_columns].round(2)
     return df
