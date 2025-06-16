@@ -37,6 +37,7 @@ resource "google_cloud_run_v2_job" "transformer_job" {
             memory = "2Gi"
           }
         }
+
         env {
           name  = "DATA_SOURCE"
           value = google_storage_bucket.infass_bucket.name
@@ -45,7 +46,14 @@ resource "google_cloud_run_v2_job" "transformer_job" {
           name  = "DESTINATION"
           value = "${google_bigquery_dataset.infass_dataset.project}.${google_bigquery_dataset.infass_dataset.dataset_id}.merc"
         }
-
+        env {
+          name  = "LIMIT"
+          value = var.TRANSFORMER_LIMIT
+        }
+        env {
+          name  = "WRITE_DISPOSITION"
+          value = var.TRANSFORMER_WRITE_DISPOSITION
+        }
       }
     }
   }

@@ -27,3 +27,15 @@ variable "GCP_USER" {
   type        = string
   description = "GCP user email"
 }
+
+variable "TRANSFORMER_LIMIT" {
+  type        = string
+  description = "Limit for the transformer job"
+  default     = "1000"
+}
+
+variable "TRANSFORMER_WRITE_DISPOSITION" {
+  type        = string
+  description = "Write disposition for the transformer job"
+  default     = "WRITE_APPEND"
+}

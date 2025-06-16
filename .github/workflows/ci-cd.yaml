@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [ingestor, transformer, api, infass-ui, retl]
+        service: [ ingestor, transformer, api, infass-ui, retl ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -46,7 +46,7 @@ jobs:
     needs: test
     strategy:
       matrix:
-        service: [ingestor, transformer, api, retl]
+        service: [ ingestor, transformer, api, retl ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
@@ -93,6 +93,8 @@ jobs:
       TF_VAR_REGION: europe-southwest1
       TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       TF_VAR_GCP_USER: ${{ secrets.GCP_USER }}
+      TF_VAR_TRANSFORMER_WRITE_DISPOSITION: WRITE_APPEND
+#      TF_VAR_TRANSFORMER_LIMIT: -1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.1.7
