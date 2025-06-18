@@ -1,11 +1,13 @@
 import logging
 import os
+from datetime import datetime
 
 from google.cloud import bigquery
 from pydantic import BaseModel
 from sinks import BigQuerySink
 from sinks import Sink
 from sinks import SQLiteSink
+from sinks import Transaction
 
 logging.basicConfig(
     format="%(name)s - %(levelname)s - %(message)s",
@@ -23,6 +25,18 @@ def _run_task(task: TaskConfig) -> None:
     logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
     df = task.data_source.fetch_data()
     task.destination.write_data(df)
+    if "date" in df.columns:
+        print("##### DEBUG ===>")
+        print(df)
+        txn = Transaction(
+            data_source_table=task.data_source.table,
+            destination_table=task.destination.table,
+            occurred_at=datetime.now().isoformat(),
+            min_date=df["date"].min(),
+            max_date=df["date"].max(),
+        )
+        print(txn.model_dump())
+        task.destination.record_transaction(txn)
 
 
 def run_tasks(tasks: list[TaskConfig]) -> None:
