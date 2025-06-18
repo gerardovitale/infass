@@ -1,10 +1,13 @@
 from unittest.mock import MagicMock
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
 from app.sinks import BigQuerySink
 from app.sinks import SQLiteSink
+from google.cloud import bigquery
+from pandas.testing import assert_frame_equal
 
 
 @pytest.fixture
@@ -16,19 +19,23 @@ def sample_df():
 # Test: BigQuerySink
 # --------------------------
 def test_bigquery_sink_fetch_data(sample_df):
-    with patch("app.sinks.bigquery.Client") as mock_client_cls:
-        mock_client = MagicMock()
-        mock_query_job = MagicMock()
-        mock_query_job.to_dataframe.return_value = sample_df
-        mock_client.query.return_value = mock_query_job
-        mock_client_cls.return_value = mock_client
+    mock_client = Mock(spec=bigquery.Client)
+    test_params = {
+        "project_id": "test_project_id",
+        "dataset_id": "test_dataset_id",
+        "table": "test_table",
+        "client": mock_client,
+    }
 
-        sink = BigQuerySink(project_id="proj", dataset_id="ds", table="tbl")
-        df = sink.fetch_data()
+    mock_query_job = MagicMock()
+    mock_query_job.to_dataframe.return_value = sample_df
+    mock_client.query.return_value = mock_query_job
 
-        mock_client_cls.assert_called_once_with(project="proj")
-        mock_client.query.assert_called_once()
-        assert df.equals(sample_df)
+    sink = BigQuerySink(**test_params)
+    df = sink.fetch_data()
+
+    mock_client.query.assert_called_once()
+    assert_frame_equal(df, sample_df)
 
 
 # --------------------------

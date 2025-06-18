@@ -5,7 +5,6 @@ from typing import List
 
 import pandas as pd
 from google.cloud import bigquery
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -18,25 +17,27 @@ class Sink(ABC):
         raise NotImplementedError()
 
 
-class BigQuerySink(BaseModel, Sink):
-    project_id: str
-    dataset_id: str
-    table: str
+class BigQuerySink(Sink):
+    def __init__(self, project_id: str, dataset_id: str, table: str, client: bigquery.Client):
+        self.project_id = project_id
+        self.dataset_id = dataset_id
+        self.table = table
+        self.client = client
 
     def fetch_data(self) -> pd.DataFrame:
         logger.info(f"Fetching data from BigQuery table: {self.project_id}.{self.dataset_id}.{self.table}")
-        client = bigquery.Client(project=self.project_id)
         query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{self.table}`"
-        df = client.query(query).to_dataframe()
+        df = self.client.query(query).to_dataframe()
         logger.info(f"Fetched {len(df)} rows from BigQuery")
         logger.info(f"DataFrame size: {df.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB")
         return df
 
 
-class SQLiteSink(BaseModel, Sink):
-    db_path: str
-    table: str
-    index_columns: List[str] = None
+class SQLiteSink(Sink):
+    def __init__(self, db_path: str, table: str, index_columns: List[str] = None):
+        self.db_path = db_path
+        self.table = table
+        self.index_columns = index_columns
 
     def write_data(self, df: pd.DataFrame) -> None:
         logger.info(f"Writing DataFrame to SQLite at {self.db_path}, table '{self.table}'")

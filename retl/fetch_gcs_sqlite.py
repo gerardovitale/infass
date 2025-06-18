@@ -3,7 +3,7 @@ import sqlite3
 from google.cloud import storage
 
 BUCKET_NAME = "infass-sqlite-bucket"
-OBJECT_NAME = "infass-sqlite-api.db"
+OBJECT_NAME = "infass-test-sqlite-api.db"
 LOCAL_PATH = "../data/infass-sqlite-api.db"
 
 

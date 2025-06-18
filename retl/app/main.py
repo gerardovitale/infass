@@ -1,9 +1,7 @@
 import logging
 import os
-from concurrent.futures import as_completed
-from concurrent.futures import ThreadPoolExecutor
-from typing import Sequence
 
+from google.cloud import bigquery
 from pydantic import BaseModel
 from sinks import BigQuerySink
 from sinks import Sink
@@ -34,28 +32,18 @@ def run_tasks(tasks: list[TaskConfig]) -> None:
     logging.info("Reversed ETL process completed")
 
 
-def parallel_run_tasks(tasks: Sequence[TaskConfig]) -> None:
-    logging.info("Starting Reversed ETL process")
-    with ThreadPoolExecutor() as executor:
-        futures = [executor.submit(_run_task, task) for task in tasks]
-        for future in as_completed(futures):
-            try:
-                future.result()
-            except Exception as e:
-                logging.error(f"Task failed: {e}")
-    logging.info("Reversed ETL process completed")
-
-
 def main():
     bq_project_id = os.environ["BQ_PROJECT_ID"]
     bq_dataset_id = os.environ["BQ_DATASET_ID"]
     sqlite_db_path = os.environ["SQLITE_DB_PATH"]
+    bq_client = bigquery.Client(project=bq_project_id)
     tasks = [
         TaskConfig(
             data_source=BigQuerySink(
                 project_id=bq_project_id,
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_products",
+                client=bq_client,
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
@@ -68,6 +56,7 @@ def main():
                 project_id=bq_project_id,
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_product_price_details",
+                client=bq_client,
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
