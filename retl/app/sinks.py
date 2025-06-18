@@ -63,7 +63,7 @@ class SQLiteSink(Sink):
         logger.info("Write to SQLite completed")
 
     def record_transaction(self, txn: Transaction) -> None:
-        print(f"Writing Transaction to SQLite at {self.db_path}, table '{self.transaction_table_name}'")
+        logger.info(f"Writing Transaction to SQLite at {self.db_path}, table '{self.transaction_table_name}'")
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute(
@@ -80,7 +80,7 @@ class SQLiteSink(Sink):
             """
         )
         record = (txn.data_source_table, txn.destination_table, txn.occurred_at, txn.min_date, txn.max_date)
-        print(f"Writing Transaction: {record}")
+        logger.info(f"Writing Transaction: {record}")
         cur.execute(
             f"INSERT INTO {self.transaction_table_name} "
             "(data_source_table, destination_table, occurred_at, min_date, max_date) "
@@ -89,4 +89,4 @@ class SQLiteSink(Sink):
         )
         conn.commit()
         conn.close()
-        print("Transaction writing completed")
+        logger.info("Transaction writing completed")

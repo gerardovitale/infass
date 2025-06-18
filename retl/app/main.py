@@ -26,8 +26,6 @@ def _run_task(task: TaskConfig) -> None:
     df = task.data_source.fetch_data()
     task.destination.write_data(df)
     if "date" in df.columns:
-        print("##### DEBUG ===>")
-        print(df)
         txn = Transaction(
             data_source_table=task.data_source.table,
             destination_table=task.destination.table,
@@ -35,7 +33,6 @@ def _run_task(task: TaskConfig) -> None:
             min_date=df["date"].min(),
             max_date=df["date"].max(),
         )
-        print(txn.model_dump())
         task.destination.record_transaction(txn)
 
 
