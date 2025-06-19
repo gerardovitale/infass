@@ -1,13 +1,17 @@
+import os
+import sqlite3
+import tempfile
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from app.sinks import BigQuerySink
-from app.sinks import SQLiteSink
 from google.cloud import bigquery
 from pandas.testing import assert_frame_equal
+from sinks import BigQuerySink
+from sinks import SQLiteSink
+from sinks import Transaction
 
 
 @pytest.fixture
@@ -82,3 +86,61 @@ def test_sqlite_sink_write_data_when_index_columns_are_specified(tmp_path, mock_
             test_params["table"], mock_conn, if_exists="replace", index=True, index_label=test_params["index_columns"]
         )
         mock_conn.close.assert_called_once()
+
+
+# --------------------------
+# Test: SQLiteSink Reversed ETL transactions
+# --------------------------
+@pytest.fixture
+def sqlite_with_retl_transactions():
+    fd, db_path = tempfile.mkstemp()
+    os.close(fd)
+    try:
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS retl_transactions
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_source_table TEXT,
+                destination_table REAL,
+                occurred_at TEXT,
+                min_date TEXT,
+                max_date TEXT
+            );
+            """
+        )
+        records = [
+            # (txn.data_source_table, txn.destination_table, txn.occurred_at, txn.min_date, txn.max_date)
+            ("test_data_source_table", "test_destination_table", "2025-06-07T09:00:00", "2025-01-01", "2025-06-06"),
+            ("test_data_source_table", "test_destination_table", "2025-06-14T07:00:00", "2025-06-07", "2025-06-14"),
+        ]
+        cur.executemany(
+            "INSERT INTO retl_transactions "
+            "(data_source_table, destination_table, occurred_at, min_date, max_date) "
+            "VALUES (?, ?, ?, ?, ?);",
+            records,
+        )
+        conn.commit()
+        yield db_path, cur
+        conn.close()
+    finally:
+        os.remove(db_path)
+
+
+def test_get_last_transaction(sqlite_with_retl_transactions):
+    db_path, _ = sqlite_with_retl_transactions
+    test_params = {
+        "db_path": db_path,
+        "table": "test_table",
+    }
+    expected = Transaction(
+        data_source_table="test_data_source_table",
+        destination_table="test_destination_table",
+        occurred_at="2025-06-14T07:00:00",
+        min_date="2025-06-07",
+        max_date="2025-06-14",
+    )
+    actual = SQLiteSink(**test_params).get_last_transaction()
+    assert actual == expected

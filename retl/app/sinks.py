@@ -1,7 +1,6 @@
 import logging
 import sqlite3
 from abc import ABC
-from datetime import date
 from typing import List
 
 import pandas as pd
@@ -15,8 +14,8 @@ class Transaction(BaseModel):
     data_source_table: str
     destination_table: str
     occurred_at: str
-    min_date: date
-    max_date: date
+    min_date: str
+    max_date: str
 
 
 class Sink(ABC):
@@ -61,6 +60,17 @@ class SQLiteSink(Sink):
         df.to_sql(self.table, conn, **params)
         conn.close()
         logger.info("Write to SQLite completed")
+
+    def get_last_transaction(self):
+        def get_columns(cursor: sqlite3.Cursor) -> List[str]:
+            return [column[0] for column in cursor.description]
+
+        logger.info(f"Fetching last transaction from {self.transaction_table_name}")
+        conn = sqlite3.connect(self.db_path)
+        cur = conn.cursor()
+        cur.execute(f"SELECT * FROM {self.transaction_table_name} ORDER BY occurred_at DESC LIMIT 1")
+        rows = cur.fetchall()
+        return Transaction(**[dict(zip(get_columns(cur), row)) for row in rows][0])
 
     def record_transaction(self, txn: Transaction) -> None:
         logger.info(f"Writing Transaction to SQLite at {self.db_path}, table '{self.transaction_table_name}'")
