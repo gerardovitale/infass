@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from typing import Union
 
 from google.cloud import bigquery
 from pydantic import BaseModel
@@ -17,23 +18,27 @@ logging.basicConfig(
 
 class TaskConfig(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
-    data_source: Sink
-    destination: Sink
+    data_source: Union[Sink, BigQuerySink]
+    destination: Union[Sink, SQLiteSink]
 
 
 def _run_task(task: TaskConfig) -> None:
     logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
-    df = task.data_source.fetch_data()
+    last_txn = None
+    if task.data_source.is_incremental:
+        last_txn = task.destination.get_last_transaction_if_exist()
+    df = task.data_source.fetch_data(last_transaction=last_txn)
     task.destination.write_data(df)
-    if "date" in df.columns:
-        txn = Transaction(
+    min_date, max_date = (df["date"].min(), df["date"].max()) if "date" in df.columns else (None, None)
+    task.destination.record_transaction(
+        Transaction(
             data_source_table=task.data_source.table,
             destination_table=task.destination.table,
             occurred_at=datetime.now().isoformat(),
-            min_date=df["date"].min(),
-            max_date=df["date"].max(),
+            min_date=min_date,
+            max_date=max_date,
         )
-        task.destination.record_transaction(txn)
+    )
 
 
 def run_tasks(tasks: list[TaskConfig]) -> None:
@@ -55,6 +60,7 @@ def main():
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_products",
                 client=bq_client,
+                is_incremental=False,
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
@@ -68,6 +74,7 @@ def main():
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_product_price_details",
                 client=bq_client,
+                is_incremental=True,
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,

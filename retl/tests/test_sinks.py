@@ -29,6 +29,7 @@ def test_bigquery_sink_fetch_data(sample_df):
         "dataset_id": "test_dataset_id",
         "table": "test_table",
         "client": mock_client,
+        "is_incremental": False,
     }
 
     mock_query_job = MagicMock()
@@ -133,7 +134,7 @@ def test_get_last_transaction(sqlite_with_retl_transactions):
     db_path, _ = sqlite_with_retl_transactions
     test_params = {
         "db_path": db_path,
-        "table": "test_table",
+        "table": "test_destination_table",
     }
     expected = Transaction(
         data_source_table="test_data_source_table",
@@ -142,5 +143,64 @@ def test_get_last_transaction(sqlite_with_retl_transactions):
         min_date="2025-06-07",
         max_date="2025-06-14",
     )
-    actual = SQLiteSink(**test_params).get_last_transaction()
+    actual = SQLiteSink(**test_params).get_last_transaction_if_exist()
     assert actual == expected
+
+
+@pytest.fixture
+def sqlite_with_no_retl_transactions():
+    fd, db_path = tempfile.mkstemp()
+    os.close(fd)
+    try:
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS retl_transactions
+            (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                data_source_table TEXT,
+                destination_table REAL,
+                occurred_at TEXT,
+                min_date TEXT,
+                max_date TEXT
+            );
+            """
+        )
+        yield db_path, cur
+        conn.close()
+    finally:
+        os.remove(db_path)
+
+
+def test_get_last_transaction_when_there_are_no_transactions(sqlite_with_no_retl_transactions):
+    db_path, _ = sqlite_with_no_retl_transactions
+    test_params = {
+        "db_path": db_path,
+        "table": "test_table",
+    }
+    actual = SQLiteSink(**test_params).get_last_transaction_if_exist()
+    assert actual is None
+
+
+@pytest.fixture
+def sqlite_with_no_retl_transactions_table():
+    fd, db_path = tempfile.mkstemp()
+    os.close(fd)
+    try:
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        yield db_path, cur
+        conn.close()
+    finally:
+        os.remove(db_path)
+
+
+def test_get_last_transaction_when_table_does_not_exist(sqlite_with_no_retl_transactions_table):
+    db_path, _ = sqlite_with_no_retl_transactions_table
+    test_params = {
+        "db_path": db_path,
+        "table": "test_table",
+    }
+    actual = SQLiteSink(**test_params).get_last_transaction_if_exist()
+    assert actual is None

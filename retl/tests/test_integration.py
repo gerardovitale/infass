@@ -83,12 +83,20 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         expected_transactions = [
             (
                 1,
+                "dbt_ref_products",
+                "products",
+                "2025-01-03T00:00:00",
+                None,
+                None,
+            ),
+            (
+                2,
                 "dbt_ref_product_price_details",
                 "product_price_details",
                 "2025-01-03T00:00:00",
                 "2025-01-01",
                 "2025-01-03",
-            )
+            ),
         ]
         cursor.execute("SELECT * FROM retl_transactions ORDER BY id;")
         actual_transactions = cursor.fetchall()
