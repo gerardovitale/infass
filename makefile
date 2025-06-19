@@ -109,14 +109,14 @@ api.local-integration-test:
 
 # UI
 ui.test:
-	scripts/run-docker-test.sh infass-ui
+	scripts/run-docker-test.sh ui
 
 ui.run:
-	cd infass-ui/ && docker buildx build -t infass-ui .
+	cd ui/ && docker buildx build -t ui .
 	docker run -p 3000:3000 --rm \
 			-e API_BASE_URL=http://localhost:8080 \
 			-e USE_API_MOCKS=false \
-			 infass-ui:latest
+			 ui:latest
 
 
 
