@@ -29,7 +29,6 @@ def test_bigquery_sink_fetch_data(sample_df):
         "dataset_id": "test_dataset_id",
         "table": "test_table",
         "client": mock_client,
-        "is_incremental": False,
     }
 
     mock_query_job = MagicMock()
@@ -41,6 +40,69 @@ def test_bigquery_sink_fetch_data(sample_df):
 
     mock_client.query.assert_called_once()
     assert_frame_equal(df, sample_df)
+
+
+def test_bigquery_sink_fetch_data_with_last_transaction(sample_df):
+    mock_client = Mock(spec=bigquery.Client)
+    test_params = {
+        "project_id": "test_project_id",
+        "dataset_id": "test_dataset_id",
+        "table": "test_table",
+        "client": mock_client,
+    }
+    test_last_transaction = Transaction(
+        data_source_table="src",
+        destination_table="test_table",
+        occurred_at="2025-06-14T07:00:00",
+        min_date="2025-06-07",
+        max_date="2025-06-14",
+    )
+
+    mock_query_job = MagicMock()
+    mock_query_job.to_dataframe.return_value = sample_df
+    mock_client.query.return_value = mock_query_job
+
+    expected_query = "SELECT * FROM `test_project_id.test_dataset_id.test_table` WHERE date >= '2025-06-14'"
+
+    sink = BigQuerySink(**test_params)
+    df = sink.fetch_data(test_last_transaction)
+
+    mock_client.query.assert_called_once_with(expected_query)
+    assert_frame_equal(df, sample_df)
+
+
+def test_bigquery_sink_fetch_data_empty_result():
+    mock_client = Mock(spec=bigquery.Client)
+    test_params = {
+        "project_id": "test_project_id",
+        "dataset_id": "test_dataset_id",
+        "table": "test_table",
+        "client": mock_client,
+    }
+
+    mock_query_job = MagicMock()
+    empty_df = pd.DataFrame()
+    mock_query_job.to_dataframe.return_value = empty_df
+    mock_client.query.return_value = mock_query_job
+
+    sink = BigQuerySink(**test_params)
+    df = sink.fetch_data()
+
+    assert_frame_equal(df, empty_df)
+
+
+def test_bigquery_sink_fetch_data_raises_exception():
+    mock_client = Mock(spec=bigquery.Client)
+    test_params = {
+        "project_id": "test_project_id",
+        "dataset_id": "test_dataset_id",
+        "table": "test_table",
+        "client": mock_client,
+    }
+    mock_client.query.side_effect = Exception("BigQuery error")
+    sink = BigQuerySink(**test_params)
+    with pytest.raises(Exception, match="BigQuery error"):
+        sink.fetch_data()
 
 
 # --------------------------
@@ -204,3 +266,27 @@ def test_get_last_transaction_when_table_does_not_exist(sqlite_with_no_retl_tran
     }
     actual = SQLiteSink(**test_params).get_last_transaction_if_exist()
     assert actual is None
+
+
+def test_sqlite_sink_record_transaction_creates_table_and_inserts(tmp_path):
+    test_params = {
+        "db_path": str(tmp_path / "test.db"),
+        "table": "test_table",
+    }
+    sink = SQLiteSink(**test_params)
+    txn = Transaction(
+        data_source_table="src",
+        destination_table="test_table",
+        occurred_at="2025-06-14T07:00:00",
+        min_date="2025-06-07",
+        max_date="2025-06-14",
+    )
+    # Should not raise
+    sink.record_transaction(txn)
+    # Check that the transaction was inserted
+    conn = sqlite3.connect(test_params["db_path"])
+    cur = conn.cursor()
+    cur.execute(f"SELECT * FROM {sink.transaction_table_name} WHERE destination_table = ?", ("test_table",))
+    rows = cur.fetchall()
+    assert len(rows) == 1
+    conn.close()

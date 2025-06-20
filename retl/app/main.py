@@ -24,9 +24,7 @@ class TaskConfig(BaseModel):
 
 def _run_task(task: TaskConfig) -> None:
     logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
-    last_txn = None
-    if task.data_source.is_incremental:
-        last_txn = task.destination.get_last_transaction_if_exist()
+    last_txn = task.destination.last_transaction
     df = task.data_source.fetch_data(last_transaction=last_txn)
     task.destination.write_data(df)
     min_date, max_date = (df["date"].min(), df["date"].max()) if "date" in df.columns else (None, None)
@@ -60,11 +58,11 @@ def main():
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_products",
                 client=bq_client,
-                is_incremental=False,
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
                 table="products",
+                is_incremental=False,
                 index_columns=["product_id"],
             ),
         ),
@@ -74,11 +72,11 @@ def main():
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_product_price_details",
                 client=bq_client,
-                is_incremental=True,
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,
                 table="product_price_details",
+                is_incremental=True,
                 index_columns=["date", "product_id"],
             ),
         ),

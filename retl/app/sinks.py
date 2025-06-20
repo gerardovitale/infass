@@ -28,15 +28,13 @@ class Sink(ABC):
 
 
 class BigQuerySink(Sink):
-    def __init__(self, project_id: str, dataset_id: str, table: str, client: bigquery.Client, is_incremental: bool):
+    def __init__(self, project_id: str, dataset_id: str, table: str, client: bigquery.Client):
         self.project_id = project_id
         self.dataset_id = dataset_id
         self.table = table
         self.client = client
-        self.is_incremental = is_incremental
 
-    def fetch_data(self, **options) -> pd.DataFrame:
-        last_transaction: Transaction = options.get("last_transaction")
+    def fetch_data(self, last_transaction: Transaction = None) -> pd.DataFrame:
         logger.info(f"Fetching data from BigQuery table: {self.project_id}.{self.dataset_id}.{self.table}")
         query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{self.table}`"
         if last_transaction:
@@ -50,10 +48,18 @@ class BigQuerySink(Sink):
 class SQLiteSink(Sink):
     transaction_table_name = "retl_transactions"
 
-    def __init__(self, db_path: str, table: str, index_columns: List[str] = None):
+    def __init__(self, db_path: str, table: str, is_incremental: bool = None, index_columns: List[str] = None):
         self.db_path = db_path
         self.table = table
+        self.is_incremental = is_incremental
         self.index_columns = index_columns
+        self._last_transaction = None
+
+    @property
+    def last_transaction(self):
+        if self._last_transaction is None and self.is_incremental:
+            self._last_transaction = self.get_last_transaction_if_exist()
+        return self._last_transaction
 
     def write_data(self, df: pd.DataFrame) -> None:
         logger.info(f"Writing DataFrame to SQLite at {self.db_path}, table '{self.table}'")
