@@ -42,6 +42,9 @@ def _run_task(task: TaskConfig) -> None:
     logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
     last_txn = task.destination.last_transaction
     df = task.data_source.fetch_data(last_transaction=last_txn)
+    if df.empty:
+        logging.warning(f"No new data to process for {task.data_source.table}")
+        return
     task.destination.write_data(df)
     min_date, max_date = get_min_max_dates(df)
     task.destination.record_transaction(

@@ -57,7 +57,7 @@ def test_bigquery_sink_fetch_data_with_last_transaction(sample_df):
     mock_query_job.to_dataframe.return_value = sample_df
     mock_client.query.return_value = mock_query_job
 
-    expected_query = "SELECT * FROM `test_project_id.test_dataset_id.test_table` WHERE date >= '2025-06-14'"
+    expected_query = "SELECT * FROM `test_project_id.test_dataset_id.test_table` WHERE date > '2025-06-14'"
 
     sink = BigQuerySink(**test_params)
     df = sink.fetch_data(test_last_transaction)

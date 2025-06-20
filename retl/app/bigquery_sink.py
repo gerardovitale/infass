@@ -19,7 +19,7 @@ class BigQuerySink(Sink):
         logger.info(f"Fetching data from BigQuery table: {self.project_id}.{self.dataset_id}.{self.table}")
         query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{self.table}`"
         if last_transaction:
-            query += f" WHERE date >= '{last_transaction.max_date}'"
+            query += f" WHERE date > '{last_transaction.max_date}'"
         df = self.client.query(query).to_dataframe()
         logger.info(f"Fetched {len(df)} rows from BigQuery")
         logger.info(f"DataFrame size: {df.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB")
