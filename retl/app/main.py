@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import logging
 import os
 from datetime import datetime
+from typing import Tuple
 from typing import Union
 
+import pandas as pd
 from bigquery_sink import BigQuerySink
 from google.cloud import bigquery
 from pydantic import BaseModel
@@ -22,12 +26,24 @@ class TaskConfig(BaseModel):
     destination: Union[Sink, SQLiteSink]
 
 
+def get_min_max_dates(d: pd.DataFrame) -> Tuple[str, str] | Tuple[None, None]:
+    if "date" in d.columns:
+        min_dt, max_dt = d["date"].min(), d["date"].max()
+        try:
+            min_date = pd.to_datetime(min_dt).date().isoformat()
+            max_date = pd.to_datetime(max_dt).date().isoformat()
+            return min_date, max_date
+        except (ValueError, TypeError):
+            return None, None
+    return None, None
+
+
 def _run_task(task: TaskConfig) -> None:
     logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
     last_txn = task.destination.last_transaction
     df = task.data_source.fetch_data(last_transaction=last_txn)
     task.destination.write_data(df)
-    min_date, max_date = (df["date"].min(), df["date"].max()) if "date" in df.columns else (None, None)
+    min_date, max_date = get_min_max_dates(df)
     task.destination.record_transaction(
         Transaction(
             data_source_table=task.data_source.table,
