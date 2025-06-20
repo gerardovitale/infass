@@ -3,12 +3,12 @@ import os
 from datetime import datetime
 from typing import Union
 
+from bigquery_sink import BigQuerySink
 from google.cloud import bigquery
 from pydantic import BaseModel
-from sinks import BigQuerySink
-from sinks import Sink
-from sinks import SQLiteSink
-from sinks import Transaction
+from sink import Sink
+from sink import Transaction
+from sqlite_sink import SQLiteSink
 
 logging.basicConfig(
     format="%(name)s - %(levelname)s - %(message)s",

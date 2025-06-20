@@ -1,48 +1,13 @@
 import logging
 import sqlite3
-from abc import ABC
 from typing import List
 from typing import Optional
 
 import pandas as pd
-from google.cloud import bigquery
-from pydantic import BaseModel
+from sink import Sink
+from sink import Transaction
 
 logger = logging.getLogger(__name__)
-
-
-class Transaction(BaseModel):
-    data_source_table: str
-    destination_table: str
-    occurred_at: str
-    min_date: Optional[str]
-    max_date: Optional[str]
-
-
-class Sink(ABC):
-    def fetch_data(self) -> pd.DataFrame:
-        raise NotImplementedError()
-
-    def write_data(self, df: pd.DataFrame) -> None:
-        raise NotImplementedError()
-
-
-class BigQuerySink(Sink):
-    def __init__(self, project_id: str, dataset_id: str, table: str, client: bigquery.Client):
-        self.project_id = project_id
-        self.dataset_id = dataset_id
-        self.table = table
-        self.client = client
-
-    def fetch_data(self, last_transaction: Transaction = None) -> pd.DataFrame:
-        logger.info(f"Fetching data from BigQuery table: {self.project_id}.{self.dataset_id}.{self.table}")
-        query = f"SELECT * FROM `{self.project_id}.{self.dataset_id}.{self.table}`"
-        if last_transaction:
-            query += f" WHERE date >= '{last_transaction.max_date}'"
-        df = self.client.query(query).to_dataframe()
-        logger.info(f"Fetched {len(df)} rows from BigQuery")
-        logger.info(f"DataFrame size: {df.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB")
-        return df
 
 
 class SQLiteSink(Sink):
@@ -55,24 +20,28 @@ class SQLiteSink(Sink):
         self.index_columns = index_columns
         self._last_transaction = None
 
-    @property
-    def last_transaction(self):
-        if self._last_transaction is None and self.is_incremental:
-            self._last_transaction = self.get_last_transaction_if_exist()
-        return self._last_transaction
-
     def write_data(self, df: pd.DataFrame) -> None:
         logger.info(f"Writing DataFrame to SQLite at {self.db_path}, table '{self.table}'")
         conn = sqlite3.connect(self.db_path)
         params = {"if_exists": "replace", "index": False}
+        if self.is_incremental and self.last_transaction:
+            logger.info("Incremental write mode is enabled")
+            params.update({"if_exists": "append"})
         if self.index_columns:
+            logger.info(f"Setting index columns: {self.index_columns}")
             df = df.set_index(self.index_columns)
             params.update({"index": True, "index_label": self.index_columns})
         df.to_sql(self.table, conn, **params)
         conn.close()
         logger.info("Write to SQLite completed")
 
-    def get_last_transaction_if_exist(self):
+    @property
+    def last_transaction(self) -> Optional[Transaction]:
+        if self._last_transaction is None and self.is_incremental:
+            self._last_transaction = self.get_last_transaction_if_exist()
+        return self._last_transaction
+
+    def get_last_transaction_if_exist(self) -> Optional[Transaction]:
         def get_columns(cursor: sqlite3.Cursor) -> List[str]:
             return [column[0] for column in cursor.description]
 

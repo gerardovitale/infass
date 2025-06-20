@@ -2,16 +2,12 @@ import os
 import sqlite3
 import tempfile
 from unittest.mock import MagicMock
-from unittest.mock import Mock
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from google.cloud import bigquery
-from pandas.testing import assert_frame_equal
-from sinks import BigQuerySink
-from sinks import SQLiteSink
-from sinks import Transaction
+from sink import Transaction
+from sqlite_sink import SQLiteSink
 
 
 @pytest.fixture
@@ -20,97 +16,11 @@ def sample_df():
 
 
 # --------------------------
-# Test: BigQuerySink
-# --------------------------
-def test_bigquery_sink_fetch_data(sample_df):
-    mock_client = Mock(spec=bigquery.Client)
-    test_params = {
-        "project_id": "test_project_id",
-        "dataset_id": "test_dataset_id",
-        "table": "test_table",
-        "client": mock_client,
-    }
-
-    mock_query_job = MagicMock()
-    mock_query_job.to_dataframe.return_value = sample_df
-    mock_client.query.return_value = mock_query_job
-
-    sink = BigQuerySink(**test_params)
-    df = sink.fetch_data()
-
-    mock_client.query.assert_called_once()
-    assert_frame_equal(df, sample_df)
-
-
-def test_bigquery_sink_fetch_data_with_last_transaction(sample_df):
-    mock_client = Mock(spec=bigquery.Client)
-    test_params = {
-        "project_id": "test_project_id",
-        "dataset_id": "test_dataset_id",
-        "table": "test_table",
-        "client": mock_client,
-    }
-    test_last_transaction = Transaction(
-        data_source_table="src",
-        destination_table="test_table",
-        occurred_at="2025-06-14T07:00:00",
-        min_date="2025-06-07",
-        max_date="2025-06-14",
-    )
-
-    mock_query_job = MagicMock()
-    mock_query_job.to_dataframe.return_value = sample_df
-    mock_client.query.return_value = mock_query_job
-
-    expected_query = "SELECT * FROM `test_project_id.test_dataset_id.test_table` WHERE date >= '2025-06-14'"
-
-    sink = BigQuerySink(**test_params)
-    df = sink.fetch_data(test_last_transaction)
-
-    mock_client.query.assert_called_once_with(expected_query)
-    assert_frame_equal(df, sample_df)
-
-
-def test_bigquery_sink_fetch_data_empty_result():
-    mock_client = Mock(spec=bigquery.Client)
-    test_params = {
-        "project_id": "test_project_id",
-        "dataset_id": "test_dataset_id",
-        "table": "test_table",
-        "client": mock_client,
-    }
-
-    mock_query_job = MagicMock()
-    empty_df = pd.DataFrame()
-    mock_query_job.to_dataframe.return_value = empty_df
-    mock_client.query.return_value = mock_query_job
-
-    sink = BigQuerySink(**test_params)
-    df = sink.fetch_data()
-
-    assert_frame_equal(df, empty_df)
-
-
-def test_bigquery_sink_fetch_data_raises_exception():
-    mock_client = Mock(spec=bigquery.Client)
-    test_params = {
-        "project_id": "test_project_id",
-        "dataset_id": "test_dataset_id",
-        "table": "test_table",
-        "client": mock_client,
-    }
-    mock_client.query.side_effect = Exception("BigQuery error")
-    sink = BigQuerySink(**test_params)
-    with pytest.raises(Exception, match="BigQuery error"):
-        sink.fetch_data()
-
-
-# --------------------------
 # Test: SQLiteSink
 # --------------------------
 @pytest.fixture
 def mock_sqlite_connect():
-    with patch("app.sinks.sqlite3.connect") as mock_connect:
+    with patch("app.sqlite_sink.sqlite3.connect") as mock_connect:
         mock_conn = MagicMock()
         mock_connect.return_value = mock_conn
         yield mock_connect, mock_conn
