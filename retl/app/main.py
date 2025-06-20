@@ -63,7 +63,7 @@ def main():
                 db_path=sqlite_db_path,
                 table="products",
                 is_incremental=False,
-                index_columns=["product_id"],
+                index_columns=["id"],
             ),
         ),
         TaskConfig(
@@ -77,7 +77,7 @@ def main():
                 db_path=sqlite_db_path,
                 table="product_price_details",
                 is_incremental=True,
-                index_columns=["date", "product_id"],
+                index_columns=["date", "id"],
             ),
         ),
     ]

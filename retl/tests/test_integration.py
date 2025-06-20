@@ -34,7 +34,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         # Step 3: Patch BigQuerySink.fetch_data to return test DataFrames
         products_df = pd.DataFrame(
             {
-                "product_id": [1, 2],
+                "id": [1, 2],
                 "name": ["Apple", "Banana"],
             }
         )
@@ -49,7 +49,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
                 ("2025-01-02", 2, 1.45),
                 ("2025-01-03", 2, 1.45),
             ],
-            columns=["date", "product_id", "price"],
+            columns=["date", "id", "price"],
         )
 
         with patch("main.BigQuerySink.fetch_data", side_effect=[products_df, price_details_df]):
@@ -62,7 +62,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
 
         # Check if 'products' table has correct data
         expected_products = [(1, "Apple"), (2, "Banana")]
-        cursor.execute("SELECT * FROM products ORDER BY product_id;")
+        cursor.execute("SELECT * FROM products ORDER BY id;")
         actual_products = cursor.fetchall()
         assert actual_products == expected_products
 
@@ -75,7 +75,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
             ("2025-01-02", 2, 1.45),
             ("2025-01-03", 2, 1.45),
         ]
-        cursor.execute("SELECT * FROM product_price_details ORDER BY product_id;")
+        cursor.execute("SELECT * FROM product_price_details ORDER BY id;")
         actual_product_price_details = cursor.fetchall()
         assert actual_product_price_details == expected_product_price_details
 
