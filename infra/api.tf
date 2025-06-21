@@ -151,7 +151,7 @@ resource "google_cloud_run_v2_job" "test_reversed_etl_job" {
 
   template {
     template {
-      timeout         = "300s"
+      timeout         = "1200s"
       max_retries     = 0
       service_account = google_service_account.api_service_account.email
 
