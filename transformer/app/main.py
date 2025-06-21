@@ -80,7 +80,7 @@ if __name__ == "__main__":
         "destination": os.getenv("DESTINATION"),
         "read_limit": os.getenv("LIMIT"),
         "write_disposition": os.getenv("WRITE_DISPOSITION", "WRITE_TRUNCATE"),
-        "is_local_run": os.getenv("IS_LOCAL_RUN").lower() in ("true", "1", "yes"),
+        "is_local_run": os.getenv("IS_LOCAL_RUN") in ("true", "1", "yes"),
     }
 
     if config_params["data_source"] and config_params["destination"]:
