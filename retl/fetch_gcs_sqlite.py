@@ -1,5 +1,6 @@
 import sqlite3
 
+import pandas as pd
 from google.cloud import storage
 
 BUCKET_NAME = "infass-sqlite-bucket"
@@ -31,14 +32,16 @@ def inspect_sqlite(db_path: str):
             column_names = [column[0] for column in cursor.description]
             print("Cursor description: ", column_names)
             rows = cursor.fetchall()
-            for row in rows:
-                for column_name, field_value in zip(column_names, row):
-                    print(f"  {column_name}: {field_value}, type: {type(field_value)}")
-                print("\n")
+            df = pd.DataFrame(rows, columns=column_names)
+            print(f"DataFrame shape: {df.shape}")
+            print("DataFrame preview:")
+            print(df.head().to_string(index=False), "\n")
+            df.info()
+            print("\n" + "=" * 100 + "\n")
 
     conn.close()
 
 
 if __name__ == "__main__":
-    download_from_gcs(BUCKET_NAME, OBJECT_NAME, LOCAL_PATH)
+    # download_from_gcs(BUCKET_NAME, OBJECT_NAME, LOCAL_PATH)
     inspect_sqlite(LOCAL_PATH)

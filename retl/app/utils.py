@@ -16,7 +16,8 @@ def timeit(func):
         start = time.perf_counter()
         result = func(*args, **kwargs)
         end = time.perf_counter()
-        logger.info(f"Function {func.__name__!r} executed in {end - start:.4f} seconds")
+        logger.info(f"Called with args: {args}, kwargs: {kwargs}")
+        logger.info(f"Function {func.__name__!r} executed in {end - start:.2f} seconds")
         return result
 
     return wrapper

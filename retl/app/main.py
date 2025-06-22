@@ -61,20 +61,20 @@ def main():
     sqlite_db_path = os.environ["SQLITE_DB_PATH"]
     bq_client = bigquery.Client(project=bq_project_id)
     tasks = [
-        # TaskConfig(
-        #     data_source=BigQuerySink(
-        #         project_id=bq_project_id,
-        #         dataset_id=bq_dataset_id,
-        #         table="dbt_ref_products",
-        #         client=bq_client,
-        #     ),
-        #     destination=SQLiteSink(
-        #         db_path=sqlite_db_path,
-        #         table="products",
-        #         is_incremental=False,
-        #         index_columns=["id"],
-        #     ),
-        # ),
+        TaskConfig(
+            data_source=BigQuerySink(
+                project_id=bq_project_id,
+                dataset_id=bq_dataset_id,
+                table="dbt_ref_products",
+                client=bq_client,
+            ),
+            destination=SQLiteSink(
+                db_path=sqlite_db_path,
+                table="products",
+                is_incremental=False,
+                index_columns=["id"],
+            ),
+        ),
         TaskConfig(
             data_source=BigQuerySink(
                 project_id=bq_project_id,
