@@ -32,12 +32,12 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         monkeypatch.setenv("SQLITE_DB_PATH", db_path)
 
         # Step 3: Patch BigQuerySink.fetch_data to return test DataFrames
-        products_df = pd.DataFrame(
-            {
-                "id": [1, 2],
-                "name": ["Apple", "Banana"],
-            }
-        )
+        # products_df = pd.DataFrame(
+        #     {
+        #         "id": [1, 2],
+        #         "name": ["Apple", "Banana"],
+        #     }
+        # )
         price_details_df = pd.DataFrame(
             [
                 # apple
@@ -52,7 +52,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
             columns=["date", "id", "price"],
         )
 
-        with patch("main.BigQuerySink.fetch_data", side_effect=[products_df, price_details_df]):
+        with patch("main.BigQuerySink.fetch_data_by_date_range", side_effect=[price_details_df]):
             # Step 4: Run main()
             main()
 
@@ -60,11 +60,11 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
 
-        # Check if 'products' table has correct data
-        expected_products = [(1, "Apple"), (2, "Banana")]
-        cursor.execute("SELECT * FROM products ORDER BY id;")
-        actual_products = cursor.fetchall()
-        assert actual_products == expected_products
+        # # Check if 'products' table has correct data
+        # expected_products = [(1, "Apple"), (2, "Banana")]
+        # cursor.execute("SELECT * FROM products ORDER BY id;")
+        # actual_products = cursor.fetchall()
+        # assert actual_products == expected_products
 
         # Check if 'product_price_details' table has correct data
         expected_product_price_details = [
@@ -81,16 +81,16 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
 
         # Check if 'retl_transactions' table has correct data
         expected_transactions = [
+            # (
+            #     1,
+            #     "dbt_ref_products",
+            #     "products",
+            #     "2025-01-03T00:00:00",
+            #     None,
+            #     None,
+            # ),
             (
                 1,
-                "dbt_ref_products",
-                "products",
-                "2025-01-03T00:00:00",
-                None,
-                None,
-            ),
-            (
-                2,
                 "dbt_ref_product_price_details",
                 "product_price_details",
                 "2025-01-03T00:00:00",
