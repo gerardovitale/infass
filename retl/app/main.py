@@ -12,6 +12,7 @@ from sink import Sink
 from sink import Transaction
 from sqlite_sink import SQLiteSink
 from utils import get_min_max_dates
+from utils import timeit
 
 logging.basicConfig(
     format="%(name)s - %(levelname)s - %(message)s",
@@ -25,13 +26,11 @@ class TaskConfig(BaseModel):
     destination: Union[Sink, SQLiteSink]
 
 
+@timeit
 def _run_task(task: TaskConfig) -> None:
     logging.info(f"Running task: {task.data_source.table} -> {task.destination.table}")
-    if task.data_source.start_date and task.data_source.end_date:
-        df = task.data_source.fetch_data_by_date_range()
-    else:
-        last_txn = task.destination.last_transaction
-        df = task.data_source.fetch_data(last_transaction=last_txn)
+    last_txn = task.destination.last_transaction
+    df = task.data_source.fetch_data(last_transaction=last_txn)
     if df.empty:
         logging.warning(f"No new data to process for {task.data_source.table}")
         return
@@ -48,6 +47,7 @@ def _run_task(task: TaskConfig) -> None:
     )
 
 
+@timeit
 def run_tasks(tasks: list[TaskConfig]) -> None:
     logging.info("Starting Reversed ETL process")
     for task in tasks:
@@ -81,8 +81,6 @@ def main():
                 dataset_id=bq_dataset_id,
                 table="dbt_ref_product_price_details",
                 client=bq_client,
-                start_date="2024-11-01",
-                end_date="2025-02-25",
             ),
             destination=SQLiteSink(
                 db_path=sqlite_db_path,

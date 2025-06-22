@@ -31,6 +31,7 @@ class SQLiteSink(Sink):
             logger.info(f"Setting index columns: {self.index_columns}")
             df = df.set_index(self.index_columns)
             params.update({"index": True, "index_label": self.index_columns})
+        logger.info(f"Writing DataFrame to SQLite with parameters: {params}")
         df.to_sql(self.table, conn, **params)
         conn.close()
         logger.info("Write to SQLite completed")

@@ -52,7 +52,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
             columns=["date", "id", "price"],
         )
 
-        with patch("main.BigQuerySink.fetch_data_by_date_range", side_effect=[price_details_df]):
+        with patch("main.BigQuerySink.fetch_data", side_effect=[price_details_df]):
             # Step 4: Run main()
             main()
 
