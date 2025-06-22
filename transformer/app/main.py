@@ -20,7 +20,7 @@ logging.basicConfig(
 def run_data_transformation(
     data_source: str,
     destination: str,
-    write_disposition: str = "WRITE_TRUNCATE",
+    write_disposition: str,
     read_limit: str = None,
     is_local_run: bool = False,
 ) -> None:
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         "data_source": os.getenv("DATA_SOURCE"),
         "destination": os.getenv("DESTINATION"),
         "read_limit": os.getenv("LIMIT"),
-        "write_disposition": os.getenv("WRITE_DISPOSITION", "WRITE_TRUNCATE"),
+        "write_disposition": os.getenv("WRITE_DISPOSITION"),
         "is_local_run": os.getenv("IS_LOCAL_RUN") in ("true", "1", "yes"),
     }
 

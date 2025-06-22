@@ -37,5 +37,4 @@ variable "TRANSFORMER_LIMIT" {
 variable "TRANSFORMER_WRITE_DISPOSITION" {
   type        = string
   description = "Write disposition for the transformer job"
-  default     = "WRITE_APPEND"
 }
