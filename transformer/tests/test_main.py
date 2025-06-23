@@ -35,6 +35,7 @@ class TestRunDataTransformation(TestCase):
         test_params = {
             "data_source": "my_bucket_name",
             "destination": "myproject.dataset.table",
+            "write_disposition": "WRITE_TRUNCATE",
             "read_limit": "5",
             "is_local_run": None,
         }
@@ -54,6 +55,7 @@ class TestRunDataTransformation(TestCase):
         test_params = {
             "data_source": "my_bucket_name",
             "destination": "myproject.dataset.table",
+            "write_disposition": "WRITE_TRUNCATE",
             "read_limit": "5",
             "is_local_run": True,
         }
@@ -79,6 +81,7 @@ class TestRunDataTransformation(TestCase):
         test_params = {
             "data_source": "my_bucket_name",
             "destination": "myproject.dataset.table",
+            "write_disposition": "WRITE_TRUNCATE",
             "read_limit": None,
             "is_local_run": None,
         }
@@ -98,6 +101,7 @@ class TestRunDataTransformation(TestCase):
         test_params = {
             "data_source": "my_bucket_name",
             "destination": "myproject.dataset.table",
+            "write_disposition": "WRITE_TRUNCATE",
             "read_limit": "invalid_limit",
             "is_local_run": None,
         }
