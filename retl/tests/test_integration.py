@@ -5,7 +5,11 @@ from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from bigquery_sink import BigQuerySink
 from main import main
+from main import run_tasks
+from main import TaskConfig
+from sqlite_sink import SQLiteSink
 
 
 @pytest.fixture
@@ -103,3 +107,69 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         assert actual_transactions == expected_transactions
 
         conn.close()
+
+
+def test_run_tasks_incremental_scenarios(monkeypatch, mock_datetime_now):
+    with tempfile.NamedTemporaryFile(suffix=".db") as tmp_db:
+        test_sqlite_db_path = tmp_db.name
+        test_destination_table = "test_table"
+
+        mock_incoming_data = [
+            # Scenario 1: First write, new table, no transaction
+            pd.DataFrame({"date": ["2025-01-01", "2025-01-02"], "id": [1, 2], "value": [10, 20]}),
+            # Scenario 2: Second write, new records to append
+            pd.DataFrame({"date": ["2025-01-03"], "id": [3], "value": [30]}),
+            # Scenario 3: No new data
+            pd.DataFrame(columns=["date", "id", "value"]),
+        ]
+
+        # Use the same table for all scenarios, incremental mode
+        test_tasks = [
+            TaskConfig(
+                data_source=BigQuerySink(
+                    project_id="test_project_id",
+                    dataset_id="test_dataset_id",
+                    table="test_bq_table",
+                    client="test_client",
+                ),
+                destination=SQLiteSink(
+                    db_path=test_sqlite_db_path,
+                    table=test_destination_table,
+                    is_incremental=True,
+                    index_columns=["date", "id"],
+                ),
+            ),
+        ]
+        with patch("main.BigQuerySink.fetch_data", side_effect=mock_incoming_data):
+            # First run: should write df1 and a transaction
+            run_tasks(test_tasks)
+            conn = sqlite3.connect(test_sqlite_db_path)
+            cur = conn.cursor()
+            cur.execute(f"SELECT * FROM {test_destination_table} ORDER BY date, id;")
+            rows = cur.fetchall()
+            assert rows == [("2025-01-01", 1, 10), ("2025-01-02", 2, 20)]
+            cur.execute("SELECT COUNT(*) FROM retl_transactions;")
+            assert cur.fetchone()[0] == 1
+            conn.close()
+
+            # Second run: should append df2 and a second transaction
+            run_tasks(test_tasks)
+            conn = sqlite3.connect(test_sqlite_db_path)
+            cur = conn.cursor()
+            cur.execute(f"SELECT * FROM {test_destination_table} ORDER BY date, id;")
+            rows = cur.fetchall()
+            assert rows == [("2025-01-01", 1, 10), ("2025-01-02", 2, 20), ("2025-01-03", 3, 30)]
+            cur.execute("SELECT COUNT(*) FROM retl_transactions;")
+            assert cur.fetchone()[0] == 2
+            conn.close()
+
+            # Third run: no new data, should not write or add transaction
+            run_tasks(test_tasks)
+            conn = sqlite3.connect(test_sqlite_db_path)
+            cur = conn.cursor()
+            cur.execute(f"SELECT * FROM {test_destination_table} ORDER BY date, id;")
+            rows = cur.fetchall()
+            assert rows == [("2025-01-01", 1, 10), ("2025-01-02", 2, 20), ("2025-01-03", 3, 30)]
+            cur.execute("SELECT COUNT(*) FROM retl_transactions;")
+            assert cur.fetchone()[0] == 2
+            conn.close()
