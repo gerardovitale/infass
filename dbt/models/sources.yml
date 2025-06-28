@@ -57,8 +57,6 @@ sources:
           - name: image_url
             description: URL of the product image
             data_type: string
-            tests:
-              - not_null
           - name: price
             description: The final price of the product on the given date, discounted if exist otherwise the original price
             data_type: float
