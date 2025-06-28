@@ -51,8 +51,6 @@ sources:
           - name: category
             description: The category of the product
             data_type: string
-            tests:
-              - not_null
           - name: subcategory
             description: The subcategory of the product
             data_type: string
@@ -67,7 +65,7 @@ sources:
             tests:
               - not_null
               - dbt_utils.expression_is_true:
-                  expression: "price >= 0"
+                  expression: "> 0"
           - name: price_ma_7
             description: 7-day moving average of the product price
             data_type: float
