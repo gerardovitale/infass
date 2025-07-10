@@ -9,6 +9,7 @@ from typing import List
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -61,9 +62,21 @@ def enter_postal_code(driver: webdriver.Chrome):
 
 def navigate_to_categories(driver: webdriver.Chrome):
     logger.info("Clicking the Categories button to view categories")
-    categories_button = driver.find_element(By.CSS_SELECTOR, CATEGORY_BUTTON_SELECTOR)
-    categories_button.click()
-    time.sleep(WAIT_CONTENT_TIME_SLEEP)
+    try:
+        categories_button = driver.find_element(By.CSS_SELECTOR, CATEGORY_BUTTON_SELECTOR)
+        categories_button.click()
+        time.sleep(WAIT_CONTENT_TIME_SLEEP)
+    except NoSuchElementException:
+        logger.error(
+            f"Could not find categories button. URL: {driver.current_url}\n"
+            f"Page source snippet: {driver.page_source[:1000]}"
+        )
+        try:
+            driver.save_screenshot("navigate_to_categories_error.png")
+            logger.error("Screenshot saved as navigate_to_categories_error.png")
+        except Exception as screenshot_exc:
+            logger.error(f"Failed to save screenshot: {screenshot_exc}")
+        raise
 
 
 def get_main_categories(driver: webdriver.Chrome) -> List[str]:
@@ -130,9 +143,20 @@ def get_page_sources(test_mode: bool):
         driver.get(BASE_URL)
         time.sleep(WAIT_CONTENT_TIME_SLEEP)
 
-        accept_cookies(driver)
-        enter_postal_code(driver)
-        navigate_to_categories(driver)
+        try:
+            accept_cookies(driver)
+            enter_postal_code(driver)
+            navigate_to_categories(driver)
+        except Exception as e:
+            logger.error(f"Exception during initial navigation: {e}")
+            logger.error(f"Current URL: {driver.current_url}")
+            logger.error(f"Page source snippet: {driver.page_source[:1000]}")
+            try:
+                driver.save_screenshot("initial_navigation_error.png")
+                logger.error("Screenshot saved as initial_navigation_error.png")
+            except Exception as screenshot_exc:
+                logger.error(f"Failed to save screenshot: {screenshot_exc}")
+            raise
 
         product_gen_list = []
         category_names = get_main_categories(driver)
@@ -140,9 +164,21 @@ def get_page_sources(test_mode: bool):
         # Iterate over each main category
         for category_name in category_names:
             logger.info(f"Clicking category: {category_name}")
-            category_button = driver.find_element(By.XPATH, CATEGORY_BUTTON_SELECTOR_TEMPLATE.format(category_name))
-            category_button.click()
-            time.sleep(WAIT_CONTENT_TIME_SLEEP)
+            try:
+                category_button = driver.find_element(By.XPATH, CATEGORY_BUTTON_SELECTOR_TEMPLATE.format(category_name))
+                category_button.click()
+                time.sleep(WAIT_CONTENT_TIME_SLEEP)
+            except NoSuchElementException:
+                logger.error(
+                    f"Could not find category button for '{category_name}'. URL: {driver.current_url}\n"
+                    f"Page source snippet: {driver.page_source[:1000]}"
+                )
+                try:
+                    driver.save_screenshot(f"category_{category_name}_error.png")
+                    logger.error(f"Screenshot saved as category_{category_name}_error.png")
+                except Exception as screenshot_exc:
+                    logger.error(f"Failed to save screenshot: {screenshot_exc}")
+                raise
 
             # Collect subcategory names for the current category
             subcategory_names = get_subcategories(driver)
