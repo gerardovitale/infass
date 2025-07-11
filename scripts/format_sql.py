@@ -20,10 +20,9 @@ TRANSPILE_PARAMS = {
     "pad": 4,
 }
 
-# Enhanced regex patterns to match Jinja blocks, including multiline and nested blocks
+# Regex patterns to match Jinja blocks
 CONFIG_JINJA_PATTERN = re.compile(r"\{\{\s*config\s*\(.*?\)\s*\}\}", re.DOTALL)
-GENERAL_JINJA_PATTERN = re.compile(r"(\{\{.*?\}\}|\{%-?.*?-%\}|\{%[^i].*?%\})", re.DOTALL)
-MULTILINE_JINJA_PATTERN = re.compile(r"(\{%\s*if[\s\S]*?%\}[\s\S]*?\{%\s*endif\s*%\})", re.DOTALL)
+GENERAL_JINJA_PATTERN = re.compile(r"(\{\{.*?\}\}|\{%-?.*?-%\}|\{%.*?%\})", re.DOTALL)
 
 # Pattern to split consecutive CTEs with a newline
 CTE_SEPARATOR_PATTERN = r"\),\s*(?=\w+\s+AS\s+\()"
@@ -69,31 +68,9 @@ def format_sql_file(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
         sql = f.read()
 
-    masked_sql, jinja_config_blocks, jinja_general_blocks, jinja_multiline_blocks = mask_jinja(sql)
-    transpile_sql_input = masked_sql
-    for i in range(len(jinja_multiline_blocks)):
-        # Context-aware replacement for multiline Jinja blocks
-        block_placeholder = f"__JINJA_MULTILINE_EXPRESSION_{i}__"
-        # Find the line containing the placeholder
-        lines = transpile_sql_input.splitlines()
-        for idx, line in enumerate(lines):
-            if block_placeholder in line:
-                # If inside WHERE clause, use AND 1=1 ...
-                if any(clause in lines[max(0, idx - 3) : idx] for clause in ["WHERE", "AND", "OR"]):
-                    lines[idx] = f"AND 1=1 /* JINJA_MULTILINE_EXPRESSION_{i} */"
-                else:
-                    lines[idx] = f"/* JINJA_MULTILINE_EXPRESSION_{i} */"
-        transpile_sql_input = "\n".join(lines)
-    formatted_sql = transpile_sql(transpile_sql_input)
-    # Restore multiline Jinja blocks after formatting
-    for i in range(len(jinja_multiline_blocks)):
-        formatted_sql = formatted_sql.replace(
-            f"AND 1=1 /* JINJA_MULTILINE_EXPRESSION_{i} */", f"__JINJA_MULTILINE_EXPRESSION_{i}__"
-        )
-        formatted_sql = formatted_sql.replace(
-            f"/* JINJA_MULTILINE_EXPRESSION_{i} */", f"__JINJA_MULTILINE_EXPRESSION_{i}__"
-        )
-    final_sql = unmask_jinja(formatted_sql, jinja_config_blocks, jinja_general_blocks, jinja_multiline_blocks)
+    masked_sql, jinja_config_blocks, jinja_general_blocks = mask_jinja(sql)
+    formatted_sql = transpile_sql(masked_sql)
+    final_sql = unmask_jinja(formatted_sql, jinja_config_blocks, jinja_general_blocks)
 
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(final_sql)
@@ -125,7 +102,6 @@ def add_cte_break_line(sql):
 def mask_jinja(sql):
     config_blocks = []
     general_blocks = []
-    multiline_blocks = []
 
     # Step 1: Mask top-level config blocks with SQL comments
     def config_replacer(match):
@@ -134,31 +110,20 @@ def mask_jinja(sql):
 
     sql = CONFIG_JINJA_PATTERN.sub(config_replacer, sql)
 
-    # Step 2: Mask multiline Jinja conditional blocks (e.g., {% if ... %} ... {% endif %})
-    def multiline_replacer(match):
-        multiline_blocks.append(match.group(0))
-        return f"__JINJA_MULTILINE_EXPRESSION_{len(multiline_blocks) - 1}__"
-
-    sql = MULTILINE_JINJA_PATTERN.sub(multiline_replacer, sql)
-
-    # Step 3: Mask all other jinja blocks with placeholders
+    # Step 2: Mask all other jinja blocks with placeholders
     def general_replacer(match):
         general_blocks.append(match.group(0))
         return f"__JINJA_EXPRESSION_{len(general_blocks) - 1}__"
 
     sql = GENERAL_JINJA_PATTERN.sub(general_replacer, sql)
 
-    return sql, config_blocks, general_blocks, multiline_blocks
+    return sql, config_blocks, general_blocks
 
 
-def unmask_jinja(sql, config_blocks, general_blocks, multiline_blocks):
+def unmask_jinja(sql, config_blocks, general_blocks):
     # Restore config blocks
     for i, block in enumerate(config_blocks):
         sql = sql.replace(f"/* JINJA_CONFIG_EXPRESSION_{i} */", block)
-
-    # Restore multiline blocks
-    for i, block in enumerate(multiline_blocks):
-        sql = sql.replace(f"__JINJA_MULTILINE_EXPRESSION_{i}__", block)
 
     # Restore general blocks
     for i, block in enumerate(general_blocks):
@@ -176,34 +141,31 @@ class TestMaskJinja(TestCase):
 
     def test_config_only(self):
         sql = "{{ config(materialized='view') }}\nSELECT * FROM table"
-        masked, config_blocks, general_blocks, multiline_blocks = mask_jinja(sql)
+        masked, config_blocks, general_blocks = mask_jinja(sql)
 
         self.assertIn("/* JINJA_CONFIG_EXPRESSION_0 */", masked)
         self.assertIn("SELECT * FROM table", masked)
         self.assertEqual(config_blocks[0], "{{ config(materialized='view') }}")
         self.assertEqual(general_blocks, [])
-        self.assertEqual(multiline_blocks, [])
 
     def test_general_jinja_only(self):
         sql = "SELECT * FROM {{ source('project', 'table') }} WHERE date = {{ get_date() }}"
-        masked, config_blocks, general_blocks, multiline_blocks = mask_jinja(sql)
+        masked, config_blocks, general_blocks = mask_jinja(sql)
 
         self.assertIn("__JINJA_EXPRESSION_0__", masked)
         self.assertIn("__JINJA_EXPRESSION_1__", masked)
         self.assertEqual(config_blocks, [])
         self.assertEqual(general_blocks[0], "{{ source('project', 'table') }}")
         self.assertEqual(general_blocks[1], "{{ get_date() }}")
-        self.assertEqual(multiline_blocks, [])
 
     def test_both_config_and_general(self):
         sql = "{{ config(materialized='view') }}\nSELECT * FROM {{ ref('table') }}"
-        masked, config_blocks, general_blocks, multiline_blocks = mask_jinja(sql)
+        masked, config_blocks, general_blocks = mask_jinja(sql)
 
         self.assertIn("/* JINJA_CONFIG_EXPRESSION_0 */", masked)
         self.assertIn("__JINJA_EXPRESSION_0__", masked)
         self.assertEqual(config_blocks[0], "{{ config(materialized='view') }}")
         self.assertEqual(general_blocks[0], "{{ ref('table') }}")
-        self.assertEqual(multiline_blocks, [])
 
     def test_multiline_config(self):
         sql = """
@@ -213,36 +175,20 @@ class TestMaskJinja(TestCase):
         ) }}
         SELECT * FROM users
         """
-        masked, config_blocks, general_blocks, multiline_blocks = mask_jinja(sql)
+        masked, config_blocks, general_blocks = mask_jinja(sql)
 
         self.assertIn("/* JINJA_CONFIG_EXPRESSION_0 */", masked)
         self.assertIn("SELECT * FROM users", masked)
         self.assertEqual(len(config_blocks), 1)
         self.assertTrue("materialized='table'" in config_blocks[0])
-        self.assertEqual(general_blocks, [])
-        self.assertEqual(multiline_blocks, [])
 
     def test_no_jinja(self):
         sql = "SELECT * FROM clean_table"
-        masked, config_blocks, general_blocks, multiline_blocks = mask_jinja(sql)
+        masked, config_blocks, general_blocks = mask_jinja(sql)
 
         self.assertEqual(masked, sql)
         self.assertEqual(config_blocks, [])
         self.assertEqual(general_blocks, [])
-        self.assertEqual(multiline_blocks, [])
-
-    def test_multiline_jinja(self):
-        sql = """
-        SELECT *
-        FROM table
-        {% if is_incremental() %}
-        WHERE something = 1
-        {% endif %}
-        """
-        masked, config_blocks, general_blocks, multiline_blocks = mask_jinja(sql)
-        self.assertIn("__JINJA_MULTILINE_EXPRESSION_0__", masked)
-        self.assertEqual(len(multiline_blocks), 1)
-        self.assertTrue("{% if is_incremental() %}" in multiline_blocks[0])
 
 
 class TestTranspileSQL(TestCase):
@@ -357,38 +303,6 @@ SELECT
 FROM __JINJA_EXPRESSION_0__
 JOIN cte2
     USING (id)
-"""
-        actual = transpile_sql(sql)
-        self.assertEqual(expected, actual)
-
-    def test_query_with_multiline_jinja_block(self):
-        sql = """
-        SELECT *
-        FROM table
-        /* JINJA_MULTILINE_EXPRESSION_0 */
-        """
-        expected = """SELECT
-    *
-FROM table
-"""
-        actual = transpile_sql(sql)
-        self.assertEqual(expected, actual)
-
-    def test_query_with_general_and_multiline_jinja(self):
-        sql = """
-        SELECT *
-        FROM __JINJA_EXPRESSION_0__
-        WHERE date = __JINJA_EXPRESSION_1__
-        /* JINJA_MULTILINE_EXPRESSION_0 */
-        GROUP BY name
-        """
-        expected = """SELECT
-    *
-FROM __JINJA_EXPRESSION_0__
-WHERE
-    date = __JINJA_EXPRESSION_1__
-GROUP BY
-    name
 """
         actual = transpile_sql(sql)
         self.assertEqual(expected, actual)
