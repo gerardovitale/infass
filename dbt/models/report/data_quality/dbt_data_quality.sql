@@ -54,10 +54,10 @@ SELECT
     nc.subcategory_count,
     nc.discount_product_count,
     (
-        nc.total_rows / LAG(nc.total_rows) OVER (ORDER BY nc.date) - 1
+        SAFE_DIVIDE(nc.total_rows, LAG(nc.total_rows) OVER (ORDER BY nc.date)) - 1
     ) AS total_rows_change_percentage,
     (
-        nc.discount_product_count / LAG(nc.discount_product_count) OVER (ORDER BY nc.date) - 1
+        SAFE_DIVIDE(nc.discount_product_count, LAG(nc.discount_product_count) OVER (ORDER BY nc.date)) - 1
     ) AS discount_product_count_change_percentage,
     SAFE_DIVIDE(nc.null_dedup_id, nc.total_rows) AS percent_null_dedup_id,
     SAFE_DIVIDE(nc.null_name, nc.total_rows) AS percent_null_name,

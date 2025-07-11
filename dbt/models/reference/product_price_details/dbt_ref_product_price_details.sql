@@ -30,5 +30,6 @@ LEFT JOIN {{ ref('dbt_ref_products') }} AS products
   ON products.name = merc.name
   AND products.size = merc.size
 {% if is_incremental() %}
-WHERE date >= (SELECT MAX(date) FROM {{ this }})
+WHERE merc.date >= (SELECT MAX(date) FROM {{ this }})
 {% endif %}
+QUALIFY ROW_NUMBER() OVER (PARTITION BY merc.date, merc.name, merc.size ORDER BY merc.date DESC) = 1

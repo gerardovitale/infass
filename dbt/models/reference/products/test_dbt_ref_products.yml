@@ -5,6 +5,11 @@ unit_tests:
       basic test for dbt_ref_products model which should return a unique product based table given product history
       transaction table
 
+    overrides:
+      macros:
+        is_incremental: false
+        get_last_saturday_date: "'2025-04-19'"
+
     given:
       - input: source('infass', 'merc')
         format: csv
@@ -13,7 +18,3 @@ unit_tests:
     expect:
       format: csv
       fixture: expected_ref_products
-
-    overrides:
-      macros:
-        get_last_saturday_date: "'2025-04-19'"
