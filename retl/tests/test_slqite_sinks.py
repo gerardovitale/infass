@@ -38,8 +38,10 @@ def test_sqlite_sink_write_data_when_index_columns_is_none(tmp_path, mock_sqlite
     with patch("pandas.DataFrame.to_sql") as mock_to_sql:
         sink.write_data(sample_df)
         mock_connect.assert_called_once_with(test_params["db_path"])
-        mock_to_sql.assert_called_once_with(test_params["table"], mock_conn, if_exists="replace", index=False)
-        mock_conn.close.assert_called_once()
+        mock_to_sql.assert_called_once_with(
+            test_params["table"], mock_conn.__enter__(), if_exists="replace", index=False
+        )
+        mock_conn.close.assert_not_called()
 
 
 def test_sqlite_sink_write_data_when_index_columns_are_specified(tmp_path, mock_sqlite_connect, sample_df):
@@ -56,9 +58,13 @@ def test_sqlite_sink_write_data_when_index_columns_are_specified(tmp_path, mock_
         sink.write_data(sample_df)
         mock_connect.assert_called_once_with(test_params["db_path"])
         mock_to_sql.assert_called_once_with(
-            test_params["table"], mock_conn, if_exists="replace", index=True, index_label=test_params["index_columns"]
+            test_params["table"],
+            mock_conn.__enter__(),
+            if_exists="replace",
+            index=True,
+            index_label=test_params["index_columns"],
         )
-        mock_conn.close.assert_called_once()
+        mock_conn.close.assert_not_called()
 
 
 # --------------------------
