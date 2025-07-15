@@ -73,6 +73,10 @@ def main():
                 table="products",
                 is_incremental=False,
                 index_columns=["id"],
+                fts5_config={
+                    "id_column": "id",
+                    "columns": ["name", "size", "categories", "subcategories"],
+                },
             ),
         ),
         TaskConfig(

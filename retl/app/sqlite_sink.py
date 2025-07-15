@@ -17,13 +17,15 @@ class SQLiteSink(Sink):
         self,
         db_path: str,
         table: str,
-        is_incremental: bool = None,
-        index_columns: List[str] = None,
+        is_incremental: Optional[bool] = None,
+        index_columns: Optional[List[str]] = None,
+        fts5_config: Optional[dict] = None,
     ):
         self.db_path = db_path
         self.table = table
         self.is_incremental = is_incremental
         self.index_columns = index_columns
+        self.fts5_config = fts5_config
         self._last_transaction = None
 
     def write_data(self, df: pd.DataFrame) -> None:
@@ -42,6 +44,9 @@ class SQLiteSink(Sink):
                 logger.info(f"Writing DataFrame to SQLite with parameters: {params}")
                 df.to_sql(self.table, conn, **params)
                 logger.info("Write to SQLite completed")
+                if self.fts5_config:
+                    logger.info(f"Creating or refreshing FTS5 for table '{self.table}' with config: {self.fts5_config}")
+                    self.create_or_refresh_fts5_table(conn, **self.fts5_config)
         except sqlite3.DatabaseError as err:
             logger.error(f"Database error during write_data: {err}")
             raise
@@ -107,3 +112,15 @@ class SQLiteSink(Sink):
         except sqlite3.DatabaseError as err:
             logger.error(f"Database error during record_transaction: {err}")
             raise
+
+    def create_or_refresh_fts5_table(self, conn: sqlite3.Connection, id_column: str, columns: List[str]) -> None:
+        fts_table = f"{self.table}_fts"
+        columns_ddl = ", ".join(columns)
+        logger.info(f"Creating or refreshing FTS5 table '{fts_table}' with columns: {columns}")
+        cur = conn.cursor()
+        cur.execute(f"DROP TABLE IF EXISTS {fts_table}")
+        cur.execute(f"CREATE VIRTUAL TABLE {fts_table} USING fts5({id_column}, {columns_ddl})")
+        columns_select = ", ".join([id_column] + columns)
+        cur.execute(f"INSERT INTO {fts_table} SELECT {columns_select} FROM {self.table}")
+        conn.commit()
+        logger.info(f"FTS5 table '{fts_table}' created and populated successfully.")

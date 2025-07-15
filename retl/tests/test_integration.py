@@ -40,6 +40,9 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
             {
                 "id": [1, 2],
                 "name": ["Apple", "Banana"],
+                "size": ["Medium", "Large"],
+                "categories": ["Fruits", "Fruits"],
+                "subcategories": ["Citrus", "Tropical"],
             }
         )
         price_details_df = pd.DataFrame(
@@ -65,7 +68,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         cursor = conn.cursor()
 
         # Check if 'products' table has correct data
-        expected_products = [(1, "Apple"), (2, "Banana")]
+        expected_products = [(1, "Apple", "Medium", "Fruits", "Citrus"), (2, "Banana", "Large", "Fruits", "Tropical")]
         cursor.execute("SELECT * FROM products ORDER BY id;")
         actual_products = cursor.fetchall()
         assert actual_products == expected_products
@@ -105,6 +108,10 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         cursor.execute("SELECT * FROM retl_transactions ORDER BY id;")
         actual_transactions = cursor.fetchall()
         assert actual_transactions == expected_transactions
+
+        # Check if FTS5 is configured correctly
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='products_fts';")
+        assert cursor.fetchone() == ("products_fts",), "FTS5 table for products should exist"
 
         conn.close()
 
