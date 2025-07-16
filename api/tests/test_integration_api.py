@@ -52,6 +52,14 @@ def setup_test_db():
     )
     cur.executemany("INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?)", TEST_PRODUCTS)
     cur.executemany("INSERT INTO product_price_details VALUES (?, ?, ?, ?, ?, ?)", TEST_PRICE_DETAILS)
+    # Create and populate FTS5 table for products
+    cur.execute("DROP TABLE IF EXISTS products_fts")
+    cur.execute("CREATE VIRTUAL TABLE products_fts USING fts5(id, name, size, categories, subcategories)")
+    for row in TEST_PRODUCTS:
+        cur.execute(
+            "INSERT INTO products_fts (id, name, size, categories, subcategories) VALUES (?, ?, ?, ?, ?)",
+            (row[0], row[1], row[2], row[3], row[4]),
+        )
     conn.commit()
     conn.close()
     return db_fd, db_path

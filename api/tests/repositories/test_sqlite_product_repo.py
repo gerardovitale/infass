@@ -38,7 +38,7 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
             "size": "1L",
             "categories": "Beverages",
             "subcategories": "Juices",
-            "price": 2.99,
+            "current_price": 2.99,
             "image_url": "http://img",
         },
         {
@@ -47,7 +47,7 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
             "size": "500g",
             "categories": "Fruits",
             "subcategories": "Apples",
-            "price": 1.99,
+            "current_price": 1.99,
             "image_url": "http://img2",
         },
     ]
@@ -64,7 +64,7 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
         ("size",),
         ("categories",),
         ("subcategories",),
-        ("price",),
+        ("current_price",),
         ("image_url",),
     ]
 

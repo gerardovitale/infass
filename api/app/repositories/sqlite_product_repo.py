@@ -17,26 +17,28 @@ class SQLiteProductRepository(ProductRepository):
         self.db_path = db_path
 
     def search_products(self, search_term: str) -> list[dict]:
-        logger.info(f"SQLiteRepo - Searching products with term '{search_term}'")
+        logger.info(f"SQLiteRepo - Searching products with term '{search_term}' using FTS5 table if available")
         conn = self.get_connection()
         cursor = conn.cursor()
-        query = """
-                SELECT id,
-                       name,
-                       size,
-                       categories,
-                       subcategories,
-                       price      AS current_price,
-                       image_url
-                FROM products
-                WHERE LOWER(name) LIKE :search
-                   OR LOWER(size) LIKE :search
-                   OR LOWER(categories) LIKE :search
-                   OR LOWER(subcategories) LIKE :search
+        fts_query = """
+                SELECT p.id,
+                       p.name,
+                       p.size,
+                       p.categories,
+                       p.subcategories,
+                       p.price      AS current_price,
+                       p.image_url
+                FROM products AS p
+                JOIN products_fts ON p.id = products_fts.id
+                WHERE products_fts MATCH :search
                 """
-        search_term = f"%{search_term.lower()}%"
-        rows = cursor.execute(query, {"search": search_term}).fetchall()
-        logger.info(f"SQLiteRepo - Found {len(rows)} products for term '{search_term}'")
+        search_term_fts = search_term.strip().lower()
+        if not search_term_fts.endswith("*"):
+            search_term_fts += "*"
+        rows = cursor.execute(fts_query, {"search": search_term_fts}).fetchall()
+        logger.info(
+            f"SQLiteRepo - Found {len(rows)} products for term '{search_term}' (fts query: '{search_term_fts}')"
+        )
         conn.close()
         return self.map_rows(rows, cursor)
 
