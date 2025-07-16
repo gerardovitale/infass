@@ -131,3 +131,6 @@ sql-format.test:
 # Reverse ETL (retl)
 retl.test:
 	scripts/run-docker-test.sh retl
+
+retl.fetch_sqlite:
+	retl/venv/bin/python3 retl/fetch_gcs_sqlite.py

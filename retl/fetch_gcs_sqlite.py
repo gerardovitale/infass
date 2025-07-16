@@ -1,22 +1,34 @@
+import os
 import sqlite3
 
 import pandas as pd
 from google.cloud import storage
+from google.oauth2.service_account import Credentials
 
 BUCKET_NAME = "infass-sqlite-bucket"
 OBJECT_NAME = "infass-sqlite-api.db"
-LOCAL_PATH = "../data/infass-sqlite-api.db"
+LOCAL_PATH = "data/infass-sqlite-api.db"
 
 
-def download_from_gcs(bucket_name: str, object_name: str, local_path: str):
-    client = storage.Client()
+def get_gcp_credentials() -> Credentials:
+    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "retl/retl-creds.json")
+    if not os.path.exists(cred_path):
+        raise FileNotFoundError(
+            f"Google Cloud credentials file not found at {cred_path}. "
+            "Set GOOGLE_APPLICATION_CREDENTIALS or place the file at that path."
+        )
+    return Credentials.from_service_account_file(cred_path)
+
+
+def download_from_gcs(bucket_name: str, object_name: str, local_path: str) -> None:
+    client = storage.Client(credentials=get_gcp_credentials())
     bucket = client.bucket(bucket_name)
     blob = bucket.blob(object_name)
     blob.download_to_filename(local_path)
     print(f"✅ Downloaded gs://{bucket_name}/{object_name} to {local_path}")
 
 
-def inspect_sqlite(db_path: str):
+def inspect_sqlite(db_path: str) -> None:
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -43,5 +55,5 @@ def inspect_sqlite(db_path: str):
 
 
 if __name__ == "__main__":
-    # download_from_gcs(BUCKET_NAME, OBJECT_NAME, LOCAL_PATH)
+    download_from_gcs(BUCKET_NAME, OBJECT_NAME, LOCAL_PATH)
     inspect_sqlite(LOCAL_PATH)
