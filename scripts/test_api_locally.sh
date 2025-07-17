@@ -2,9 +2,16 @@
 
 urls=(
   "http://0.0.0.0:8080/products/search?search_term=cerveza"
-  "http://0.0.0.0:8080/products/b4d8b3c5-482e-40f1-b225-7bdb72c0cbc4"
+  "http://0.0.0.0:8080/products/search?search_term=cerveza%2012"
+  "http://0.0.0.0:8080/products/search?search_term=cerveza%20botellin"
+  "http://0.0.0.0:8080/products/88ef6cd3b94916f4790907ebaa12e4f8"
 )
-expected_codes=(200 200)
+expected_codes=(
+  200
+  200
+  200
+  200
+)
 
 for i in "${!urls[@]}"; do
   url="${urls[$i]}"
