@@ -6,8 +6,8 @@ from google.cloud import storage
 from google.oauth2.service_account import Credentials
 
 BUCKET_NAME = "infass-sqlite-bucket"
-OBJECT_NAME = "infass-sqlite-api.db"
-LOCAL_PATH = "data/infass-sqlite-api.db"
+OBJECT_NAME = "infass-test-sqlite-api.db"
+LOCAL_PATH = "data/infass-test-sqlite-api.db"
 
 
 def get_gcp_credentials() -> Credentials:
