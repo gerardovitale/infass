@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Generator
 
 import pandas as pd
+from gcs_client import GCSClientSingleton
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud.storage import Client
 from google.resumable_media.common import InvalidResponse
@@ -15,12 +16,16 @@ GCP_STORAGE_RESUMABLE_UPLOAD_URL = "https://www.googleapis.com/upload/storage/v1
 logger = logging.getLogger(__name__)
 
 
-def write_data(data_gen: Generator[pd.DataFrame, None, None], destination_bucket: str, test_mode: bool):
-    bucket_name, bucket_key = destination_bucket.replace("gs://", "").split("/")
+def write_data(
+    data_gen: Generator[pd.DataFrame, None, None],
+    dest_bucket_name: str,
+    dest_bucket_prefix: str,
+    test_mode: bool,
+):
     if test_mode:
-        write_pandas_to_local_csv(data_gen, bucket_key)
+        write_pandas_to_local_csv(data_gen, dest_bucket_prefix)
     else:
-        write_pandas_to_bucket_as_csv(data_gen, bucket_name, bucket_key)
+        write_pandas_to_bucket_as_csv(data_gen, dest_bucket_name, dest_bucket_prefix)
 
 
 def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], filename_prefix: str = "data") -> None:
@@ -47,11 +52,11 @@ def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], fil
 
 
 def write_pandas_to_bucket_as_csv(
-    data_gen: Generator[pd.DataFrame, None, None], bucket_name: str, bucket_key: str
+    data_gen: Generator[pd.DataFrame, None, None], bucket_name: str, bucket_prefix: str
 ) -> None:
-    logger.info(f"Writing data to bucket: {bucket_name}, key: {bucket_key}")
+    logger.info(f"Writing data to bucket: {bucket_name}, key: {bucket_prefix}")
 
-    storage_client = Client()
+    storage_client = GCSClientSingleton.get_client()
 
     logger.info("Getting bucket")
     bucket = storage_client.get_bucket(bucket_name)
@@ -61,7 +66,9 @@ def write_pandas_to_bucket_as_csv(
 
     logger.info(f"Got bucket with name: {bucket.name}")
     with StorageStreamUploader(
-        storage_client, bucket.name, f"{bucket_key}/{datetime.now().date().isoformat()}.csv"
+        storage_client,
+        bucket.name,
+        f"{bucket_prefix}/{datetime.now().date().isoformat()}.csv",
     ) as uploader:
         headers_written = False
 
@@ -81,7 +88,13 @@ def write_pandas_to_bucket_as_csv(
 
 
 class StorageStreamUploader(object):
-    def __init__(self, client: Client, bucket_name: str, blob_name: str, chunk_size: int = CHUNK_SIZE):
+    def __init__(
+        self,
+        client: Client,
+        bucket_name: str,
+        blob_name: str,
+        chunk_size: int = CHUNK_SIZE,
+    ):
         self._client = client
         self._bucket = self._client.bucket(bucket_name)
         self._blob = self._bucket.blob(blob_name)

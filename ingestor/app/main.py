@@ -14,20 +14,21 @@ logging.basicConfig(
 )
 
 
-def ingest_data(destination_path: str) -> None:
+def ingest_data(dest_bucket_uri: str) -> None:
     logging.info("🚀 Starting data ingestion")
+    bucket_name, bucket_prefix = dest_bucket_uri.replace("gs://", "").split("/")
     is_test_mode = False
     if os.getenv("TEST_MODE"):
         logging.info(f"Running test mode with: TEST_MODE = {os.getenv('TEST_MODE')}")
         is_test_mode = True
-    sources = get_page_sources(is_test_mode)
+    sources = get_page_sources(is_test_mode, bucket_name)
     data_gen = build_data_gen(sources)
-    write_data(data_gen, destination_path, is_test_mode)
+    write_data(data_gen, bucket_name, bucket_prefix, is_test_mode)
     logging.info("✅ Successfully ingested data}")
 
 
 if __name__ == "__main__":
-    bucket_uri = os.getenv("INGESTION_MERC_PATH", "gs://infass/merc")
+    bucket_uri = os.getenv("INGESTION_MERC_PATH", "gs://infass-merc/merc")
     if not bucket_uri:
         logging.error(f"A Bucket URI must be provided: {bucket_uri}")
         sys.exit(1)

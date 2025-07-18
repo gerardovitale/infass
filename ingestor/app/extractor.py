@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import Generator
 from typing import List
 
 from bs4 import BeautifulSoup
+from gcs_client import GCSClientSingleton
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
@@ -60,7 +62,31 @@ def enter_postal_code(driver: webdriver.Chrome):
     time.sleep(WAIT_CONTENT_TIME_SLEEP)
 
 
-def navigate_to_categories(driver: webdriver.Chrome):
+def upload_to_gcs(local_file_path: str, bucket_name_name: str, destination_blob_name: str):
+    try:
+        storage_client = GCSClientSingleton.get_client()
+        bucket_name = storage_client.bucket_name(bucket_name_name)
+        blob = bucket_name.blob(destination_blob_name)
+        blob.upload_from_filename(local_file_path)
+        logger.info(f"Screenshot uploaded to gs://{bucket_name_name}/{destination_blob_name}")
+    except Exception as e:
+        logger.error(f"Failed to upload screenshot to GCS: {e}")
+
+
+def save_screenshot(driver: webdriver.Chrome, filename: str, bucket_name: str, bucket_name_prefix: str = "screenshots"):
+    try:
+        driver.save_screenshot(filename)
+        logger.error(f"Screenshot saved as {filename}")
+        if bucket_name:
+            timestamp = datetime.now(datetime.timezone.utc).isoformat()
+            gcs_dest = f"{bucket_name_prefix}/{filename.replace('.png', '')}_{timestamp}.png"
+            upload_to_gcs(filename, bucket_name, gcs_dest)
+    except Exception as e:
+        logger.error(f"Failed to save screenshot: {e}")
+        raise
+
+
+def navigate_to_categories(driver: webdriver.Chrome, bucket_name: str):
     logger.info("Clicking the Categories button to view categories")
     try:
         categories_button = driver.find_element(By.CSS_SELECTOR, CATEGORY_BUTTON_SELECTOR)
@@ -71,11 +97,7 @@ def navigate_to_categories(driver: webdriver.Chrome):
             f"Could not find categories button. URL: {driver.current_url}\n"
             f"Page source snippet: {driver.page_source[:1000]}"
         )
-        try:
-            driver.save_screenshot("navigate_to_categories_error.png")
-            logger.error("Screenshot saved as navigate_to_categories_error.png")
-        except Exception as screenshot_exc:
-            logger.error(f"Failed to save screenshot: {screenshot_exc}")
+        save_screenshot(driver, "navigate_to_categories_error.png", bucket_name)
         raise
 
 
@@ -135,7 +157,7 @@ def extract_page_source_for_subcategory(
     return extract_product_data(driver.page_source, f"{category_name} > {subcategory_name}")
 
 
-def get_page_sources(test_mode: bool):
+def get_page_sources(test_mode: bool, bucket_name: str = None) -> Generator[Dict[str, Any], None, None]:
     logger.info("Getting page content")
     driver = initialize_driver()
 
@@ -146,16 +168,12 @@ def get_page_sources(test_mode: bool):
         try:
             accept_cookies(driver)
             enter_postal_code(driver)
-            navigate_to_categories(driver)
+            navigate_to_categories(driver, bucket_name)
         except Exception as e:
             logger.error(f"Exception during initial navigation: {e}")
             logger.error(f"Current URL: {driver.current_url}")
             logger.error(f"Page source snippet: {driver.page_source[:1000]}")
-            try:
-                driver.save_screenshot("initial_navigation_error.png")
-                logger.error("Screenshot saved as initial_navigation_error.png")
-            except Exception as screenshot_exc:
-                logger.error(f"Failed to save screenshot: {screenshot_exc}")
+            save_screenshot(driver, "initial_navigation_error.png", bucket_name)
             raise
 
         product_gen_list = []
@@ -173,12 +191,7 @@ def get_page_sources(test_mode: bool):
                     f"Could not find category button for '{category_name}'. URL: {driver.current_url}\n"
                     f"Page source snippet: {driver.page_source[:1000]}"
                 )
-                try:
-                    driver.save_screenshot(f"category_{category_name}_error.png")
-                    logger.error(f"Screenshot saved as category_{category_name}_error.png")
-                except Exception as screenshot_exc:
-                    logger.error(f"Failed to save screenshot: {screenshot_exc}")
-                raise
+                save_screenshot(driver, "category_navigation_error.png", bucket_name)
 
             # Collect subcategory names for the current category
             subcategory_names = get_subcategories(driver)
