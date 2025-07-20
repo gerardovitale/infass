@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: dbt_product_price_details
+  - name: dbt_ref_product_price_details
     description: "Product details history in the Merc database"
     tests:
       - dbt_utils.unique_combination_of_columns:
