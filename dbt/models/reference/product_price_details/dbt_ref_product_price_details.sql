@@ -24,12 +24,15 @@ SELECT
     merc.price_ma_15 AS sma15,
     merc.price_ma_30 AS sma30,
     CAST({{ current_timestamp() }} AS DATE) AS created_at,
-    CAST({{ current_timestamp() }} AS DATE) AS updated_at
+    CAST({{ current_timestamp() }} AS DATE) AS updated_at,
+    CONCAT(products.name, ' | ', products.size) AS debug_product_name_size,
+    CONCAT(merc.name, ' | ', merc.size) AS debug_merc_name_size
 FROM {{ source('infass', 'merc') }} AS merc
 LEFT JOIN {{ ref('dbt_ref_products') }} AS products
   ON products.name = merc.name
   AND products.size = merc.size
-{% if is_incremental() %}
-WHERE merc.date >= (SELECT MAX(date) FROM {{ this }})
-{% endif %}
+WHERE products.id IS NOT NULL
+    {% if is_incremental() %}
+    AND merc.date >= (SELECT MAX(date) FROM {{ this }})
+    {% endif %}
 QUALIFY ROW_NUMBER() OVER (PARTITION BY merc.date, merc.name, merc.size ORDER BY merc.date DESC) = 1
