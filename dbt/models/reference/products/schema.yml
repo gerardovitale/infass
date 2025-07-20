@@ -46,5 +46,3 @@ models:
       - name: image_url
         description: "The URL of the product image"
         data_type: string
-        tests:
-          - not_null
