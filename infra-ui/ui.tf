@@ -1,8 +1,8 @@
 # ------------------------------
 # Service Account for Cloud Run
 # ------------------------------
-resource "google_service_account" "cloud_run_sa" {
-  account_id   = "${var.APP_NAME}-cloud-run-sa"
+resource "google_service_account" "cloud_run_ui_sa" {
+  account_id   = "${var.APP_NAME}-cloud-run-ui-sa"
   display_name = "Cloud Run Service Account for ${var.APP_NAME}-ui"
 }
 
@@ -17,7 +17,7 @@ resource "google_cloud_run_v2_service" "ui_service" {
 
   template {
     timeout         = "5s"
-    service_account = google_service_account.cloud_run_sa.email
+    service_account = google_service_account.cloud_run_ui_sa.email
 
     containers {
       name  = "${var.APP_NAME}-ui"
