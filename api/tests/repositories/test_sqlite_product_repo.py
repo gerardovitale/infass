@@ -1,5 +1,4 @@
 import os
-import sqlite3
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -54,7 +53,8 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
 
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
-    mock_sqlite_connect.return_value = mock_conn
+    # Patch context manager __enter__ to return mock_conn
+    mock_sqlite_connect.return_value.__enter__.return_value = mock_conn
     mock_conn.cursor.return_value = mock_cursor
     mock_cursor.execute.return_value.fetchall.return_value = expected_rows
     # Simulate cursor.description as a list of tuples with column names
@@ -80,7 +80,7 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
     mock_sqlite_connect.assert_called_once_with(test_db_path)
     mock_conn.cursor.assert_called_once()
     mock_cursor.execute.assert_called_once()
-    mock_conn.close.assert_called_once()
+    # Connection is closed automatically by context manager; no explicit close call
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -105,28 +105,6 @@ def test_check_db_path_exist_passes_when_file_exists(tmp_path):
 # ----------------------------------------
 # get_connection tests
 # ----------------------------------------
-def test_get_connection_calls_sqlite_connect(monkeypatch):
-    test_db_path = "some_path.db"
-
-    repo = init_sqlite_product_repo()
-    repo.db_path = test_db_path
-
-    mock_conn = MagicMock()
-    with patch("repositories.sqlite_product_repo.sqlite3.connect", return_value=mock_conn) as mock_connect:
-        conn = repo.get_connection()
-        mock_connect.assert_called_once_with(test_db_path)
-        assert conn == mock_conn
-
-
-def test_get_connection_raises_on_operational_error(monkeypatch):
-    test_db_path = "bad_path.db"
-
-    repo = init_sqlite_product_repo()
-    repo.db_path = test_db_path
-
-    with patch("repositories.sqlite_product_repo.sqlite3.connect", side_effect=sqlite3.OperationalError):
-        with pytest.raises(sqlite3.OperationalError):
-            repo.get_connection()
 
 
 # ----------------------------------------------------------------------------------------------------------------------

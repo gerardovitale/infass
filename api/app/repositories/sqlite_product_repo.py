@@ -1,7 +1,7 @@
 import logging
+import os
 import sqlite3
 from pathlib import Path
-from sqlite3 import Connection
 from sqlite3 import Cursor
 
 from fastapi import HTTPException
@@ -18,8 +18,6 @@ class SQLiteProductRepository(ProductRepository):
 
     def search_products(self, search_term: str) -> list[dict]:
         logger.info(f"SQLiteRepo - Searching products with term '{search_term}' using FTS5 table if available")
-        conn = self.get_connection()
-        cursor = conn.cursor()
         fts_query = """
                 SELECT p.id,
                        p.name,
@@ -35,12 +33,13 @@ class SQLiteProductRepository(ProductRepository):
         search_term_fts = search_term.strip().lower()
         if not search_term_fts.endswith("*"):
             search_term_fts += "*"
-        rows = cursor.execute(fts_query, {"search": search_term_fts}).fetchall()
-        logger.info(
-            f"SQLiteRepo - Found {len(rows)} products for term '{search_term}' (fts query: '{search_term_fts}')"
-        )
-        conn.close()
-        return self.map_rows(rows, cursor)
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            rows = cursor.execute(fts_query, {"search": search_term_fts}).fetchall()
+            logger.info(
+                f"SQLiteRepo - Found {len(rows)} products for term '{search_term}' (fts query: '{search_term_fts}')"
+            )
+            return self.map_rows(rows, cursor)
 
     def get_enriched_product(self, product_id: str):
         def map_enriched_product(mapped_rows):
@@ -51,8 +50,6 @@ class SQLiteProductRepository(ProductRepository):
             return product
 
         logger.info(f"SQLiteRepo - Getting enriched product by id: '{product_id}'")
-        conn = self.get_connection()
-        cursor = conn.cursor()
         query = """
                 SELECT p.id,
                        p.name,
@@ -71,31 +68,36 @@ class SQLiteProductRepository(ProductRepository):
                               ON p.id = ppd.id
                 WHERE p.id = :product_id
                 """
-        rows = cursor.execute(query, {"product_id": product_id}).fetchall()
-        logger.info(f"SQLiteRepo - Found {len(rows)} records for product_id '{product_id}'")
-        if not rows:
-            logger.warning(f"SQLiteRepo - No product found for id: '{product_id}'")
-            conn.close()
-            raise HTTPException(status_code=404, detail="Product not found or no price details available")
-        conn.close()
-        return map_enriched_product(self.map_rows(rows, cursor))
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            rows = cursor.execute(query, {"product_id": product_id}).fetchall()
+            logger.info(f"SQLiteRepo - Found {len(rows)} records for product_id '{product_id}'")
+            if not rows:
+                logger.warning(f"SQLiteRepo - No product found for id: '{product_id}'")
+                raise HTTPException(status_code=404, detail="Product not found or no price details available")
+            return map_enriched_product(self.map_rows(rows, cursor))
 
     def map_rows(self, rows: list[tuple], cursor: Cursor):
         return [dict(zip(self._get_column_names(cursor), row)) for row in rows]
 
-    def get_connection(self) -> Connection:
-        logger.info(f"SQLiteRepo - Connecting to database at {self.db_path}")
-        try:
-            return sqlite3.connect(self.db_path)
-        except sqlite3.OperationalError:
-            logger.error(f"SQLiteRepo - Failed to connect to database at {self.db_path}")
-            raise sqlite3.OperationalError("Could not connect to the SQLite database.")
+    # get_connection is no longer needed due to context manager usage
 
     @staticmethod
     def check_db_path_exist(db_path: str) -> None:
-        if not Path(db_path).exists():
-            logger.error(f"SQLiteRepo - Database file not found at {db_path}")
+        path_obj = Path(db_path)
+        logger.info(f"SQLiteRepo - Checking db_path: {db_path} (absolute: {path_obj.resolve()})")
+        logger.info(f"SQLiteRepo - Current working directory: {Path.cwd()}")
+        exists = path_obj.exists()
+        readable = path_obj.is_file() and os.access(path_obj, os.R_OK)
+        writable = path_obj.is_file() and os.access(path_obj, os.W_OK)
+        logger.info(f"SQLiteRepo - Exists: {exists}, Readable: {readable}, Writable: {writable}")
+        if not exists:
+            logger.error(f"SQLiteRepo - Database file not found at {db_path} (absolute: {path_obj.resolve()})")
             raise FileNotFoundError(f"Database file not found at {db_path}")
+        if not readable:
+            logger.error(f"SQLiteRepo - Database file at {db_path} is not readable")
+        if not writable:
+            logger.warning(f"SQLiteRepo - Database file at {db_path} is not writable")
 
     @staticmethod
     def _get_column_names(cursor: Cursor) -> list[str]:
