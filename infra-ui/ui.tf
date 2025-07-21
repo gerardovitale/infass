@@ -10,7 +10,7 @@ resource "google_service_account" "cloud_run_ui_sa" {
 # Cloud Run UI Service
 # ------------------------------
 resource "google_cloud_run_v2_service" "ui_service" {
-  name                = "${var.APP_NAME}-ui"
+  name                = "${var.APP_NAME}-ui-service"
   location            = var.REGION
   ingress             = "INGRESS_TRAFFIC_ALL"
   deletion_protection = false
