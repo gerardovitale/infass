@@ -81,8 +81,7 @@ resource "google_cloud_run_v2_service" "api_service" {
     volumes {
       name = local.volume_name
       gcs {
-        bucket    = google_storage_bucket.sqlite_bucket.name
-        read_only = true
+        bucket = google_storage_bucket.sqlite_bucket.name
       }
     }
 
