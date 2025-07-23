@@ -14,6 +14,7 @@ test-all:
 	@$(MAKE) -s transformer.test
 	@$(MAKE) -s dbt.test
 	@$(MAKE) -s api.test
+	@$(MAKE) -s api.local-integration-test
 	@$(MAKE) -s ui.test
 	@$(MAKE) -s sql-format.test
 	@echo "Tests completed for all components."
@@ -26,6 +27,8 @@ notebook:
 
 # INGESTOR
 ingestor.test:
+	@echo "####################################################################################################"
+	@echo "Running Ingestor tests"
 	scripts/run-docker-test.sh ingestor
 
 ingestor.local-run:
@@ -38,6 +41,8 @@ ingestor.local-run:
 
 # TRANSFORMER
 transformer.test:
+	@echo "####################################################################################################"
+	@echo "Running Transformer tests"
 	scripts/run-docker-test.sh transformer
 
 transformer.local-run:
@@ -53,14 +58,10 @@ transformer.local-run:
 		transformer:latest
 
 
-# SPARK JOBS
-spark-jobs.test:
-	cd spark-jobs/ && docker buildx build -f Dockerfile.test -t spark-job-test .
-	docker run --rm spark-job-test:latest
-
-
 # DBT
 dbt.test: dbt.deps
+	@echo "####################################################################################################"
+	@echo "Running DBT tests"
 	cd dbt/ && venv/bin/dbt test --profile infass --target dev
 
 dbt.build: dbt.deps
@@ -86,6 +87,8 @@ tf-apply:
 
 # API
 api.test:
+	@echo "####################################################################################################"
+	@echo "Running API tests"
 	scripts/run-docker-test.sh api
 
 api.run:
@@ -103,33 +106,39 @@ api.local-integration-test:
 		-v $(SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-sqlite-api.db \
 		api:latest
 	sleep 5
-	scripts/test_api_locally.sh
+	scripts/test-api-locally.sh
 	docker stop infass-api
 
 
 # UI
 ui.test:
+	@echo "####################################################################################################"
+	@echo "Running UI tests"
 	scripts/run-docker-test.sh ui
 
 ui.run:
 	cd ui/ && docker buildx build -t ui .
 	docker run -p 3000:3000 --rm \
-			-e API_BASE_URL=http://localhost:8080 \
-			-e USE_API_MOCKS=false \
-			 ui:latest
+		-e API_BASE_URL=http://localhost:8080 \
+		-e USE_API_MOCKS=false \
+		ui:latest
 
 
 
 # SQL Formatter
 sql-format.run:
-	python3 scripts/format_sql.py
+	scripts/venv/bin/python3 scripts/format_sql.py
 
 sql-format.test:
-	python3 -m unittest scripts/format_sql.py
+	@echo "####################################################################################################"
+	@echo "Running SQL format tests"
+	scripts/venv/bin/python3 -m unittest scripts/format_sql.py
 
 
 # Reverse ETL (retl)
 retl.test:
+	@echo "####################################################################################################"
+	@echo "Running Reverse ETL tests"
 	scripts/run-docker-test.sh retl
 
 retl.fetch_sqlite:
