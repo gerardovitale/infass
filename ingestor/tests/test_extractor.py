@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import patch
 
-from app.extractor import extract_product_data
 from bs4 import BeautifulSoup
+from extractor import extract_product_data
 from extractor import get_image_url
 from tests.conf_test import BasicTestCase
 

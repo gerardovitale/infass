@@ -22,6 +22,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 POSTAL_CODE = "28050"
 BASE_URL = "https://tienda.mercadona.es"
 WAIT_CONTENT_TIME_SLEEP = 2
+
 COOKIES_BUTTON_XPATH = "//button[contains(text(), 'Aceptar')]"
 POSTAL_CODE_INPUT_BOX_SELECTOR = "[data-testid='postal-code-checker-input']"
 CATEGORY_SELECTOR = ".category-menu__item button span label"
@@ -212,6 +213,7 @@ def get_page_sources(test_mode: bool, bucket_name: str = None) -> Generator[Dict
                 logger.info("Running in test mode 🧪: Stopping after the first category")
                 break
 
+        logger.info(f"Extracted {len(product_gen_list)} product data generators")
         return product_gen_list
 
     finally:

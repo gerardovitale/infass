@@ -8,7 +8,6 @@ from writer import write_data
 
 # LOGGING
 logging.basicConfig(
-    # format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     format="%(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
@@ -24,7 +23,7 @@ def ingest_data(dest_bucket_uri: str) -> None:
     sources = get_page_sources(is_test_mode, bucket_name)
     data_gen = build_data_gen(sources)
     write_data(data_gen, bucket_name, bucket_prefix, is_test_mode)
-    logging.info("✅ Successfully ingested data}")
+    logging.info("✅ Successfully ingested data")
 
 
 if __name__ == "__main__":
