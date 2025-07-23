@@ -35,4 +35,4 @@ COPY --from=python-build /usr/local/bin /usr/local/bin
 WORKDIR /jobs
 COPY spark_jobs/ ./
 COPY spark_jobs/tests/ ./tests
-ENTRYPOINT ["pytest", "--durations=0", "/jobs/tests"]
+ENTRYPOINT ["pytest", "--durations=5", "/jobs/tests"]
