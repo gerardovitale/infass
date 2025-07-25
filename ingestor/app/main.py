@@ -3,6 +3,7 @@ import os
 import sys
 
 from data_builder import build_data_gen
+from extractor import Extractor
 from extractor.carr_extractor import CarrExtractor
 from extractor.merc_extractor import MercExtractor
 from writer import write_data
@@ -29,28 +30,30 @@ def parse_args():
 def ingest_data(data_source_url: str, dest_bucket_uri: str) -> None:
     logging.info("🚀 Starting data ingestion")
     bucket_name, bucket_prefix = dest_bucket_uri.replace("gs://", "").split("/")
+
     is_test_mode = False
     if os.getenv("TEST_MODE"):
         logging.info(f"Running test mode with: TEST_MODE = {os.getenv('TEST_MODE')}")
         is_test_mode = True
-    sources = extract_page_sources(data_source_url, is_test_mode, bucket_name)
+
+    extractor = get_extractor(data_source_url, bucket_name, is_test_mode)
+    sources = extractor.get_page_sources()
     data_gen = build_data_gen(sources)
     write_data(data_gen, bucket_name, bucket_prefix, is_test_mode)
     logging.info("✅ Successfully ingested data")
 
 
-def extract_page_sources(data_source_url: str, test_mode: bool, bucket_name: str = None) -> list:
+def get_extractor(data_source_url: str, bucket_name: str, test_mode: bool) -> Extractor:
     logging.info(
-        "Starting page source extraction with: "
-        f"data_source_url={data_source_url}, test_mode={test_mode}, bucket_name={bucket_name}"
+        f"Creating extractor for data_source_url={data_source_url}, bucket_name={bucket_name}, test_mode={test_mode},"
     )
     if "mercadona" in data_source_url:
-        logging.info("Extracting data from Mercadona")
-        return MercExtractor(data_source_url, test_mode, bucket_name).get_page_sources()
+        logging.info("Using MercExtractor for Mercadona data source")
+        return MercExtractor(data_source_url, bucket_name, test_mode)
 
     elif "carrefour" in data_source_url:
-        logging.info("Extracting data from Carrefour")
-        return CarrExtractor(data_source_url, test_mode, bucket_name).get_page_sources()
+        logging.info("Using CarrExtractor for Carrefour data source")
+        return CarrExtractor(data_source_url, bucket_name, test_mode)
 
     else:
         logging.error("Unsupported data source URL")

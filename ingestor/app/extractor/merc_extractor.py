@@ -31,8 +31,8 @@ class MercExtractor(Extractor):
     SUBCATEGORY_SELECTOR = "ul li.category-item button"
     SUBCATEGORY_BUTTON_SELECTOR_TEMPLATE = "//button[contains(text(), '{0}')]"
 
-    def __init__(self, data_source_url: str, test_mode: bool, bucket_name: Optional[str] = None):
-        super().__init__(data_source_url, test_mode, bucket_name)
+    def __init__(self, data_source_url: str, bucket_name: str, test_mode: bool):
+        super().__init__(data_source_url, bucket_name, test_mode)
         self.base_url = data_source_url
 
     def accept_cookies(self, driver: webdriver.Chrome):

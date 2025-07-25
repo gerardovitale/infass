@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 
 
 class Extractor(metaclass=ABCMeta):
-    def __init__(self, data_source_url: str, test_mode: bool, bucket_name: str | None = None):
+    def __init__(self, data_source_url: str, bucket_name: str, test_mode: bool):
         self.data_source_url = data_source_url
-        self.test_mode = test_mode
         self.bucket_name = bucket_name
+        self.test_mode = test_mode
 
     @abstractmethod
     def get_page_sources(self) -> List[Generator[Dict[str, Any], None, None]]:
