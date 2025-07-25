@@ -18,5 +18,13 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
-      - name: Trigger Ingestor Cloud Run Job
-        run: gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} --region ${{ env.GCP_REGION }} --wait
+      - name: Trigger Mercadona Ingestor Cloud Run Job
+        env:
+          DATA_SOURCE_URL: https://tienda.mercadona.es
+          BUCKET_URI: gs://infass-merc/merc
+          CONTAINER_NAME: merc-ingestor
+        run: |
+          gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
+            --region ${{ env.GCP_REGION }} --wait \
+            --container=${{ env.CONTAINER_NAME }} \
+            --args="${{ env.DATA_SOURCE_URL }},${{ env.BUCKET_URI }}" \

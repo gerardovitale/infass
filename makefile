@@ -35,8 +35,10 @@ ingestor.local-run:
 	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
 	docker run --rm --name ingestor \
 		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
-   		-e TEST_MODE=true \
-		ingestor:latest
+		-e TEST_MODE=true \
+		ingestor:latest \
+		gs://infass-merc/merc \
+		https://tienda.mercadona.es
 
 
 # TRANSFORMER

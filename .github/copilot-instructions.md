@@ -1,7 +1,6 @@
 # Copilot Instructions for infass Monorepo
 
-This repository contains multiple independent modules, each with its own README describing its purpose, input/output
-data, configuration, and usage.
+This repository (monorepo alike) contains multiple independent modules, each with its own README describing its purpose, input/output data, configuration, and usage.
 
 ## General Guidelines
 

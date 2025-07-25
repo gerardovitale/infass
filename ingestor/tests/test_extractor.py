@@ -1,9 +1,11 @@
 from unittest import TestCase
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 from bs4 import BeautifulSoup
-from extractor import extract_product_data
-from extractor import get_image_url
+from extractor import Extractor
+from extractor.merc_extractor import extract_product_data
+from extractor.merc_extractor import get_image_url
 from tests.conf_test import BasicTestCase
 
 
@@ -46,7 +48,7 @@ class TestExtractor(BasicTestCase):
         self.addCleanup(logger_patch.stop)
         self.mock_logger = logger_patch.start()
 
-        time_patch = patch("extractor.time.sleep")
+        time_patch = patch("extractor.merc_extractor.time.sleep")
         self.addCleanup(time_patch.stop)
         self.mock_sleep = time_patch.start()
 
@@ -63,6 +65,7 @@ class TestExtractor(BasicTestCase):
             "image_url": "sample.jpg",
         }
         actual_output = extract_product_data(self.test_html, category)
+        self.assertIsNotNone(actual_output)
         self.assertEqual(next(actual_output), expected_output)
 
     def test_extract_product_data_when_there_is_no_discount(self):
@@ -94,7 +97,6 @@ class TestExtractor(BasicTestCase):
             </button>
         </div>
         """
-
         expected_output = {
             "name": "No Discount Product",
             "original_price": "2,00 €",
@@ -104,6 +106,7 @@ class TestExtractor(BasicTestCase):
             "image_url": "https://prod-merc.imgix.net/images/c1788076223b499bd260c6a03d89b087.jpg",
         }
         actual_output = extract_product_data(no_discount_html, category)
+        self.assertIsNotNone(actual_output)
         self.assertEqual(next(actual_output), expected_output)
 
     def test_extract_product_data_when_there_is_no_image(self):
@@ -113,15 +116,15 @@ class TestExtractor(BasicTestCase):
             <button class="product-cell__content-link" data-testid="open-product-detail">
                 <div class="product-cell__info">
                     <h4 class="subhead1-r product-cell__description-name" data-testid="product-cell-name">
-                        No Discount Product
+                        No Image Product
                     </h4>
                     <div class="product-format product-format__size--cell" tabindex="0">
-                        <span class="footnote1-r">Unidad </span><span class="footnote1-r">500 ml</span>
+                        <span class="footnote1-r">Caja </span><span class="footnote1-r">12 uds</span>
                     </div>
                     <div class="product-price">
                         <div>
                             <p class="product-price__unit-price subhead1-b" data-testid="product-price">
-                                2,00 €
+                                5,00 €
                             </p>
                         </div>
                     </div>
@@ -130,14 +133,15 @@ class TestExtractor(BasicTestCase):
         </div>
         """
         expected_output = {
-            "name": "No Discount Product",
-            "original_price": "2,00 €",
+            "name": "No Image Product",
+            "original_price": "5,00 €",
             "discount_price": None,
-            "size": "Unidad 500 ml",
+            "size": "Caja 12 uds",
             "category": category,
             "image_url": None,
         }
         actual_output = extract_product_data(no_image_html, category)
+        self.assertIsNotNone(actual_output)
         self.assertEqual(next(actual_output), expected_output)
 
 
@@ -166,3 +170,32 @@ class TestGetImageUrl(TestCase):
         soup = BeautifulSoup(html, "html.parser")
         result = get_image_url(soup)
         assert result is None
+
+
+class DummyExtractor(Extractor):
+    def get_page_sources(self):
+        return []
+
+
+class TestExtractorGCS(TestCase):
+    def test_upload_to_gcs_calls_blob_upload(self):
+        with patch("extractor.GCSClientSingleton.get_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_bucket = MagicMock()
+            mock_blob = MagicMock()
+            mock_get_client.return_value = mock_client
+            mock_client.bucket_name.return_value = mock_bucket
+            mock_bucket.blob.return_value = mock_blob
+
+            DummyExtractor.upload_to_gcs("file.png", "bucket", "dest.png")
+            mock_client.bucket_name.assert_called_with("bucket")
+            mock_bucket.blob.assert_called_with("dest.png")
+            mock_blob.upload_from_filename.assert_called_with("file.png")
+
+    def test_save_screenshot_calls_upload_and_saves_file(self):
+        extractor = DummyExtractor("url", False, "bucket")
+        driver = MagicMock()
+        with patch.object(DummyExtractor, "upload_to_gcs") as mock_upload:
+            extractor.save_screenshot(driver, "file.png", "bucket")
+            driver.save_screenshot.assert_called_with("file.png")
+            mock_upload.assert_called()
