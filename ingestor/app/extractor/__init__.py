@@ -49,9 +49,6 @@ class Extractor(metaclass=ABCMeta):
         try:
             storage_client = GCSClientSingleton.get_client()
             bucket = storage_client.get_bucket(bucket_name)
-            if not bucket:
-                logger.error(f"Couldn't get the bucket: {bucket_name}")
-                raise Exception("Bucket not found")
             blob = bucket.blob(destination_blob_name)
             blob.upload_from_filename(local_file_path)
             logger.info(f"Screenshot uploaded to gs://{bucket.name}/{destination_blob_name}")
