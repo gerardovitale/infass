@@ -42,13 +42,19 @@ class Extractor(metaclass=ABCMeta):
         return webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=chrome_options)
 
     @staticmethod
-    def upload_to_gcs(local_file_path: str, bucket_name_name: str, destination_blob_name: str):
+    def upload_to_gcs(local_file_path: str, bucket_name: str, destination_blob_name: str):
+        logger.info(
+            f"Uploading screenshot to GCS: {local_file_path} to bucket: {bucket_name} as {destination_blob_name}"
+        )
         try:
             storage_client = GCSClientSingleton.get_client()
-            bucket_name = storage_client.bucket_name(bucket_name_name)
-            blob = bucket_name.blob(destination_blob_name)
+            bucket = storage_client.get_bucket(bucket_name)
+            if not bucket:
+                logger.error(f"Couldn't get the bucket: {bucket_name}")
+                raise Exception("Bucket not found")
+            blob = bucket.blob(destination_blob_name)
             blob.upload_from_filename(local_file_path)
-            logger.info(f"Screenshot uploaded to gs://{bucket_name_name}/{destination_blob_name}")
+            logger.info(f"Screenshot uploaded to gs://{bucket.name}/{destination_blob_name}")
         except Exception as e:
             logger.error(f"Failed to upload screenshot to GCS: {e}")
 
@@ -56,16 +62,14 @@ class Extractor(metaclass=ABCMeta):
         self,
         driver: webdriver.Chrome,
         filename: str,
-        bucket_name: str,
         bucket_name_prefix: str = "screenshots",
     ):
         try:
             driver.save_screenshot(filename)
-            logger.error(f"Screenshot saved as {filename}")
-            if bucket_name:
-                timestamp = datetime.now(timezone.utc).isoformat()
-                gcs_dest = f"{bucket_name_prefix}/{filename.replace('.png', '')}_{timestamp}.png"
-                self.upload_to_gcs(filename, bucket_name, gcs_dest)
+            logger.info(f"Screenshot saved as {filename}")
+            timestamp = datetime.now(timezone.utc).isoformat()
+            gcs_dest = f"{bucket_name_prefix}/{filename.replace('.png', '')}_{timestamp}.png"
+            self.upload_to_gcs(filename, self.bucket_name, gcs_dest)
         except Exception as e:
             logger.error(f"Failed to save screenshot: {e}")
             raise

@@ -33,7 +33,6 @@ class MercExtractor(Extractor):
 
     def __init__(self, data_source_url: str, bucket_name: str, test_mode: bool):
         super().__init__(data_source_url, bucket_name, test_mode)
-        self.base_url = data_source_url
 
     def accept_cookies(self, driver: webdriver.Chrome):
         logger.info("Accepting cookies")
@@ -51,7 +50,7 @@ class MercExtractor(Extractor):
         logger.info("Waiting for main content to load after entering postal code")
         time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
 
-    def navigate_to_categories(self, driver: webdriver.Chrome, bucket_name: str):
+    def navigate_to_categories(self, driver: webdriver.Chrome):
         logger.info("Clicking the Categories button to view categories")
         try:
             categories_button = driver.find_element(By.CSS_SELECTOR, self.CATEGORY_BUTTON_SELECTOR)
@@ -62,7 +61,7 @@ class MercExtractor(Extractor):
                 f"Could not find categories button. URL: {driver.current_url}\n"
                 f"Page source snippet: {driver.page_source[:1000]}"
             )
-            self.save_screenshot(driver, "navigate_to_categories_error.png", bucket_name)
+            self.save_screenshot(driver, "navigate_to_categories_error.png")
             raise
 
     def get_main_categories(self, driver: webdriver.Chrome) -> List[str]:
@@ -94,18 +93,18 @@ class MercExtractor(Extractor):
         driver = self.initialize_driver()
 
         try:
-            driver.get(self.base_url)
+            driver.get(self.data_source_url)
             time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
 
             try:
                 self.accept_cookies(driver)
                 self.enter_postal_code(driver)
-                self.navigate_to_categories(driver, self.bucket_name)
+                self.navigate_to_categories(driver)
             except Exception as e:
                 logger.error(f"Exception during initial navigation: {e}")
                 logger.error(f"Current URL: {driver.current_url}")
                 logger.error(f"Page source snippet: {driver.page_source[:1000]}")
-                self.save_screenshot(driver, "initial_navigation_error.png", self.bucket_name)
+                self.save_screenshot(driver, "initial_navigation_error.png")
                 raise
 
             product_gen_list = []
@@ -125,7 +124,7 @@ class MercExtractor(Extractor):
                         f"Could not find category button for '{category_name}'. URL: {driver.current_url}\n"
                         f"Page source snippet: {driver.page_source[:1000]}"
                     )
-                    self.save_screenshot(driver, "category_navigation_error.png", self.bucket_name)
+                    self.save_screenshot(driver, "category_navigation_error.png")
 
                 # Collect subcategory names for the current category
                 subcategory_names = self.get_subcategories(driver)
@@ -168,7 +167,7 @@ def get_image_url(soup: BeautifulSoup) -> Optional[str]:
 def extract_product_data(page_source: str, category: str) -> Generator[Dict[str, Any], None, None] | None:
     logger.info(f"Extracting product data for category: {category}")
     if not page_source:
-        return
+        return (item for item in [])
 
     soup = BeautifulSoup(page_source, "html.parser")
     products = soup.find_all("div", {"data-testid": "product-cell"})

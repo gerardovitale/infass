@@ -62,7 +62,7 @@ def write_pandas_to_bucket_as_csv(
     bucket = storage_client.get_bucket(bucket_name)
     if not bucket:
         logger.error(f"Couldn't get the bucket: {bucket_name}")
-        raise Exception
+        raise Exception("Bucket not found")
 
     logger.info(f"Got bucket with name: {bucket.name}")
     with StorageStreamUploader(

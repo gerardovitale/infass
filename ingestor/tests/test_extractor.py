@@ -173,6 +173,9 @@ class TestGetImageUrl(TestCase):
 
 
 class DummyExtractor(Extractor):
+    def __init__(self, data_source_url="url", bucket_name="bucket", test_mode=False):
+        super().__init__(data_source_url, bucket_name, test_mode)
+
     def get_page_sources(self):
         return []
 
@@ -184,16 +187,16 @@ class TestExtractorGCS(TestCase):
             mock_bucket = MagicMock()
             mock_blob = MagicMock()
             mock_get_client.return_value = mock_client
-            mock_client.bucket_name.return_value = mock_bucket
+            mock_client.get_bucket.return_value = mock_bucket
             mock_bucket.blob.return_value = mock_blob
 
             DummyExtractor.upload_to_gcs("file.png", "bucket", "dest.png")
-            mock_client.bucket_name.assert_called_with("bucket")
+            mock_client.get_bucket.assert_called_with("bucket")
             mock_bucket.blob.assert_called_with("dest.png")
             mock_blob.upload_from_filename.assert_called_with("file.png")
 
     def test_save_screenshot_calls_upload_and_saves_file(self):
-        extractor = DummyExtractor("url", False, "bucket")
+        extractor = DummyExtractor("url", "bucket", False)
         driver = MagicMock()
         with patch.object(DummyExtractor, "upload_to_gcs") as mock_upload:
             extractor.save_screenshot(driver, "file.png", "bucket")
