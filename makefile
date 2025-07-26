@@ -130,7 +130,7 @@ ui.test:
 ui.run:
 	cd ui/ && docker buildx build -t ui .
 	docker run -p 3000:3000 --rm \
-		-e API_BASE_URL=http://localhost:8080 \
+		-e API_BASE_URL=http://host.docker.internal:8080 \
 		-e USE_API_MOCKS=false \
 		ui:latest
 
