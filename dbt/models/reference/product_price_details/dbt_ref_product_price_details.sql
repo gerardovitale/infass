@@ -24,9 +24,7 @@ SELECT
     merc.price_ma_15 AS sma15,
     merc.price_ma_30 AS sma30,
     CAST({{ current_timestamp() }} AS DATE) AS created_at,
-    CAST({{ current_timestamp() }} AS DATE) AS updated_at,
-    CONCAT(products.name, ' | ', products.size) AS debug_product_name_size,
-    CONCAT(merc.name, ' | ', merc.size) AS debug_merc_name_size
+    CAST({{ current_timestamp() }} AS DATE) AS updated_at
 FROM {{ source('infass', 'merc') }} AS merc
 LEFT JOIN {{ ref('dbt_ref_products') }} AS products
   ON products.name = merc.name
