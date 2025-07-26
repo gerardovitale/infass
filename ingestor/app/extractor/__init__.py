@@ -39,6 +39,7 @@ class Extractor(metaclass=ABCMeta):
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--remote-debugging-port=9222")
         logger.info("Initializing driver with webdriver-manager")
+        # service = Service(ChromeDriverManager().install())
         return webdriver.Chrome(service=Service("/usr/bin/chromedriver"), options=chrome_options)
 
     @staticmethod

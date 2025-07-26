@@ -46,7 +46,7 @@ ingestor.carr-local-run:
 		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
 		-e TEST_MODE=true \
 		ingestor:latest \
-		https://www.carrefour.es/ \
+		https://www.carrefour.es/supermercado \
 		gs://infass-carr/carr
 
 
