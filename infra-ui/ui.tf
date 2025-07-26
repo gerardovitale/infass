@@ -39,3 +39,11 @@ resource "google_cloud_run_v2_service" "ui_service" {
   }
 
 }
+
+resource "google_cloud_run_v2_service_iam_member" "public_access" {
+  project  = google_cloud_run_v2_service.ui_service.project
+  location = google_cloud_run_v2_service.ui_service.location
+  name     = google_cloud_run_v2_service.ui_service.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
