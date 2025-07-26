@@ -21,10 +21,10 @@ jobs:
       - name: Trigger Mercadona Ingestor Cloud Run Job
         env:
           DATA_SOURCE_URL: https://tienda.mercadona.es
-          BUCKET_URI: gs://infass-merc/merc
+          DEST_BUCKET_URI: gs://infass-merc/merc
           CONTAINER_NAME: merc-ingestor
         run: |
           gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
             --region ${{ env.GCP_REGION }} --wait \
             --container=${{ env.CONTAINER_NAME }} \
-            --args="${{ env.DATA_SOURCE_URL }},${{ env.BUCKET_URI }}" \
+            --args="${{ env.DATA_SOURCE_URL }},${{ env.DEST_BUCKET_URI }}" \

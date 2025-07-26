@@ -22,8 +22,8 @@ def parse_args():
             "Insufficient arguments provided. Please provide bucket_uri and data_source_url as positional arguments."
         )
         sys.exit(1)
-    bucket_uri = sys.argv[1]
-    data_source_url = sys.argv[2]
+    data_source_url = sys.argv[1]
+    bucket_uri = sys.argv[2]
     return bucket_uri, data_source_url
 
 
