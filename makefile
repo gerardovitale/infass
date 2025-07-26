@@ -31,14 +31,23 @@ ingestor.test:
 	@echo "Running Ingestor tests"
 	scripts/run-docker-test.sh ingestor
 
-ingestor.local-run:
+ingestor.merc-local-run:
 	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
 	docker run --rm --name ingestor \
 		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
 		-e TEST_MODE=true \
 		ingestor:latest \
-		gs://infass-merc/merc \
-		https://tienda.mercadona.es
+		https://tienda.mercadona.es \
+		gs://infass-merc/merc
+
+ingestor.carr-local-run:
+	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
+	docker run --rm --name ingestor \
+		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
+		-e TEST_MODE=true \
+		ingestor:latest \
+		https://www.carrefour.es/ \
+		gs://infass-carr/carr
 
 
 # TRANSFORMER
