@@ -10,10 +10,11 @@ resource "google_service_account" "cloud_run_ui_sa" {
 # Cloud Run UI Service
 # ------------------------------
 resource "google_cloud_run_v2_service" "ui_service" {
-  name                = "${var.APP_NAME}-ui-service"
-  location            = var.REGION
-  ingress             = "INGRESS_TRAFFIC_ALL"
-  deletion_protection = false
+  name                 = "${var.APP_NAME}-ui-service"
+  location             = var.REGION
+  ingress              = "INGRESS_TRAFFIC_ALL"
+  deletion_protection  = false
+  invoker_iam_disabled = true
 
   template {
     timeout         = "5s"
@@ -38,12 +39,4 @@ resource "google_cloud_run_v2_service" "ui_service" {
 
   }
 
-}
-
-resource "google_cloud_run_v2_service_iam_member" "public_access" {
-  project  = google_cloud_run_v2_service.ui_service.project
-  location = google_cloud_run_v2_service.ui_service.location
-  name     = google_cloud_run_v2_service.ui_service.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
 }
