@@ -3,8 +3,8 @@
 *-creds*
 
 # Local Data folder
-data/
-data/transformer_output/
+ext/
+ext/transformer_output/
 *.duckdb
 
 # Byte-compiled / optimized / DLL files
