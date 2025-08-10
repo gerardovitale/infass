@@ -69,6 +69,22 @@ transformer.local-run:
 		transformer:latest
 
 
+# TRANSFORMER V2
+transformerV2.test:
+	@echo "####################################################################################################"
+	@echo "Running Transformer tests"
+	scripts/run-docker-test.sh transformerV2
+
+transformerV2.local-run:
+	cd transformerV2/ && docker buildx build -f Dockerfile -t transformer-v2 .
+	docker run --rm \
+		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
+		transformer-v2:latest \
+		--gcs-source-bucket test-bucket \
+		--bq-destination-table test-table
+
+
 # DBT
 dbt.test: dbt.deps
 	@echo "####################################################################################################"
