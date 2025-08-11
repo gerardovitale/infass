@@ -22,4 +22,5 @@ jobs:
         run: |
           gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
             --region ${{ env.GCP_REGION }} --wait \
-            --args "--gcs-source-bucket=test-bucket,--bq-destination-table=test-table"
+            --container=merc-transformer-v2 \
+            --args="--gcs-source-bucket test-bucket,--bq-destination-table test-table"
