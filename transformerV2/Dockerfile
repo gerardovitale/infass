@@ -18,4 +18,3 @@ COPY --from=python-build /usr/local/lib/python3.9/site-packages /usr/local/lib/p
 COPY --from=python-build /usr/local/bin /usr/local/bin
 COPY ./app/ ./
 ENTRYPOINT ["python3", "main.py"]
-CMD ["--gcs-source-bucket", "${GCS_SOURCE_BUCKET}", "--bq-destination-table", "${BQ_DESTINATION_TABLE}"]
