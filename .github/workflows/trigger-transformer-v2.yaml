@@ -1,0 +1,25 @@
+name: Trigger Transformer
+
+on:
+  schedule:
+    - cron: "0 6 * * 6"
+  workflow_dispatch:
+
+env:
+  GCP_RUN_JOB_NAME: infass-transformer-job-v2
+  GCP_REGION: europe-southwest1
+
+jobs:
+  trigger-transformer-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.7
+        with:
+          credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
+
+      - name: Trigger Ingestor Cloud Run Job
+        run: |
+          gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
+            --region ${{ env.GCP_REGION }} --wait \
+            --args "--gcs-source-bucket=test-bucket,--bq-destination-table=test-table"
