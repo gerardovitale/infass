@@ -30,7 +30,7 @@ resource "google_cloud_run_v2_job" "transformer_job" {
       service_account = google_service_account.transformer_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-transformer:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer:${var.DOCKER_IMAGE_TAG}"
         resources {
           limits = {
             cpu    = "1"
@@ -54,6 +54,25 @@ resource "google_cloud_run_v2_job" "transformer_job" {
           name  = "WRITE_DISPOSITION"
           value = var.TRANSFORMER_WRITE_DISPOSITION
         }
+      }
+    }
+  }
+}
+
+resource "google_cloud_run_v2_job" "transformer_job_v2" {
+  name                = "${var.APP_NAME}-transformer-job-v2"
+  location            = var.REGION
+  deletion_protection = false
+  labels              = local.labels
+
+  template {
+    template {
+      timeout         = "1200s"
+      max_retries     = 0
+      service_account = google_service_account.transformer_sa.email
+
+      containers {
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer-v2:${var.DOCKER_IMAGE_TAG}"
       }
     }
   }
