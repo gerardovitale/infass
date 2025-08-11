@@ -70,13 +70,13 @@ transformer.local-run:
 
 
 # TRANSFORMER V2
-transformerV2.test:
+transformer-v2.test:
 	@echo "####################################################################################################"
 	@echo "Running Transformer tests"
-	scripts/run-docker-test.sh transformerV2
+	scripts/run-docker-test.sh transformer-v2
 
-transformerV2.local-run:
-	cd transformerV2/ && docker buildx build -f Dockerfile -t transformer-v2 .
+transformer-v2.local-run:
+	cd transformer-v2/ && docker buildx build -f Dockerfile -t transformer-v2 .
 	docker run --rm \
 		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
