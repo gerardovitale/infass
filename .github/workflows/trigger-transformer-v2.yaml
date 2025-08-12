@@ -1,4 +1,4 @@
-name: Trigger Transformer
+name: Trigger Transformer V2
 
 on:
   schedule:
@@ -23,4 +23,4 @@ jobs:
           gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
             --region ${{ env.GCP_REGION }} --wait \
             --container=merc-transformer-v2 \
-            --args="--gcs-source-bucket test-bucket,--bq-destination-table test-table"
+            --args=" --gcs-source-bucket,test-bucket, --bq-destination-table,test-table"
