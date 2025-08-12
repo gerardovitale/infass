@@ -48,8 +48,8 @@ def main():
 def parse_args():
     logging.info("Parsing command-line arguments")
     parser = argparse.ArgumentParser(description="Data transformation pipeline")
-    parser.add_argument("--gcs-source-bucket", help="GCS source bucket name")  # required=True,
-    parser.add_argument("--bq-destination-table", help="BigQuery destination table name")  # required=True,
+    parser.add_argument("--gcs-source-bucket", required=True, help="GCS source bucket name")
+    parser.add_argument("--bq-destination-table", required=True, help="BigQuery destination table name")
     return parser.parse_args()
 
 
