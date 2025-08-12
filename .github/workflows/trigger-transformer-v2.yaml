@@ -6,8 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_RUN_JOB_NAME: infass-transformer-job-v2
   GCP_REGION: europe-southwest1
+  APP_NAME: infass
+  COMPONENT: transformer-v2
+  ARGS: "--gcs-source-bucket,test-bucket,--bq-destination-table,test-table"
 
 jobs:
   trigger-transformer-v2:
@@ -20,7 +22,8 @@ jobs:
 
       - name: Trigger Ingestor Cloud Run Job
         run: |
-          gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
-            --region ${{ env.GCP_REGION }} --wait \
-            --container=merc-transformer-v2 \
-            --args="--gcs-source-bucket,test-bucket,--bq-destination-table,test-table"
+          gcloud run jobs execute ${{ env.APP_NAME }}-${{ env.COMPONENT }} \
+            --region ${{ env.GCP_REGION }} \
+            --wait \
+            --container=${{ env.COMPONENT }} \
+            --args="${{ env.ARGS }}"

@@ -59,8 +59,8 @@ resource "google_cloud_run_v2_job" "transformer_job" {
   }
 }
 
-resource "google_cloud_run_v2_job" "transformer_job_v2" {
-  name                = "${var.APP_NAME}-transformer-job-v2"
+resource "google_cloud_run_v2_job" "transformer_v2_job" {
+  name                = "${var.APP_NAME}-transformer-v2"
   location            = var.REGION
   deletion_protection = false
   labels              = local.labels
