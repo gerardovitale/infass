@@ -9,6 +9,9 @@ jobs:
   trigger-transformer-v2:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
       - name: Trigger Cloud Run Job
         uses: ./.github/actions/trigger-cloud-run-job
         with:
