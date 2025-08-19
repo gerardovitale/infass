@@ -19,4 +19,4 @@ jobs:
           region: europe-southwest1
           app_name: infass
           component: transformer-v2
-          args: "--gcs-source-bucket,test-bucket,--bq-destination-table,test-table"
+          args: "--gcs-source-bucket,test-bucket,--product,merc,--bq-destination-table,test-table"
