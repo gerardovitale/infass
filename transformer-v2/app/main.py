@@ -12,9 +12,19 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 # Cases to handle:
 
 # 1. Process last date file
-# - Just read last csv file from GCS
-# - Transform data
-# - Append to BigQuery dataset
+# - Just read last csv file from GCS, assuming there is one per day
+# - Transform data using MercTransformer, CarrTransformer, DiaTransformer...
+# - Append to BigQuery dataset (merc, carr, dia)
+
+# For example:
+# Given inputs:
+# - GCS source bucket: infass-landing-zone
+# - Product: merc
+# - BigQuery destination table: inflation-assistant.infass.merc
+# The pipeline will:
+# - Read last CSV file from GCS: gs://infass-landing-zone/merc/2025-08-19.csv
+# - Transform data using MercTransformer
+# - Append to BigQuery dataset inflation-assistant.infass.merc
 
 # 2. Process a specific unprocessed date range
 # - Read unprocessed CSV files from GCS
@@ -37,9 +47,9 @@ def main():
     args = parse_args()
     logging.info(f"Parsed args: {vars(args)}")
     params = {
-        "data_source": GCS(args.gcs_source_bucket),
-        "transformer": MercTransformer(),
-        "destination": BigQuery(args.bq_destination_table),
+        "data_source": GCS(bucket_name=args.gcs_source_bucket, prefix=args.product),
+        "transformer": get_transformer(args.product),
+        "destination": BigQuery(dataset_name=args.bq_destination_table),
     }
     run_transformer(**params)
     logging.info("Pipeline completed successfully.")
@@ -48,8 +58,11 @@ def main():
 def parse_args():
     logging.info("Parsing command-line arguments")
     parser = argparse.ArgumentParser(description="Data transformation pipeline")
-    parser.add_argument("--gcs-source-bucket", required=True, help="GCS source bucket name")
-    parser.add_argument("--bq-destination-table", required=True, help="BigQuery destination table name")
+    parser.add_argument("--gcs-source-bucket", type=str, required=True, help="GCS source bucket name")
+    parser.add_argument(
+        "--product", type=str, required=True, choices=["merc", "carr", "dia"], help="Product to process"
+    )
+    parser.add_argument("--bq-destination-table", type=str, required=True, help="BigQuery destination table name")
     return parser.parse_args()
 
 
@@ -67,6 +80,17 @@ class Transformer(ABC):
         raise NotImplementedError()
 
 
+def get_transformer(product: str) -> Transformer:
+    if product == "merc":
+        return MercTransformer()
+    elif product == "carr":
+        raise NotImplementedError()
+    elif product == "dia":
+        raise NotImplementedError()
+    else:
+        raise ValueError(f"Unknown product: {product}")
+
+
 def run_transformer(data_source: Sink, transformer: Transformer, destination: Sink) -> None:
     logging.info(
         "Running transformer with "
@@ -80,9 +104,10 @@ def run_transformer(data_source: Sink, transformer: Transformer, destination: Si
 
 
 class GCS(Sink):
-    def __init__(self, bucket_name: str):
-        logging.info(f"Initializing GCS Sink for bucket: {bucket_name}")
+    def __init__(self, bucket_name: str, prefix: str):
+        logging.info(f"Initializing GCS Sink for bucket: {bucket_name} with prefix: {prefix}")
         self.bucket_name = bucket_name
+        self.prefix = prefix
         self.storage_client = storage.Client()
 
     def fetch_data(self) -> pd.DataFrame:
