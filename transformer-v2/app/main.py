@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 import argparse
 import logging
 from abc import ABC
 from abc import abstractmethod
+from ast import Tuple
+from datetime import date
+from datetime import datetime
+from typing import Optional
 
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud import storage
+from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -46,12 +53,17 @@ def main():
     logging.info("Starting transformer V2 pipeline")
     args = parse_args()
     logging.info(f"Parsed args: {vars(args)}")
-    params = {
-        "data_source": GCS(bucket_name=args.gcs_source_bucket, prefix=args.product),
-        "transformer": get_transformer(args.product),
-        "destination": BigQuery(dataset_name=args.bq_destination_table),
-    }
-    run_transformer(**params)
+    run_transformer(
+        data_source=GCS(bucket_name=args.gcs_source_bucket, prefix=args.product),
+        transformer=get_transformer(args.product),
+        destination=BigQuery(dataset_name=args.bq_destination_table),
+        txn_recorder=TransactionRecorder(
+            db_path="/mnt/sqlite/infass-transformer-sqlite.db",
+            product=args.product,
+            data_source=args.gcs_source_bucket,
+            destination=args.bq_destination_table,
+        ),
+    )
     logging.info("Pipeline completed successfully.")
 
 
@@ -60,9 +72,18 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Data transformation pipeline")
     parser.add_argument("--gcs-source-bucket", type=str, required=True, help="GCS source bucket name")
     parser.add_argument(
-        "--product", type=str, required=True, choices=["merc", "carr", "dia"], help="Product to process"
+        "--product",
+        type=str,
+        required=True,
+        choices=["merc", "carr", "dia"],
+        help="Product to process",
     )
-    parser.add_argument("--bq-destination-table", type=str, required=True, help="BigQuery destination table name")
+    parser.add_argument(
+        "--bq-destination-table",
+        type=str,
+        required=True,
+        help="BigQuery destination table name",
+    )
     return parser.parse_args()
 
 
@@ -91,16 +112,79 @@ def get_transformer(product: str) -> Transformer:
         raise ValueError(f"Unknown product: {product}")
 
 
-def run_transformer(data_source: Sink, transformer: Transformer, destination: Sink) -> None:
+class Transaction(BaseModel):
+    product: str
+    data_source_table: str
+    destination_table: str
+    occurred_at: str
+    min_date: Optional[str]
+    max_date: Optional[str]
+
+
+class TransactionRecorder:
+    def __init__(self, db_path: str, product: str, data_source: str, destination: str):
+        logging.info(f"Initializing TransactionRecorder with db_path: {db_path} and product: {product}")
+        self.db_path = db_path
+        self.product = product
+        self.data_source = data_source
+        self.destination = destination
+        self.validate_db()
+
+    def validate_db(self) -> None:
+        logging.info("Validating database")
+        pass
+
+    def record(self, min_date: date, max_date: date) -> None:
+        logging.info(f"Recording transaction for product: {self.product}")
+        tnx = Transaction(
+            product=self.product,
+            data_source_table=self.data_source,
+            destination_table=self.destination,
+            occurred_at=datetime.now().isoformat(timespec="seconds"),
+            min_date=min_date,
+            max_date=max_date,
+        )
+        logging.info(f"Transaction to be recorded: {tnx}")
+        pass
+
+    def get_last_transaction_if_exists(self) -> Transaction | None:
+        logging.info("Fetching last transaction")
+        pass
+
+
+def get_min_max_dates(d: pd.DataFrame) -> Tuple[str, str] | Tuple[None, None]:
+    if not isinstance(d, pd.DataFrame):
+        logging.error("Input is not a DataFrame")
+        return None, None
+
+    if "date" in d.columns:
+        min_dt, max_dt = d["date"].min(), d["date"].max()
+        try:
+            min_date = pd.to_datetime(min_dt).date().isoformat()
+            max_date = pd.to_datetime(max_dt).date().isoformat()
+            return min_date, max_date
+        except (ValueError, TypeError):
+            logging.error(f"Invalid date values: min={min_dt}, max={max_dt}")
+    return None, None
+
+
+def run_transformer(
+    data_source: Sink,
+    transformer: Transformer,
+    destination: Sink,
+    txn_recorder: TransactionRecorder,
+) -> None:
     logging.info(
         "Running transformer with "
         f"data_source: {data_source.__class__.__name__}, "
         f"transformer: {transformer.__class__.__name__}, "
         f"destination: {destination.__class__.__name__}"
     )
-    data = data_source.fetch_data()
+    last_txn = txn_recorder.get_last_transaction_if_exists()
+    data = data_source.fetch_data(last_transaction=last_txn)
     transformed_data = transformer.transform(data)
     destination.write_data(transformed_data)
+    txn_recorder.record(*get_min_max_dates(transformed_data))
 
 
 class GCS(Sink):
@@ -110,7 +194,7 @@ class GCS(Sink):
         self.prefix = prefix
         self.storage_client = storage.Client()
 
-    def fetch_data(self) -> pd.DataFrame:
+    def fetch_data(self, last_transaction: Transaction | None) -> pd.DataFrame:
         pass
 
 
