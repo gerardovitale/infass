@@ -82,6 +82,7 @@ transformer-v2.local-run:
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		transformer-v2:latest \
 		--gcs-source-bucket test-bucket \
+		--product merc \
 		--bq-destination-table test-table
 
 
