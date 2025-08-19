@@ -3,7 +3,7 @@
 # ------------------------------
 resource "google_storage_bucket" "infass_bucket" {
   name          = "${var.APP_NAME}-merc"
-  force_destroy = true
+  force_destroy = false
   location      = var.REGION
   storage_class = "STANDARD"
 

@@ -9,6 +9,7 @@ locals {
 # ------------------------------
 resource "google_storage_bucket" "sqlite_bucket" {
   name          = "${var.APP_NAME}-sqlite-bucket"
+  force_destroy = false
   location      = var.REGION
   storage_class = "STANDARD"
 
