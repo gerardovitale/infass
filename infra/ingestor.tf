@@ -14,6 +14,19 @@ resource "google_storage_bucket" "infass_bucket" {
   labels = local.labels
 }
 
+resource "google_storage_bucket" "landing_zone" {
+  name          = "${var.APP_NAME}-ingestor-landing-zone"
+  force_destroy = false
+  location      = var.REGION
+  storage_class = "STANDARD"
+
+  versioning {
+    enabled = true
+  }
+
+  labels = local.labels
+}
+
 resource "google_storage_bucket_iam_member" "bucket_permissions" {
   bucket = google_storage_bucket.infass_bucket.name
   member = "serviceAccount:${google_service_account.ingestor_sa.email}"
@@ -43,7 +56,7 @@ resource "google_project_iam_member" "cloud_run_job_ingestor_storage_permissions
 # Cloud Run Job for Ingestor
 # ------------------------------
 resource "google_cloud_run_v2_job" "ingestor_job" {
-  name                = "${var.APP_NAME}-ingestor-job"
+  name                = "${var.APP_NAME}-ingestor"
   location            = var.REGION
   deletion_protection = false
   labels              = local.labels
