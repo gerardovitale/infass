@@ -13,18 +13,14 @@ jobs:
   trigger-ingestor:
     runs-on: ubuntu-latest
     steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2.1.7
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Trigger Cloud Run Job
+        uses: ./.github/actions/trigger-cloud-run-job
         with:
           credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
-
-      - name: Trigger Mercadona Ingestor Cloud Run Job
-        env:
-          DATA_SOURCE_URL: https://tienda.mercadona.es
-          DEST_BUCKET_URI: gs://infass-merc/merc
-          CONTAINER_NAME: merc-ingestor
-        run: |
-          gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} \
-            --region ${{ env.GCP_REGION }} --wait \
-            --container=${{ env.CONTAINER_NAME }} \
-            --args="${{ env.DATA_SOURCE_URL }},${{ env.DEST_BUCKET_URI }}" \
+          region: europe-southwest1
+          app_name: infass
+          component: ingestor
+          args: "https://tienda.mercadona.es,gs://infass-merc/merc"
