@@ -12,6 +12,7 @@ SUBDIRS=(
   "transformer"
   "retl"
   "scripts"
+  "transformer-v2"
 )
 
 setup_global_tools() {
