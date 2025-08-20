@@ -4,10 +4,9 @@ import argparse
 import logging
 from abc import ABC
 from abc import abstractmethod
-from ast import Tuple
-from datetime import date
 from datetime import datetime
 from typing import Optional
+from typing import Tuple
 
 import pandas as pd
 from google.cloud import bigquery
@@ -88,7 +87,7 @@ def parse_args():
 
 
 class Sink(ABC):
-    def fetch_data(self) -> pd.DataFrame:
+    def fetch_data(self, last_transaction: Optional[Transaction] = None) -> pd.DataFrame:
         raise NotImplementedError()
 
     def write_data(self, df: pd.DataFrame) -> None:
@@ -134,7 +133,7 @@ class TransactionRecorder:
         logging.info("Validating database")
         pass
 
-    def record(self, min_date: date, max_date: date) -> None:
+    def record(self, min_date: str | None, max_date: str | None) -> None:
         logging.info(f"Recording transaction for product: {self.product}")
         tnx = Transaction(
             product=self.product,
@@ -194,7 +193,7 @@ class GCS(Sink):
         self.prefix = prefix
         self.storage_client = storage.Client()
 
-    def fetch_data(self, last_transaction: Transaction | None) -> pd.DataFrame:
+    def fetch_data(self, last_transaction: Optional[Transaction] = None) -> pd.DataFrame:
         pass
 
 
