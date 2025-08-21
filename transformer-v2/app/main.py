@@ -4,14 +4,15 @@ import argparse
 import logging
 from abc import ABC
 from abc import abstractmethod
-from datetime import datetime
 from typing import Optional
 from typing import Tuple
 
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud import storage
-from pydantic import BaseModel
+from transaction_recorder import Transaction
+from transaction_recorder import TransactionRecorder
+from transaction_recorder import TxnRecSQLite
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -56,7 +57,7 @@ def main():
         data_source=GCS(bucket_name=args.gcs_source_bucket, prefix=args.product),
         transformer=get_transformer(args.product),
         destination=BigQuery(dataset_name=args.bq_destination_table),
-        txn_recorder=TransactionRecorder(
+        txn_recorder=TxnRecSQLite(
             db_path="/mnt/sqlite/infass-transformer-sqlite.db",
             product=args.product,
             data_source=args.gcs_source_bucket,
@@ -111,46 +112,6 @@ def get_transformer(product: str) -> Transformer:
         raise ValueError(f"Unknown product: {product}")
 
 
-class Transaction(BaseModel):
-    product: str
-    data_source_table: str
-    destination_table: str
-    occurred_at: str
-    min_date: Optional[str]
-    max_date: Optional[str]
-
-
-class TransactionRecorder:
-    def __init__(self, db_path: str, product: str, data_source: str, destination: str):
-        logging.info(f"Initializing TransactionRecorder with db_path: {db_path} and product: {product}")
-        self.db_path = db_path
-        self.product = product
-        self.data_source = data_source
-        self.destination = destination
-        self.validate_db()
-
-    def validate_db(self) -> None:
-        logging.info("Validating database")
-        pass
-
-    def record(self, min_date: str | None, max_date: str | None) -> None:
-        logging.info(f"Recording transaction for product: {self.product}")
-        tnx = Transaction(
-            product=self.product,
-            data_source_table=self.data_source,
-            destination_table=self.destination,
-            occurred_at=datetime.now().isoformat(timespec="seconds"),
-            min_date=min_date,
-            max_date=max_date,
-        )
-        logging.info(f"Transaction to be recorded: {tnx}")
-        pass
-
-    def get_last_transaction_if_exists(self) -> Transaction | None:
-        logging.info("Fetching last transaction")
-        pass
-
-
 def get_min_max_dates(d: pd.DataFrame) -> Tuple[str, str] | Tuple[None, None]:
     if not isinstance(d, pd.DataFrame):
         logging.error("Input is not a DataFrame")
@@ -177,7 +138,8 @@ def run_transformer(
         "Running transformer with "
         f"data_source: {data_source.__class__.__name__}, "
         f"transformer: {transformer.__class__.__name__}, "
-        f"destination: {destination.__class__.__name__}"
+        f"destination: {destination.__class__.__name__}, "
+        f"txn_recorder: {txn_recorder.__class__.__name__} "
     )
     last_txn = txn_recorder.get_last_transaction_if_exists()
     data = data_source.fetch_data(last_transaction=last_txn)
