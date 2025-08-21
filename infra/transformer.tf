@@ -59,6 +59,10 @@ resource "google_cloud_run_v2_job" "transformer_job" {
   }
 }
 
+# ------------------------------
+# Transformer V2 Job Definition
+# ------------------------------
+
 resource "google_cloud_run_v2_job" "transformer_v2_job" {
   name                = "${var.APP_NAME}-transformer-v2"
   location            = var.REGION
@@ -73,6 +77,11 @@ resource "google_cloud_run_v2_job" "transformer_v2_job" {
 
       containers {
         image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer-v2:${var.DOCKER_IMAGE_TAG}"
+
+        volume_mounts {
+          name       = local.volume_name
+          mount_path = local.volume_mount_path
+        }
       }
     }
   }

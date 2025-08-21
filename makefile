@@ -76,14 +76,17 @@ transformer-v2.test:
 	scripts/run-docker-test.sh transformer-v2
 
 transformer-v2.local-run:
+	sqlite3 transformer-v2/infass-transformer-sqlite.db < transformer-v2/infass-transformer-sqlite.db.sql
 	cd transformer-v2/ && docker buildx build -f Dockerfile -t transformer-v2 .
 	docker run --rm \
+		-v $(TRANSFORMER_V2_SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-transformer-sqlite.db \
 		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		transformer-v2:latest \
 		--gcs-source-bucket test-bucket \
 		--product merc \
 		--bq-destination-table test-table
+	rm transformer-v2/infass-transformer-sqlite.db
 
 
 # DBT
