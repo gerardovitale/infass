@@ -25,14 +25,17 @@ class TransactionRecorder(ABC):
 
 class Transaction(BaseModel):
     product: str
-    data_source_table: str
-    destination_table: str
+    data_source: str
+    destination: str
     occurred_at: str
     min_date: Optional[str]
     max_date: Optional[str]
 
 
 class TxnRecSQLite(TransactionRecorder):
+
+    table_name = "transactions"
+
     def __init__(self, db_path: str, product: str, data_source: str, destination: str):
         logger.info(
             f"Initializing TransactionRecorder with db_path: {db_path}, product: {product}, "
@@ -56,18 +59,52 @@ class TxnRecSQLite(TransactionRecorder):
             logger.error(f"Invalid SQLite database: {self.db_path}")
             raise Exception(f"Invalid SQLite database: {self.db_path}") from e
 
-    def record(self, min_date: str | None, max_date: str | None) -> None:
-        logger.info(f"Recording transaction for product: {self.product}")
-        tnx = Transaction(
+    def create_txn_obj(self, min_date: str | None, max_date: str | None) -> Transaction:
+        logger.info(f"Creating transaction for product: {self.product}")
+        return Transaction(
             product=self.product,
-            data_source_table=self.data_source,
-            destination_table=self.destination,
+            data_source=self.data_source,
+            destination=self.destination,
             occurred_at=datetime.now().isoformat(timespec="seconds"),
             min_date=min_date,
             max_date=max_date,
         )
-        logger.info(f"Transaction to be recorded: {tnx}")
-        pass
+
+    def record(self, min_date: str | None, max_date: str | None) -> None:
+        logger.info(f"Recording transaction for product: {self.product}")
+        txn = self.create_txn_obj(min_date, max_date)
+        logger.info(f"Transaction to be recorded: {txn}")
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {self.table_name}
+                (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    product TEXT,
+                    data_source TEXT,
+                    destination TEXT,
+                    occurred_at TEXT,
+                    min_date TEXT,
+                    max_date TEXT
+                );
+                """
+            )
+            cursor.execute(
+                f"INSERT INTO {self.table_name} "
+                "(product, data_source, destination, occurred_at, min_date, max_date) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (
+                    txn.product,
+                    txn.data_source,
+                    txn.destination,
+                    txn.occurred_at,
+                    txn.min_date,
+                    txn.max_date,
+                ),
+            )
+            conn.commit()
+        logger.info("Transaction recorded successfully")
 
     def get_last_transaction_if_exists(self) -> Transaction | None:
         logger.info("Fetching last transaction")
