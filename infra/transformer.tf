@@ -83,6 +83,13 @@ resource "google_cloud_run_v2_job" "transformer_v2_job" {
           mount_path = local.volume_mount_path
         }
       }
+
+      volumes {
+        name = local.volume_name
+        gcs {
+          bucket = google_storage_bucket.sqlite_bucket.name
+        }
+      }
     }
   }
 }
