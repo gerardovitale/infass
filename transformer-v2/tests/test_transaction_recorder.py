@@ -171,3 +171,32 @@ def test_txn_rec_sqlite_get_last_txn_if_exists_with_existing_txns(mock_datetime,
     last_txn = test_recorder.get_last_txn_if_exists()
 
     assert last_txn == expected_txn
+
+
+def test_txn_rec_sqlite_get_last_txn_if_exists_after_multiple_records(sqlite_db_path):
+    test_recorder = TxnRecSQLite(
+        db_path=sqlite_db_path,
+        product="test_product",
+        data_source="test_data_source",
+        destination="test_destination",
+    )
+    # First transaction
+    test_recorder.record("2025-01-01", "2025-08-01")
+    # Second transaction
+    test_recorder.record("2025-02-01", "2025-09-01")
+    last_txn = test_recorder.get_last_txn_if_exists()
+    assert last_txn.min_date == "2025-02-01"
+    assert last_txn.max_date == "2025-09-01"
+
+
+def test_txn_rec_sqlite_get_last_txn_if_exists_with_null_dates(sqlite_db_path):
+    test_recorder = TxnRecSQLite(
+        db_path=sqlite_db_path,
+        product="test_product",
+        data_source="test_data_source",
+        destination="test_destination",
+    )
+    test_recorder.record(None, None)
+    last_txn = test_recorder.get_last_txn_if_exists()
+    assert last_txn.min_date is None
+    assert last_txn.max_date is None
