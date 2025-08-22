@@ -10,9 +10,9 @@ from typing import Tuple
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud import storage
-from transaction_recorder import Transaction
-from transaction_recorder import TransactionRecorder
-from transaction_recorder import TxnRecSQLite
+from txn_rec import Transaction
+from txn_rec import TransactionRecorder
+from txn_rec import TxnRecSQLite
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 

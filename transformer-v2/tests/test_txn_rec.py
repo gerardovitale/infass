@@ -4,8 +4,8 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
-from app.transaction_recorder import Transaction
-from app.transaction_recorder import TxnRecSQLite
+from app.txn_rec import Transaction
+from app.txn_rec import TxnRecSQLite
 
 
 @pytest.fixture
@@ -68,7 +68,7 @@ def test_txn_rec_sqlite_init_with_existing_invalid_db_path():
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-@patch("app.transaction_recorder.datetime")
+@patch("app.txn_rec.datetime")
 def test_txn_rec_sqlite_record_with_valid_data(mock_datetime, sqlite_db_path):
     min_date = "2025-01-01"
     max_date = "2025-08-01"
@@ -98,7 +98,7 @@ def test_txn_rec_sqlite_record_with_valid_data(mock_datetime, sqlite_db_path):
     assert rows[0] == expected_transaction
 
 
-@patch("app.transaction_recorder.datetime")
+@patch("app.txn_rec.datetime")
 def test_txn_rec_sqlite_record_with_valid_data_when_min_max_dates_are_none(mock_datetime, sqlite_db_path):
     min_date = None
     max_date = None
@@ -145,7 +145,7 @@ def test_txn_rec_sqlite_get_last_txn_if_exists_with_no_existing_txns(sqlite_db_p
     assert last_txn is None
 
 
-@patch("app.transaction_recorder.datetime")
+@patch("app.txn_rec.datetime")
 def test_txn_rec_sqlite_get_last_txn_if_exists_with_existing_txns(mock_datetime, sqlite_db_path):
     test_recorder = TxnRecSQLite(
         db_path=sqlite_db_path,
