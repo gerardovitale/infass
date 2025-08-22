@@ -19,7 +19,7 @@ class TransactionRecorder(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_last_transaction_if_exists(self) -> Transaction | None:
+    def get_last_txn_if_exists(self) -> Transaction | None:
         raise NotImplementedError()
 
 
@@ -106,6 +106,30 @@ class TxnRecSQLite(TransactionRecorder):
             conn.commit()
         logger.info("Transaction recorded successfully")
 
-    def get_last_transaction_if_exists(self) -> Transaction | None:
+    def get_last_txn_if_exists(self) -> Transaction | None:
         logger.info("Fetching last transaction")
-        pass
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+
+            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{self.table_name}';")
+            if not cursor.fetchone():
+                logger.info(f"Table does not exist yet: {self.table_name}")
+                return None
+
+            cursor.execute(
+                f"SELECT product, data_source, destination, occurred_at, min_date, max_date "
+                f"FROM {self.table_name} "
+                f"ORDER BY id DESC LIMIT 1"
+            )
+            row = cursor.fetchone()
+            if row:
+                txn = Transaction(
+                    product=row[0],
+                    data_source=row[1],
+                    destination=row[2],
+                    occurred_at=row[3],
+                    min_date=row[4],
+                    max_date=row[5],
+                )
+                logger.info(f"Last transaction found: {txn}")
+                return txn

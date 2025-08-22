@@ -4,6 +4,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+from app.transaction_recorder import Transaction
 from app.transaction_recorder import TxnRecSQLite
 
 
@@ -125,3 +126,48 @@ def test_txn_rec_sqlite_record_with_valid_data_when_min_max_dates_are_none(mock_
     rows = get_sqlite_rows(sqlite_db_path, test_recorder.table_name)
     assert len(rows) == 1
     assert rows[0] == expected_transaction
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Test: TxnRecSQLite get_last_transaction_if_exists
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def test_txn_rec_sqlite_get_last_txn_if_exists_with_no_existing_txns(sqlite_db_path):
+    test_recorder = TxnRecSQLite(
+        db_path=sqlite_db_path,
+        product="test_product",
+        data_source="test_data_source",
+        destination="test_destination",
+    )
+
+    last_txn = test_recorder.get_last_txn_if_exists()
+    assert last_txn is None
+
+
+@patch("app.transaction_recorder.datetime")
+def test_txn_rec_sqlite_get_last_txn_if_exists_with_existing_txns(mock_datetime, sqlite_db_path):
+    test_recorder = TxnRecSQLite(
+        db_path=sqlite_db_path,
+        product="test_product",
+        data_source="test_data_source",
+        destination="test_destination",
+    )
+    test_min_date = "2025-01-01"
+    test_max_date = "2025-08-01"
+
+    mock_datetime.now.return_value = datetime(2025, 1, 1, 12, 0, 0)
+
+    expected_txn = Transaction(
+        product=test_recorder.product,
+        data_source=test_recorder.data_source,
+        destination=test_recorder.destination,
+        occurred_at=datetime(2025, 1, 1, 12, 0, 0).isoformat(timespec="seconds"),
+        min_date=test_min_date,
+        max_date=test_max_date,
+    )
+
+    test_recorder.record(test_min_date, test_max_date)
+    last_txn = test_recorder.get_last_txn_if_exists()
+
+    assert last_txn == expected_txn
