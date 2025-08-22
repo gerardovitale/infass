@@ -141,7 +141,7 @@ def run_transformer(
         f"destination: {destination.__class__.__name__}, "
         f"txn_recorder: {txn_recorder.__class__.__name__} "
     )
-    last_txn = txn_recorder.get_last_transaction_if_exists()
+    last_txn = txn_recorder.get_last_txn_if_exists()
     data = data_source.fetch_data(last_transaction=last_txn)
     transformed_data = transformer.transform(data)
     destination.write_data(transformed_data)
