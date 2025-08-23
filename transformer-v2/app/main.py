@@ -4,47 +4,48 @@ import argparse
 import logging
 from abc import ABC
 from abc import abstractmethod
-from typing import Optional
 from typing import Tuple
 
 import pandas as pd
-from google.cloud import bigquery
-from google.cloud import storage
-from txn_rec import Transaction
+from sinks import BigQuery
+from sinks import Sink
+from sinks import Storage
 from txn_rec import TransactionRecorder
 from txn_rec import TxnRecSQLite
 
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
 
 # Cases to handle:
 
 # 1. Process last date file
-# - Just read last csv file from GCS, assuming there is one per day
+# - Just read last csv file from Storage, assuming there is one per day
 # - Transform data using MercTransformer, CarrTransformer, DiaTransformer...
 # - Append to BigQuery dataset (merc, carr, dia)
 
 # For example:
 # Given inputs:
-# - GCS source bucket: infass-landing-zone
+# - Storage source bucket: infass-landing-zone
 # - Product: merc
 # - BigQuery destination table: inflation-assistant.infass.merc
 # The pipeline will:
-# - Read last CSV file from GCS: gs://infass-landing-zone/merc/2025-08-19.csv
+# - Read last CSV file from Storage: gs://infass-landing-zone/merc/2025-08-19.csv
 # - Transform data using MercTransformer
 # - Append to BigQuery dataset inflation-assistant.infass.merc
 
 # 2. Process a specific unprocessed date range
-# - Read unprocessed CSV files from GCS
+# - Read unprocessed CSV files from Storage
 # - Transform data
 # - Append to BigQuery dataset
 
 # 3. Reprocess entire history
-# - Read all CSV files from GCS
+# - Read all CSV files from Storage
 # - Transform data
 # - Overwrite BigQuery dataset
 
 # 4. Reprocess a specific date range
-# - Read all CSV files from GCS within the date range
+# - Read all CSV files from Storage within the date range
 # - Transform data
 # - Overwrite/Update that date range BigQuery dataset
 
@@ -54,7 +55,7 @@ def main():
     args = parse_args()
     logging.info(f"Parsed args: {vars(args)}")
     run_transformer(
-        data_source=GCS(bucket_name=args.gcs_source_bucket, prefix=args.product),
+        data_source=Storage(bucket_name=args.gcs_source_bucket, prefix=args.product),
         transformer=get_transformer(args.product),
         destination=BigQuery(dataset_name=args.bq_destination_table),
         txn_recorder=TxnRecSQLite(
@@ -70,7 +71,7 @@ def main():
 def parse_args():
     logging.info("Parsing command-line arguments")
     parser = argparse.ArgumentParser(description="Data transformation pipeline")
-    parser.add_argument("--gcs-source-bucket", type=str, required=True, help="GCS source bucket name")
+    parser.add_argument("--gcs-source-bucket", type=str, required=True, help="Storage source bucket name")
     parser.add_argument(
         "--product",
         type=str,
@@ -85,14 +86,6 @@ def parse_args():
         help="BigQuery destination table name",
     )
     return parser.parse_args()
-
-
-class Sink(ABC):
-    def fetch_data(self, last_transaction: Optional[Transaction] = None) -> pd.DataFrame:
-        raise NotImplementedError()
-
-    def write_data(self, df: pd.DataFrame) -> None:
-        raise NotImplementedError()
 
 
 class Transformer(ABC):
@@ -142,37 +135,16 @@ def run_transformer(
         f"txn_recorder: {txn_recorder.__class__.__name__} "
     )
     last_txn = txn_recorder.get_last_txn_if_exists()
-    data = data_source.fetch_data(last_transaction=last_txn)
+    data = data_source.fetch_data(last_txn=last_txn)
     transformed_data = transformer.transform(data)
     destination.write_data(transformed_data)
     txn_recorder.record(*get_min_max_dates(transformed_data))
-
-
-class GCS(Sink):
-    def __init__(self, bucket_name: str, prefix: str):
-        logging.info(f"Initializing GCS Sink for bucket: {bucket_name} with prefix: {prefix}")
-        self.bucket_name = bucket_name
-        self.prefix = prefix
-        self.storage_client = storage.Client()
-
-    def fetch_data(self, last_transaction: Optional[Transaction] = None) -> pd.DataFrame:
-        pass
 
 
 class MercTransformer(Transformer):
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         logging.info("Executing MercTransformer")
         return df
-
-
-class BigQuery(Sink):
-    def __init__(self, dataset_name: str):
-        logging.info(f"Initializing BigQuery Sink for table: {dataset_name}")
-        self.dataset_name = dataset_name
-        self.client = bigquery.Client()
-
-    def write_data(self, df: pd.DataFrame) -> None:
-        pass
 
 
 if __name__ == "__main__":
