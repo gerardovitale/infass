@@ -9,6 +9,7 @@ from typing import Optional
 
 import pandas as pd
 from google.cloud.bigquery import Client as BigQueryClient
+from google.cloud.bigquery import LoadJobConfig
 from google.cloud.storage import Blob as StorageBlob
 from google.cloud.storage import Client as StorageClient
 from txn_rec import Transaction
@@ -77,10 +78,18 @@ class Storage(Sink):
 
 
 class BigQuery(Sink):
-    def __init__(self, dataset_name: str):
-        logger.info(f"Initializing BigQuery Sink for table: {dataset_name}")
-        self.dataset_name = dataset_name
+    def __init__(self, table_ref: str, write_config: dict):
+        logger.info(f"Initializing BigQuery Sink for table: {table_ref}")
+        self.table_ref = table_ref
         self.client = BigQueryClient()
+        self.write_config = write_config
 
     def write_data(self, df: pd.DataFrame) -> None:
-        pass
+        job_config = LoadJobConfig(**self.write_config, autodetect=False)
+        try:
+            job = self.client.load_table_from_dataframe(df, self.table_ref, job_config=job_config)
+            job.result()  # Waits for the job to complete
+            logger.info(f"Data successfully written to {self.table_ref}.")
+        except Exception as e:
+            logger.error(f"Error writing to BigQuery: {e}")
+            raise

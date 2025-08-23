@@ -2,17 +2,18 @@ from __future__ import annotations
 
 import argparse
 import logging
-from abc import ABC
-from abc import abstractmethod
-from typing import Tuple
 
-import pandas as pd
+from google.cloud.bigquery import TimePartitioning
+from google.cloud.bigquery import TimePartitioningType
+from schemas import MERC_SCHEMA
 from sinks import BigQuery
 from sinks import Sink
 from sinks import Storage
+from transformers import MercTransformer
+from transformers import Transformer
 from txn_rec import TransactionRecorder
 from txn_rec import TxnRecSQLite
-
+from utils import get_min_max_dates
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
@@ -53,11 +54,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 def main():
     logging.info("Starting transformer V2 pipeline")
     args = parse_args()
+    product_config = get_pipeline_config()[args.product]
     logging.info(f"Parsed args: {vars(args)}")
     run_transformer(
         data_source=Storage(bucket_name=args.gcs_source_bucket, prefix=args.product),
-        transformer=get_transformer(args.product),
-        destination=BigQuery(dataset_name=args.bq_destination_table),
+        transformer=product_config["transformer"](),
+        destination=BigQuery(table_ref=args.bq_destination_table, write_config=product_config["write_config"]),
         txn_recorder=TxnRecSQLite(
             db_path="/mnt/sqlite/infass-transformer-sqlite.db",
             product=args.product,
@@ -88,37 +90,23 @@ def parse_args():
     return parser.parse_args()
 
 
-class Transformer(ABC):
-    @abstractmethod
-    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        raise NotImplementedError()
-
-
-def get_transformer(product: str) -> Transformer:
-    if product == "merc":
-        return MercTransformer()
-    elif product == "carr":
-        raise NotImplementedError()
-    elif product == "dia":
-        raise NotImplementedError()
-    else:
-        raise ValueError(f"Unknown product: {product}")
-
-
-def get_min_max_dates(d: pd.DataFrame) -> Tuple[str, str] | Tuple[None, None]:
-    if not isinstance(d, pd.DataFrame):
-        logging.error("Input is not a DataFrame")
-        return None, None
-
-    if "date" in d.columns:
-        min_dt, max_dt = d["date"].min(), d["date"].max()
-        try:
-            min_date = pd.to_datetime(min_dt).date().isoformat()
-            max_date = pd.to_datetime(max_dt).date().isoformat()
-            return min_date, max_date
-        except (ValueError, TypeError):
-            logging.error(f"Invalid date values: min={min_dt}, max={max_dt}")
-    return None, None
+def get_pipeline_config() -> dict:
+    return {
+        "merc": {
+            "transformer": MercTransformer,
+            "write_config": {
+                "write_disposition": "WRITE_APPEND",
+                "schema": MERC_SCHEMA,
+                "time_partitioning": TimePartitioning(
+                    type_=TimePartitioningType.DAY,
+                    field="date",
+                ),
+                "clustering_fields": ["name", "size"],
+            },
+        },
+        "carr": {},
+        "dia": {},
+    }
 
 
 def run_transformer(
@@ -139,12 +127,6 @@ def run_transformer(
     transformed_data = transformer.transform(data)
     destination.write_data(transformed_data)
     txn_recorder.record(*get_min_max_dates(transformed_data))
-
-
-class MercTransformer(Transformer):
-    def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        logging.info("Executing MercTransformer")
-        return df
 
 
 if __name__ == "__main__":
