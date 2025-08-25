@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  GCP_RUN_JOB_NAME: infass-ingestor-job
+  APP_NAME: infass
   GCP_REGION: europe-southwest1
 
 jobs:
@@ -16,11 +16,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Trigger Cloud Run Job
+      - name: Trigger Ingestion Job
+        id: trigger-ingestor
         uses: ./.github/actions/trigger-cloud-run-job
         with:
           credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
-          region: europe-southwest1
-          app_name: infass
+          region: ${{ env.GCP_REGION }}
+          app_name: ${{ env.APP_NAME }}
           component: ingestor
           args: "https://tienda.mercadona.es,gs://infass-merc/merc"
+
+      - name: Trigger Transformation Job
+        id: trigger-transformer
+        uses: ./.github/actions/trigger-cloud-run-job
+        with:
+          credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
+          region: ${{ env.GCP_REGION }}
+          app_name: ${{ env.APP_NAME }}
+          component: transformer-v2
+          args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.merc"
