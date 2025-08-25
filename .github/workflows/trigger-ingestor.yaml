@@ -34,4 +34,4 @@ jobs:
           region: ${{ env.GCP_REGION }}
           app_name: ${{ env.APP_NAME }}
           component: transformer-v2
-          args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.merc"
+          args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.incremental_merc"
