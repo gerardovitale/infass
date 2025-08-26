@@ -123,7 +123,7 @@ def run_transformer(
         f"txn_recorder: {txn_recorder.__class__.__name__} "
     )
     last_txn = txn_recorder.get_last_txn_if_exists()
-    data = data_source.fetch_data(last_txn=last_txn)
+    data = data_source.fetch_data(last_txn_date=last_txn.max_date if last_txn else None)
     transformed_data = transformer.transform(data)
     destination.write_data(transformed_data)
     txn_recorder.record(*get_min_max_dates(transformed_data))

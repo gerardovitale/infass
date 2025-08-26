@@ -12,7 +12,6 @@ from google.cloud.bigquery import Client as BigQueryClient
 from google.cloud.bigquery import LoadJobConfig
 from google.cloud.storage import Blob as StorageBlob
 from google.cloud.storage import Client as StorageClient
-from txn_rec import Transaction
 
 CSV_PATTERN_FILE_NAME = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class Sink(ABC):
-    def fetch_data(self, last_txn: Optional[Transaction] = None) -> pd.DataFrame:
+    def fetch_data(self, last_txn_date: Optional[str] = None) -> pd.DataFrame:
         raise NotImplementedError()
 
     def write_data(self, df: pd.DataFrame) -> None:
