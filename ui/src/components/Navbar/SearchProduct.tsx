@@ -29,7 +29,9 @@ export const SearchProduct = () => {
                 id="search-button"
                 href={{
                     pathname: '/search',
-                    query: { search_term: encodeURIComponent(searchValue.trim()) },
+                    query: {
+                        search_term: encodeURIComponent(searchValue.trim()),
+                    },
                 }}
                 aria-label="Search"
                 className="ml-2 px-4 py-2 text-white bg-blue-600 rounded-xl hover:bg-blue-700 focus:outline-none focus:ring focus:ring-blue-300"

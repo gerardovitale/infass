@@ -1,5 +1,5 @@
+import { getClient } from '@/auth/getClient';
 import { ProductResponse } from '@/types';
-import { GoogleAuth } from 'google-auth-library';
 import NoResults from '../ProductList/NoResults';
 import { ProductList } from '../ProductList/ProductList';
 
@@ -12,12 +12,7 @@ export default async function SearchResult(props: Props) {
     console.log('API Base URL:', process.env.API_BASE_URL);
 
     try {
-        const auth = new GoogleAuth();
-
-        const client = await auth.getIdTokenClient(
-            process.env.API_BASE_URL || ''
-        );
-
+        const client = await getClient();
         const res = await client.fetch(
             `${process.env.API_BASE_URL}/products/search?search_term=${props.productSearched}`
         );

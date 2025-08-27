@@ -7,7 +7,8 @@ const NoResults = () => {
                 No products found
             </h2>
             <p className="text-gray-600 mb-6">
-                We couldn&apos;t find any products matching your search. Please try a different search term or check back later.
+                We couldn&apos;t find any products matching your search. Please
+                try a different search term or check back later.
             </p>
         </div>
     );
