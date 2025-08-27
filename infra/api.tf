@@ -91,6 +91,23 @@ resource "google_cloud_run_v2_service" "api_service" {
   labels = local.labels
 }
 
+data "google_iam_policy" "api_service" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+      "serviceAccount:${var.UI_SERVICE_ACCOUNT_EMAIL}",
+    ]
+  }
+}
+
+resource "google_cloud_run_service_iam_policy" "api_service" {
+  location = google_cloud_run_v2_service.api_service.location
+  project  = google_cloud_run_v2_service.api_service.project
+  service  = google_cloud_run_v2_service.api_service.name
+
+  policy_data = data.google_iam_policy.api_service.policy_data
+}
+
 # ------------------------------
 # Cloud Run Job (Reversed ETL)
 # ------------------------------

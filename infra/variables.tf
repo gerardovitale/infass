@@ -38,3 +38,8 @@ variable "TRANSFORMER_WRITE_DISPOSITION" {
   type        = string
   description = "Write disposition for the transformer job"
 }
+
+variable "UI_SERVICE_ACCOUNT_EMAIL" {
+  type    = string
+  default = "infass-cloud-run-ui-sa@inflation-assistant-ui.iam.gserviceaccount.com"
+}
