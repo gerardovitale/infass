@@ -1,3 +1,4 @@
+import { ProductResponse } from '@/types';
 import { GoogleAuth } from 'google-auth-library';
 import NoResults from '../ProductList/NoResults';
 import { ProductList } from '../ProductList/ProductList';
@@ -13,12 +14,15 @@ export default async function SearchResult(props: Props) {
     try {
         const auth = new GoogleAuth();
 
-        const client = await auth.getIdTokenClient(process.env.API_BASE_URL || '');
+        const client = await auth.getIdTokenClient(
+            process.env.API_BASE_URL || ''
+        );
 
-        const data = await client.fetch(
+        const res = await client.fetch(
             `${process.env.API_BASE_URL}/products/search?search_term=${props.productSearched}`
         );
-        const response = await data.json();
+        console.log('Fetch response:', res);
+        const response = res.data as ProductResponse;
         if (!response || response.total_results === 0) {
             return <NoResults />;
         }

@@ -29,8 +29,8 @@ jest.mock('google-auth-library', () => {
             return {
                 getIdTokenClient: jest.fn().mockResolvedValue({
                     fetch: fetchMock.mockResolvedValue({
-                        ok: true,
-                        json: () => Promise.resolve(mockedProducts),
+                        data: mockedProducts,
+                        status: 200,
                     }),
                 }),
             };
@@ -52,8 +52,8 @@ describe('SearchResult', () => {
 
     it('should render an empty list if no search results are found', async () => {
         fetchMock.mockResolvedValueOnce({
-            ok: true,
-            json: () => Promise.resolve({ results: [], total_results: 0 }),
+            status: 200,
+            data: { results: [], total_results: 0 },
         });
         const { queryByText } = await renderSearchPage();
         const noResults = queryByText('No products found');
