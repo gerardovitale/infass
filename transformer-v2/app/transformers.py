@@ -15,9 +15,6 @@ MERC_SCHEMA = {
     "subcategory": "category",
     "image_url": "object",
     "price": "float32",
-    "price_ma_7": "float32",
-    "price_ma_15": "float32",
-    "price_ma_30": "float32",
     "original_price": "float32",
     "discount_price": "float32",
 }
