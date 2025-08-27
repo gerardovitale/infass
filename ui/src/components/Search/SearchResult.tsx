@@ -1,3 +1,4 @@
+import { GoogleAuth } from 'google-auth-library';
 import NoResults from '../ProductList/NoResults';
 import { ProductList } from '../ProductList/ProductList';
 
@@ -8,8 +9,13 @@ type Props = {
 export default async function SearchResult(props: Props) {
     console.log('About to fetch search results for:', props.productSearched);
     console.log('API Base URL:', process.env.API_BASE_URL);
+
     try {
-        const data = await fetch(
+        const auth = new GoogleAuth();
+
+        const client = await auth.getIdTokenClient(process.env.API_BASE_URL || '');
+
+        const data = await client.fetch(
             `${process.env.API_BASE_URL}/products/search?search_term=${props.productSearched}`
         );
         const response = await data.json();

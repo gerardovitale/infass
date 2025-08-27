@@ -1,4 +1,3 @@
-import { ProductResponse } from '@/types';
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
 import SearchResult from './SearchResult';
@@ -22,14 +21,22 @@ const mockedProducts = {
     ],
     total_results: 2,
 };
-const fetchMock = jest.fn(() =>
-    Promise.resolve({
-        ok: true,
-        json: () => Promise.resolve<ProductResponse>(mockedProducts),
-    })
-);
-global.fetch = fetchMock as unknown as typeof fetch;
+const fetchMock = jest.fn();
 
+jest.mock('google-auth-library', () => {
+    return {
+        GoogleAuth: jest.fn().mockImplementation(() => {
+            return {
+                getIdTokenClient: jest.fn().mockResolvedValue({
+                    fetch: fetchMock.mockResolvedValue({
+                        ok: true,
+                        json: () => Promise.resolve(mockedProducts),
+                    }),
+                }),
+            };
+        }),
+    };
+});
 async function renderSearchPage() {
     const ui = await SearchResult({ productSearched: 'milk' });
     return render(<>{ui}</>);
