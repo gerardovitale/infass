@@ -26,6 +26,13 @@ jobs:
           component: ingestor
           args: "https://tienda.mercadona.es,gs://infass-merc/merc"
 
+  trigger-transformer:
+    needs: trigger-ingestor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
       - name: Trigger Transformation Job
         id: trigger-transformer
         uses: ./.github/actions/trigger-cloud-run-job
