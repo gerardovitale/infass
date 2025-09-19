@@ -5,7 +5,7 @@
     on_schema_change='sync'
 ) }}
 
-{% set days_back = var('dim_product_days_back', 90) %}
+{% set days_back = var('dim_product_days_back', 30) %}
 
 with src as (
   select
@@ -13,7 +13,7 @@ with src as (
     lower(trim(size))              as size,
     image_url,
     cast(date as date)             as obs_date
-  from {{ ref('incremental_merc') }}
+  from {{ source('infass', 'incremental_merc') }}
   {% if is_incremental() %}
     where date >= date_sub(
       (select coalesce(max(last_seen_date), date '1900-01-01') from {{ this }}),
