@@ -29,10 +29,10 @@ with src as (
     discount_price
   from {{ source('infass', 'incremental_merc') }}
   {% if is_incremental() %}
-    where date >= date_sub(
-      (select coalesce(max_date, date '1900-01-01')
+  where date >= date_sub(
+    (select coalesce(max_date, date '1900-01-01')
        from (select MAX(date) as max_date from {{ this }} as t
-       join {{ ref('dbt_dim_date') }} d on d.date_key = t.date_key)),
+       join {{ ref("dim_date") }} d on d.date_key = t.date_key)),
       interval {{ days_back }} day
     )
   {% endif %}
@@ -56,6 +56,6 @@ select
   src.date as fact_date,
   current_timestamp() as load_ts
 from src
-join {{ ref('dbt_dim_date') }}     d on d.date = src.date
-join {{ ref('dbt_dim_product') }}  p on p.product_nk  = src.product_nk
-join {{ ref('dbt_dim_category') }} c on c.category_nk = src.category_nk
+join {{ ref("dim_date") }}     d on d.date = src.date
+join {{ ref("dim_product") }}  p on p.product_nk  = src.product_nk
+join {{ ref("dim_category") }} c on c.category_nk = src.category_nk
