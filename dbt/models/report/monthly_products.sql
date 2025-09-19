@@ -7,7 +7,7 @@
       'data_type': 'date',
       'granularity': 'month'
     },
-    cluster_by = ['name','size'],
+    cluster_by = ['product_key'],
     on_schema_change = 'sync_all_columns'
   )
 }}
@@ -17,46 +17,38 @@
 
 WITH year_month_agg_merc AS (
     SELECT
-        DATE_TRUNC(date, MONTH) AS year_month_period,
-        name,
-        size,
-        category,
-        subcategory,
-        MIN_BY(date, date) AS earliest_date,
-        MAX_BY(date, date) AS latest_date,
-        MIN_BY(price, date) AS earliest_price,
-        MAX_BY(price, date) AS latest_price,
-        MIN_BY(original_price, date) AS earliest_orig_price,
-        MAX_BY(original_price, date) AS latest_orig_price
-    FROM {{ source('infass', 'incremental_merc') }}
-
+        d.month_start_date AS year_month_period,
+        src.product_key,
+        src.category_key,
+        MIN_BY(d.date, d.date) AS earliest_date,
+        MAX_BY(d.date, d.date) AS latest_date,
+        MIN_BY(price, d.date) AS earliest_price,
+        MAX_BY(price, d.date) AS latest_price,
+        MIN_BY(original_price, d.date) AS earliest_orig_price,
+        MAX_BY(original_price, d.date) AS latest_orig_price
+    FROM {{ ref("fact_product_price_daily") }} AS src
+    LEFT JOIN {{ ref("dim_date") }} d ON d.date_key = src.date_key
     {% if is_incremental() %}
-    WHERE date >= {{ month_start }} AND date < {{ month_end }}
+    WHERE d.date >= {{ month_start }} AND d.date < {{ month_end }}
     {% endif %}
-
-    GROUP BY
-        year_month_period,
-        name,
-        size,
-        category,
-        subcategory
+    GROUP BY 1,2,3
 )
 
 SELECT
     year_month_period,
-    name,
-    size,
-    category,
-    subcategory,
+    product_key,
+    category_key,
     CAST({{ current_timestamp() }} AS DATE) AS processing_date,
     earliest_date,
     latest_date,
 
+    -- Price variations
     earliest_price,
     latest_price,
     latest_price - earliest_price AS price_variation_abs,
     {{ get_variation_percent('latest_price', 'earliest_price') }} AS price_variation_percent,
 
+    -- Original Price variations
     earliest_orig_price,
     latest_orig_price,
     latest_orig_price - earliest_orig_price AS orig_price_variation_abs,
