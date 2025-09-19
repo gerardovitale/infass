@@ -1,13 +1,9 @@
 {{
   config(
     materialized = 'incremental',
+    incremental_strategy = 'merge',
     unique_key = ['id', 'date'],
-    merge_update_columns = [
-      'price',
-      'sma7',
-      'sma15',
-      'sma30',
-    ],
+    merge_exclude_columns = ['created_at'],
     partition_by = {
       "field": "date",
       "data_type": "date",
@@ -16,6 +12,7 @@
     cluster_by = ["id"]
   )
 }}
+
 SELECT
     merc.date,
     products.id,
