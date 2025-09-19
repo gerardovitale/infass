@@ -177,3 +177,26 @@ models:
           - not_null
           - dbt_utils.expression_is_true:
               expression: ">= first_seen_date"
+
+  - name: dbt_dim_category
+    description: "Product category dimension table."
+    columns:
+      - name: category_key
+        description: "Surrogate key"
+        data_type: string
+        tests: [not_null, unique]
+
+      - name: category_nk
+        description: "Stable natural key: category + subcategory."
+        data_type: string
+        tests: [not_null, unique]
+
+      - name: category
+        description: "Product category."
+        data_type: string
+        tests: [not_null]
+
+      - name: subcategory
+        description: "Product subcategory."
+        data_type: string
+        tests: [not_null]
