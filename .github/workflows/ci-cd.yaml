@@ -179,11 +179,8 @@ jobs:
   build-dbt:
     uses: ./.github/workflows/dbt-workflow.yml
     with:
-      dbt_directory: ./dbt
-      dbt_profiles_dir: ./.dbt
       dbt_profile: infass
       dbt_target: test
-      python_version: "3.9.19"
       dbt_subcommand: build
       dbt_args: "" # e.g. "--select tag:nightly"
     secrets:
