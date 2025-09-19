@@ -177,7 +177,7 @@ jobs:
         run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
 
   build-dbt:
-    uses: .github/workflows/run-dbt.yml
+    uses: ./.github/workflows/run-dbt.yml@main
     with:
       dbt_profile: infass
       dbt_target: test
