@@ -7,58 +7,27 @@ on:
 
 jobs:
   trigger-dbt:
-    runs-on: ubuntu-latest
-    env:
-      DBT_PROFILES_DIR: ./.dbt
-      DBT_DIRECTORY: ./dbt
-      DBT_PROFILE: infass
-      DBT_TARGET: prod
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4.2.2
-
-      - name: Set up Python3
-        uses: actions/setup-python@v5.6.0
-        with:
-          python-version: '3.9.19'
-
-      - name: Install dependencies
-        working-directory: ${{ env.DBT_DIRECTORY }}
-        run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2.1.7
-        with:
-          credentials_json: ${{ secrets.GCP_DBT_CREDENTIALS }}
-
-      - name: Install dependencies
-        working-directory: ${{ env.DBT_DIRECTORY }}
-        run: dbt deps
-
-      - name: Build dbt transformations
-        working-directory: ${{ env.DBT_DIRECTORY }}
-        env:
-          PYTHONWARNINGS: ignore::FutureWarning
-        run: |
-          dbt build \
-          --profiles-dir ${{ env.DBT_PROFILES_DIR }} \
-          --profile ${{ env.DBT_PROFILE }} \
-          --target ${{ env.DBT_TARGET }}
-
+    uses: ./.github/workflows/dbt-workflow.yml
+    with:
+      dbt_profile: infass
+      dbt_target: prod
+      dbt_subcommand: build
+      dbt_args: "" # e.g. "--select tag:nightly"
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_DBT_CREDENTIALS }}
 
   trigger-reversed-etl:
     runs-on: ubuntu-latest
     needs: trigger-dbt
-    env:
-      GCP_RUN_JOB_NAME: infass-reversed-etl-job
-      GCP_REGION: europe-southwest1
     steps:
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2.1.7
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Trigger Transformation Job
+        id: trigger-reversed-etl
+        uses: ./.github/actions/trigger-cloud-run-job
         with:
           credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
-
-      - name: Trigger Reversed ETL Cloud Run Job
-        run: gcloud run jobs execute ${{ env.GCP_RUN_JOB_NAME }} --region ${{ env.GCP_REGION }} --wait
+          region: europe-southwest1
+          app_name: infass
+          component: reversed-etl-job
