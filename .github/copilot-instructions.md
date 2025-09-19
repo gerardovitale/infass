@@ -33,7 +33,7 @@ input/output data, configuration, and usage.
     - [ci-cd.yaml](workflows/ci-cd.yaml)
     - [trigger-ingestor.yaml](workflows/trigger-ingestor.yaml)
     - [trigger-transformer.yaml](workflows/trigger-transformer.yaml)
-    - [trigger-dbt.yml](workflows/trigger-dbt.yml)
+    - [trigger-dbt.yml](workflows/trigger-transformations.yml)
   - Ensure your changes do not break existing workflows or deployments.
 
 ## References

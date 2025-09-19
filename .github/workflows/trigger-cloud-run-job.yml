@@ -1,0 +1,54 @@
+name: Reusable — Trigger Cloud Run Job
+
+on:
+  workflow_call:
+    inputs:
+      region:
+        description: GCP region
+        required: true
+        type: string
+      app_name:
+        description: App name (job prefix)
+        required: true
+        type: string
+      component:
+        description: Component name (job + container name suffix)
+        required: true
+        type: string
+      args:
+        description: Optional arguments for the Cloud Run job
+        required: false
+        type: string
+        default: ""
+    secrets:
+      gcp_credentials:
+        description: JSON service account credentials
+        required: true
+
+jobs:
+  trigger:
+    name: Trigger ${{ inputs.app_name }}-${{ inputs.component }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2.1.12
+        with:
+          credentials_json: ${{ secrets.gcp_credentials }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Trigger Cloud Run Job
+        shell: bash
+        run: |
+          set -euo pipefail
+          CMD=( gcloud run jobs execute "${{ inputs.app_name }}-${{ inputs.component }}" \
+                --region "${{ inputs.region }}" \
+                --wait \
+                --container="${{ inputs.component }}" )
+          if [ -n "${{ inputs.args }}" ]; then
+            CMD+=( --args="${{ inputs.args }}" )
+          fi
+          echo "Executing: ${CMD[*]}"
+          "${CMD[@]}"

@@ -1,0 +1,35 @@
+name: Trigger dbt transformations
+
+on:
+  schedule:
+    - cron: "0 6 * * 6"
+  workflow_dispatch:
+
+jobs:
+  trigger-transformer:
+    uses: .github/workflows/trigger-cloud-run-job.yml
+    with:
+      region: europe-southwest1
+      app_name: infass
+      component: transformer-job
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
+
+  trigger-dbt:
+    uses: .github/workflows/run-dbt.yml
+    with:
+      dbt_profile: infass
+      dbt_target: prod
+      dbt_subcommand: build
+      dbt_args: "" # e.g. "--select tag:nightly"
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_DBT_CREDENTIALS }}
+
+  trigger-reversed-etl:
+    uses: .github/workflows/trigger-cloud-run-job.yml
+    with:
+      region: europe-southwest1
+      app_name: infass
+      component: reversed-etl-job
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
