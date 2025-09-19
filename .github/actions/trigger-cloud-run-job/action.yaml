@@ -16,7 +16,8 @@ inputs:
     required: true
   args:
     description: 'Arguments for the Cloud Run job.'
-    required: true
+    required: false
+    default: ""
 
 runs:
   using: 'composite'
@@ -29,8 +30,13 @@ runs:
     - name: Trigger Cloud Run Job
       shell: bash
       run: |
-        gcloud run jobs execute ${{ inputs.app_name }}-${{ inputs.component }} \
+        CMD="gcloud run jobs execute ${{ inputs.app_name }}-${{ inputs.component }} \
           --region ${{ inputs.region }} \
           --wait \
-          --container=${{ inputs.component }} \
-          --args="${{ inputs.args }}"
+          --container=${{ inputs.component }}"
+
+        if [ -n "${{ inputs.args }}" ]; then
+          CMD="$CMD --args=${{ inputs.args }}"
+        fi
+        echo "Executing: $CMD"
+        eval "$CMD"
