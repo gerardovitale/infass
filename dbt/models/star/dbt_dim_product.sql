@@ -9,10 +9,10 @@
 
 with src as (
   select
-    lower(trim(name))              as name,
-    lower(trim(size))              as size,
+    name,
+    size,
     image_url,
-    cast(date as date)             as obs_date
+    cast(date as date) as obs_date
   from {{ source('infass', 'incremental_merc') }}
   {% if is_incremental() %}
     where date >= date_sub(

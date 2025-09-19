@@ -8,7 +8,7 @@
 with src as (
   select distinct
     -- NK stable against case/whitespace drift
-    {{ dbt_utils.generate_surrogate_key(["lower(trim(category))","lower(trim(subcategory))"]) }} as category_nk,
+    {{ dbt_utils.generate_surrogate_key(["category","subcategory"]) }} as category_nk,
     category,
     subcategory
   from {{ source('infass', 'incremental_merc') }}
