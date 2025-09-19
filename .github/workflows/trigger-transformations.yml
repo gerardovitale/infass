@@ -1,4 +1,4 @@
-name: Trigger dbt transformations
+name: Trigger Transformations and Reversed ETL
 
 on:
   schedule:
