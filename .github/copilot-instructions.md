@@ -30,7 +30,7 @@ input/output data, configuration, and usage.
 
 - **CI/CD:**
   - All modules are built and tested via GitHub Actions workflows:
-    - [ci-cd.yaml](workflows/ci-cd.yaml)
+    - [ci-cd.yaml](workflows/ci-cd.yml)
     - [trigger-ingestor.yaml](workflows/trigger-ingestor.yaml)
     - [trigger-transformer.yaml](workflows/trigger-transformer.yaml)
     - [trigger-dbt.yml](workflows/trigger-transformations.yml)

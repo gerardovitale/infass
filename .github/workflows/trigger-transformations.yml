@@ -7,7 +7,7 @@ on:
 
 jobs:
   trigger-transformer:
-    uses: ./.github/workflows/trigger-cloud-run-job.yml@main
+    uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
       region: europe-southwest1
       app_name: infass
@@ -16,7 +16,7 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
   trigger-dbt:
-    uses: ./.github/workflows/run-dbt.yml@main
+    uses: ./.github/workflows/run-dbt.yml
     with:
       dbt_profile: infass
       dbt_target: prod
@@ -26,7 +26,7 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_DBT_CREDENTIALS }}
 
   trigger-reversed-etl:
-    uses: ./.github/workflows/trigger-cloud-run-job.yml@main
+    uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
       region: europe-southwest1
       app_name: infass
