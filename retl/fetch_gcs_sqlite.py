@@ -55,6 +55,9 @@ def inspect_sqlite(db_path: str) -> None:
 
     # Show top 5 rows per table
     if tables:
+        print("\n" + "=" * 100 + "\n")
+        print("Tables found: ", [table[0] for table in tables])
+
         for table in tables:
             if "fts_" in table[0]:
                 print(f"Skipping FTS table: `{table[0]}`")
