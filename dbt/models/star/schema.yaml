@@ -1,25 +1,20 @@
 version: 2
 
 models:
-  - name: dbt_dim_date
+  - name: dim_date
     description: "Calendar dimension at day grain with ISO week (Mon–Sun)."
     columns:
       - name: date
         description: "Calendar date (UTC-naive)."
-        tests:
-          - not_null
-          - unique
+        tests: [ not_null, unique ]
 
       - name: date_key
         description: "YYYYMMDD integer surrogate for date."
-        tests:
-          - not_null
-          - unique
+        tests: [ not_null, unique ]
 
       - name: year
         description: "Calendar year (e.g., 2025)."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: quarter
         description: "Calendar quarter (1–4)."
@@ -37,18 +32,15 @@ models:
 
       - name: month_key
         description: "YYYYMM integer (e.g., 202501)."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: month_name
         description: "Month name in locale (e.g., 'January')."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: iso_year
         description: "ISO week-numbering year."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: iso_week
         description: "ISO week number (1–53)."
@@ -59,18 +51,15 @@ models:
 
       - name: week_start_date
         description: "Start of ISO week (Monday)."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: week_end_date
         description: "End of ISO week (Sunday)."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: iso_week_key
         description: "ISO year+week key (e.g., 202501 or string '2025-01')."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: day_of_week
         description: "ISO day-of-week (1=Mon … 7=Sun)."
@@ -88,8 +77,7 @@ models:
 
       - name: day_of_year
         description: "Day of year (1–366)."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: is_weekend
         description: "True if Saturday or Sunday."
@@ -101,62 +89,50 @@ models:
 
       - name: month_start_date
         description: "First day of the month."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: month_end_date
         description: "Last day of the month."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: quarter_start_date
         description: "First day of the quarter."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: quarter_end_date
         description: "Last day of the quarter."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: year_start_date
         description: "First day of the year."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: year_end_date
         description: "Last day of the year."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
-  - name: dbt_dim_product
+  - name: dim_product
     description: "Product dimension table."
     columns:
       - name: product_key
         description: "Surrogate key (hash of product_nk)."
         data_type: string
-        tests:
-          - not_null
-          - unique
+        tests: [ not_null, unique ]
 
       - name: product_nk
         description: "Stable natural key: name + size."
         data_type: string
-        tests:
-          - not_null
-          - unique
+        tests: [ not_null, unique ]
 
       - name: name
         description: "Product name."
         data_type: string
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: size
         description: "Product size."
         data_type: string
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: image_url
         description: "Latest observed image URL (Type-1)."
@@ -167,8 +143,7 @@ models:
       - name: first_seen_date
         description: "First date the product_nk was observed."
         data_type: date
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: last_seen_date
         description: "Most recent date the product_nk was observed."
@@ -178,30 +153,30 @@ models:
           - dbt_utils.expression_is_true:
               expression: ">= first_seen_date"
 
-  - name: dbt_dim_category
+  - name: dim_category
     description: "Product category dimension table."
     columns:
       - name: category_key
         description: "Surrogate key"
         data_type: string
-        tests: [not_null, unique]
+        tests: [ not_null, unique ]
 
       - name: category_nk
         description: "Stable natural key: category + subcategory."
         data_type: string
-        tests: [not_null, unique]
+        tests: [ not_null, unique ]
 
       - name: category
         description: "Product category."
         data_type: string
-        tests: [not_null]
+        tests: [ not_null ]
 
       - name: subcategory
         description: "Product subcategory."
         data_type: string
-        tests: [not_null]
+        tests: [ not_null ]
 
-  - name: dbt_fact_product_price_daily
+  - name: fact_product_price_daily
     description: "Daily final/original/discount price by date × product × category × dedup_id."
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -213,7 +188,7 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dbt_dim_date')
+              to: ref('dim_date')
               field: date_key
 
       - name: product_key
@@ -221,7 +196,7 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dbt_dim_product')
+              to: ref('dim_product')
               field: product_key
 
       - name: category_key
@@ -229,7 +204,7 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('dbt_dim_category')
+              to: ref('dim_category')
               field: category_key
 
       - name: dedup_id
@@ -259,8 +234,7 @@ models:
 
       - name: is_discounted
         description: "True when discount_price is present and less than original_price."
-        tests:
-          - not_null
+        tests: [ not_null ]
 
       - name: discount_abs
         description: "original_price - price; null if no discount."

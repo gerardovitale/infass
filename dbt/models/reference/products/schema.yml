@@ -13,29 +13,28 @@ models:
       - name: id
         description: "The unique identifier for the product"
         data_type: string
-        tests:
-          - not_null
-          - unique
+        tests: [ not_null, unique ]
+
       - name: name
         description: "The name of the product"
         data_type: string
-        tests:
-          - not_null
+        tests: [ not_null ]
+
       - name: size
         description: "The size of the product"
         data_type: string
-        tests:
-          - not_null
+        tests: [ not_null ]
+
       - name: categories
         description: "One or more categories of the product separated by pipe"
         data_type: string
-        tests:
-          - not_null
+        tests: [ not_null ]
+
       - name: subcategories
         description: "One or more subcategories of the product separated by pipe"
         data_type: string
-        tests:
-          - not_null
+        tests: [ not_null ]
+
       - name: price
         description: "The price of the product"
         data_type: number
@@ -43,6 +42,7 @@ models:
           - not_null
           - dbt_utils.expression_is_true:
               expression: "> 0"
+
       - name: image_url
         description: "The URL of the product image"
         data_type: string
