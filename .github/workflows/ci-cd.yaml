@@ -175,3 +175,16 @@ jobs:
         id: apply
         working-directory: ./infra-ui
         run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+
+  build-dbt:
+    uses: ./.github/workflows/dbt-workflow.yml
+    with:
+      dbt_directory: ./dbt
+      dbt_profiles_dir: ./.dbt
+      dbt_profile: infass
+      dbt_target: test
+      python_version: "3.9.19"
+      dbt_subcommand: build
+      dbt_args: "" # e.g. "--select tag:nightly"
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_DBT_CREDENTIALS }}
