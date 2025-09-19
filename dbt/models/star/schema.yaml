@@ -96,7 +96,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [true, false]
+              values: [ true, false ]
               quote: false
 
       - name: month_start_date
@@ -128,3 +128,52 @@ models:
         description: "Last day of the year."
         tests:
           - not_null
+
+  - name: dbt_dim_product
+    description: "Product dimension table."
+    columns:
+      - name: product_key
+        description: "Surrogate key (hash of product_nk)."
+        data_type: string
+        tests:
+          - not_null
+          - unique
+
+      - name: product_nk
+        description: "Stable natural key: name + size."
+        data_type: string
+        tests:
+          - not_null
+          - unique
+
+      - name: name
+        description: "Product name."
+        data_type: string
+        tests:
+          - not_null
+
+      - name: size
+        description: "Product size."
+        data_type: string
+        tests:
+          - not_null
+
+      - name: image_url
+        description: "Latest observed image URL (Type-1)."
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "is null or regexp_contains(image_url, r'^https?://')"
+
+      - name: first_seen_date
+        description: "First date the product_nk was observed."
+        data_type: date
+        tests:
+          - not_null
+
+      - name: last_seen_date
+        description: "Most recent date the product_nk was observed."
+        data_type: date
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= first_seen_date"
