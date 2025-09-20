@@ -43,12 +43,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CMD=( gcloud run jobs execute "${{ inputs.app_name }}-${{ inputs.component }}" \
-                --region "${{ inputs.region }}" \
-                --wait )
+          CMD=( gcloud run jobs execute "${{ inputs.app_name }}-${{ inputs.component }}" --region "${{ inputs.region }}" --wait )
           if [ -n "${{ inputs.args }}" ]; then
-            CMD+=( --container="${{ inputs.component }}" \
-                  --args="${{ inputs.args }}" )
+            CMD+=( --container="${{ inputs.component }}" --args="${{ inputs.args }}" )
           fi
           echo "Executing: ${CMD[*]}"
           "${CMD[@]}"
