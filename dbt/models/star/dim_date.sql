@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 {% set start_date = var('date_spine_start', '2024-11-01') %}
-{% set end_date   = var('date_spine_end', (run_started_at + modules.datetime.timedelta(days=365*3)).strftime('%Y-%m-%d')) %}
+{% set end_date   = var('date_spine_end', '2035-12-31') %}
 
 with spine as (
   {{ dbt_utils.date_spine(

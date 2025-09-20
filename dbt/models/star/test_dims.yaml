@@ -1,0 +1,40 @@
+version: 2
+
+unit_tests:
+  # ---------- dim_category ----------
+  - name: dim_category_dedupes_clean_labels
+    description: "Produces one row per distinct (category, subcategory); ignores null/null."
+    model: dim_category
+    given:
+      - input: source('infass', 'stg_merc')
+        rows:
+          - { date: 2025-01-01, category: "Bebidas", subcategory: "Agua" }
+          - { date: 2025-01-02, category: "Bebidas", subcategory: "Agua" }   # dup -> should collapse
+          - { date: 2025-01-02, category: "Aceites", subcategory: "Oliva" }
+          - { date: 2025-01-03, category: null,     subcategory: null }      # filtered out
+    expect:
+      rows:
+        - { category: "Bebidas", subcategory: "Agua" }
+        - { category: "Aceites", subcategory: "Oliva" }
+
+
+  # ---------- dim_product ----------
+  - name: dim_product_type1_latest_image_and_dates
+    description: "Type-1 overwrite for image; first/last_seen tracked; one row per product_nk."
+    model: dim_product
+    given:
+      - input: source('infass', 'stg_merc')
+        rows:
+          # first observation
+          - { date: 2025-01-01, name: "Aceite X", size: "1 L", image_url: "img1.jpg",
+              category: "Aceites", subcategory: "Oliva", price: 10.0, original_price: 10.0, discount_price: null }
+          # later observation with new image and discount
+          - { date: 2025-01-03, name: "Aceite X", size: "1 L", image_url: "img2.jpg",
+              category: "Aceites", subcategory: "Oliva", price: 8.0, original_price: 10.0, discount_price: 8.0 }
+    overrides:
+      macros:
+        is_incremental: false
+    expect:
+      rows:
+        - { name: "Aceite X", size: "1 L", image_url: "img2.jpg",
+            first_seen_date: 2025-01-01, last_seen_date: 2025-01-03 }
