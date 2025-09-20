@@ -45,10 +45,10 @@ jobs:
           set -euo pipefail
           CMD=( gcloud run jobs execute "${{ inputs.app_name }}-${{ inputs.component }}" \
                 --region "${{ inputs.region }}" \
-                --wait \
-                --container="${{ inputs.component }}" )
+                --wait )
           if [ -n "${{ inputs.args }}" ]; then
-            CMD+=( --args="${{ inputs.args }}" )
+            CMD+=( --container="${{ inputs.component }}" \
+                  --args="${{ inputs.args }}" )
           fi
           echo "Executing: ${CMD[*]}"
           "${CMD[@]}"

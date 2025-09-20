@@ -21,6 +21,7 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
   trigger-transformer:
+    needs: trigger-ingestor
     uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
       region: ${{ env.GCP_REGION }}

@@ -16,6 +16,7 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
   trigger-dbt:
+    needs: trigger-transformer
     uses: ./.github/workflows/run-dbt.yml
     with:
       dbt_profile: infass
@@ -26,6 +27,7 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_DBT_CREDENTIALS }}
 
   trigger-reversed-etl:
+    needs: trigger-dbt
     uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
       region: europe-southwest1
