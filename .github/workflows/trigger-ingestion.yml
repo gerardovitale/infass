@@ -23,6 +23,6 @@ jobs:
       region: europe-southwest1
       app_name: infass
       component: transformer-v2
-      args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.incremental_merc"
+      args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.stg_merc"
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}

@@ -10,7 +10,7 @@ with src as (
     {{ dbt_utils.generate_surrogate_key(["category","subcategory"]) }} as category_nk,
     category,
     subcategory
-  from {{ source('infass', 'incremental_merc') }}
+  from {{ source('infass', 'stg_merc') }}
   where category is not null or subcategory is not null
 )
 

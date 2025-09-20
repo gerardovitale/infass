@@ -9,7 +9,7 @@
 
 SELECT
     *
-FROM `inflation-assistant.infass.incremental_merc`
+FROM `inflation-assistant.infass.stg_merc`
 WHERE
     date between {{ start_date }} and {{ end_date }}
     AND name IN (

@@ -13,7 +13,7 @@ with src as (
     size,
     image_url,
     cast(date as date) as obs_date
-  from {{ source('infass', 'incremental_merc') }}
+  from {{ source('infass', 'stg_merc') }}
   {% if is_incremental() %}
     where date >= date_sub(
       (select coalesce(max(last_seen_date), date '1900-01-01') from {{ this }}),

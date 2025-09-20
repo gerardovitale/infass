@@ -27,7 +27,7 @@ with src as (
     price,
     original_price,
     discount_price
-  from {{ source('infass', 'incremental_merc') }}
+  from {{ source('infass', 'stg_merc') }}
   {% if is_incremental() %}
   where date >= date_sub(
     (select coalesce(max_date, date '1900-01-01')

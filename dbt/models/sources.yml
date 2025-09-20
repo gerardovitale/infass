@@ -80,7 +80,7 @@ sources:
             description: The price of the product after applying discounts
             data_type: float
 
-      - name: incremental_merc
+      - name: stg_merc
         description: Merc historical product prices
 
         config:
