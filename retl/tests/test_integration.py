@@ -90,7 +90,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
         expected_transactions = [
             (
                 1,
-                "dbt_ref_products",
+                "ref_products",
                 "products",
                 "2025-01-03T00:00:00",
                 None,
@@ -98,7 +98,7 @@ def test_main_integration(monkeypatch, mock_datetime_now, mock_bq_client):
             ),
             (
                 2,
-                "dbt_ref_product_price_details",
+                "ref_product_price_details",
                 "product_price_details",
                 "2025-01-03T00:00:00",
                 "2025-01-01",

@@ -8,17 +8,17 @@ The `retl` module is a Reversed ETL (Extract, Transform, Load) pipeline written 
 
 - **Source:** Extracts data from Google BigQuery.
 - **Destination:** Loads data into a SQLite database used by the API.
-- **No Transformations:** Data is transferred as-is, assuming that the `dbt_ref_*` tables in BigQuery are already correct and up-to-date.
+- **No Transformations:** Data is transferred as-is, assuming that the `ref_*` tables in BigQuery are already correct and up-to-date.
 - **Extensible Design:** The architecture is designed to support additional data sources, destinations, and transformation steps in the future.
 
 ## Workflow
 
-1. **Extract:** Pulls data from the relevant `dbt_ref_*` tables in BigQuery.
+1. **Extract:** Pulls data from the relevant `ref_*` tables in BigQuery.
 2. **Load:** Writes the extracted data directly into the SQLite database.
 
 ## Usage
 
-- Ensure that the `dbt_ref_*` tables in BigQuery are up-to-date before running the pipeline.
+- Ensure that the `ref_*` tables in BigQuery are up-to-date before running the pipeline.
 - Run the ETL process to sync data from BigQuery to SQLite.
 - The API will automatically use the updated SQLite database to serve requests.
 
