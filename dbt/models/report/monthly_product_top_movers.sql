@@ -11,6 +11,8 @@
 ) }}
 
 {% set TOP_N = var('top_n', 5) %}
+{% set max_months = 3 %}
+{% set backfill_months = var('monthly_product_top_movers_backfill_months', max_months) %}
 
 WITH base AS (
   SELECT
@@ -20,7 +22,7 @@ WITH base AS (
     price_variation_percent
   FROM {{ ref("monthly_products") }}
   {% if is_incremental() %}
-  WHERE year_month_period >= DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY), MONTH)
+  WHERE year_month_period >= DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL {{ backfill_months }} MONTH), MONTH)
   {% endif %}
 ),
 

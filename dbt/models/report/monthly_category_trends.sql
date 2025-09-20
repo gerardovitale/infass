@@ -10,13 +10,16 @@
     on_schema_change='sync_all_columns'
 ) }}
 
+{% set max_months = 3 %}
+{% set backfill_months = var('monthly_category_trend_backfill_months', max_months) %}
+
 WITH base AS (SELECT year_month_period,
                      category_key,
                      price_variation_percent,
                      orig_price_variation_percent
               FROM {{ ref("monthly_products") }}
               {% if is_incremental() %}
-              WHERE year_month_period >= DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 60 DAY), MONTH)
+              WHERE year_month_period >= DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL {{ backfill_months }} MONTH), MONTH)
               {% endif %}
               )
 

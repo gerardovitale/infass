@@ -12,8 +12,8 @@
   )
 }}
 
-{% set max_window = 30 %}
-{% set backfill_days = var('sma_backfill_days', max_window) %}
+{% set max_months = 6 %}
+{% set backfill_months = var('sma_backfill_months', max_months) %}
 
 WITH base AS (
     SELECT
@@ -24,7 +24,7 @@ WITH base AS (
     LEFT JOIN {{ ref('dim_date') }} AS d
         ON d.date_key = fact.date_key
     {% if is_incremental() %}
-    WHERE d.date >= DATE_SUB(CURRENT_DATE(), INTERVAL {{ backfill_days }} DAY)
+    WHERE d.date >= DATE_SUB(CURRENT_DATE(), INTERVAL {{ backfill_months }} MONTH)
     {% endif %}
     QUALIFY ROW_NUMBER() OVER (PARTITION BY d.date, fact.product_key ORDER BY d.date DESC) = 1
 ),

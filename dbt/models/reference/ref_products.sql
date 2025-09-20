@@ -6,7 +6,8 @@
     cluster_by = ['id']
 ) }}
 
-{% set recent_days = var('ref_latest_price_days', 120) %}
+{% set max_days = 120 %}
+{% set recent_days = var('ref_latest_price_days', max_days) %}
 
 WITH src AS (
     SELECT
