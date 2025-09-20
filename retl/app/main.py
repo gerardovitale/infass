@@ -65,7 +65,7 @@ def main():
             data_source=BigQuerySink(
                 project_id=bq_project_id,
                 dataset_id=bq_dataset_id,
-                table="dbt_ref_products",
+                table="ref_products",
                 client=bq_client,
             ),
             destination=SQLiteSink(
@@ -83,7 +83,7 @@ def main():
             data_source=BigQuerySink(
                 project_id=bq_project_id,
                 dataset_id=bq_dataset_id,
-                table="dbt_ref_product_price_details",
+                table="ref_product_price_details",
                 client=bq_client,
             ),
             destination=SQLiteSink(
