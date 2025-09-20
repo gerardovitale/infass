@@ -15,7 +15,7 @@ infass:
       method: service-account
       priority: interactive
       project: inflation-assistant
-      threads: 1
+      threads: 8
       type: bigquery
 
     test:
@@ -27,7 +27,7 @@ infass:
       method: service-account
       priority: interactive
       project: inflation-assistant
-      threads: 1
+      threads: 8
       type: bigquery
 
     prod:
@@ -39,5 +39,5 @@ infass:
       method: service-account
       priority: interactive
       project: inflation-assistant
-      threads: 1
+      threads: 8
       type: bigquery
