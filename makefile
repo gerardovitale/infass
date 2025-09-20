@@ -75,18 +75,17 @@ transformer-v2.test:
 	@echo "Running Transformer tests"
 	scripts/run-docker-test.sh transformer-v2
 
-transformer-v2.local-run:
-	sqlite3 transformer-v2/infass-transformer-sqlite.db < transformer-v2/infass-transformer-sqlite.db.sql
+transformer-v2.run:
+	sqlite3 transformer-v2/infass-transformer-sqlite.db ""
 	cd transformer-v2/ && docker buildx build -f Dockerfile -t transformer-v2 .
 	docker run --rm \
 		-v $(TRANSFORMER_V2_SQLITE_DB_LOCAL_PATH):/mnt/sqlite/infass-transformer-sqlite.db \
 		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
 		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
 		transformer-v2:latest \
-		--gcs-source-bucket test-bucket \
+		--gcs-source-bucket infass-merc \
 		--product merc \
-		--bq-destination-table test-table
-	rm transformer-v2/infass-transformer-sqlite.db
+		--bq-destination-table inflation-assistant.infass.stg_merc
 
 
 # DBT
@@ -167,6 +166,18 @@ sql-format.test:
 
 
 # Reverse ETL (retl)
+retl.run:
+	sqlite3 retl/infass-sqlite-api.db ""
+	cd retl/ && docker buildx build -f Dockerfile -t retl .
+	docker run --rm \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
+		-v $(GCP_API_CREDS_PATH):/app/key.json \
+		-e BQ_PROJECT_ID=$(BQ_PROJECT_ID) \
+		-e BQ_DATASET_ID=$(BQ_DATASET_ID) \
+		-e SQLITE_DB_PATH=/mnt/sqlite/infass-sqlite-api.db \
+		-v $(SQLITE_DB_PATH):/mnt/sqlite/infass-sqlite-api.db \
+		retl:latest
+
 retl.test:
 	@echo "####################################################################################################"
 	@echo "Running Reverse ETL tests"
