@@ -1,0 +1,93 @@
+version: 2
+
+models:
+  - name: ref_product_price_details
+    description: "Product details history in the Merc database"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - date
+            - id
+    columns:
+      - name: date
+        description: "The date when the price was recorded"
+        data_type: date
+        tests: [ not_null ]
+
+      - name: id
+        description: "The unique identifier for the product"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: price
+        description: "The price of the product"
+        data_type: number
+        tests: [ not_null ]
+
+      - name: sma7
+        description: "The 7-day simple moving average of the product price"
+        data_type: number
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "is null or sma7 > 0"
+
+      - name: sma15
+        description: "The 15-day simple moving average of the product price"
+        data_type: number
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "is null or sma15 > 0"
+
+      - name: sma30
+        description: "The 30-day simple moving average of the product price"
+        data_type: number
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "is null or sma30 > 0"
+
+
+  - name: ref_products
+    description: "Unique products in the Merc database"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - id
+            - name
+            - size
+    columns:
+      - name: id
+        description: "The unique identifier for the product"
+        data_type: string
+        tests: [ not_null, unique ]
+
+      - name: name
+        description: "The name of the product"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: size
+        description: "The size of the product"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: categories
+        description: "One or more categories of the product separated by pipe"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: subcategories
+        description: "One or more subcategories of the product separated by pipe"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: price
+        description: "The price of the product"
+        data_type: number
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: image_url
+        description: "The URL of the product image"
+        data_type: string

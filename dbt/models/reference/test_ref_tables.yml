@@ -1,0 +1,116 @@
+version: 2
+
+unit_tests:
+  # ---------- ref_product_price_details ----------
+  - name: test_ref_product_price_details
+    description: "Checks SMA7/15/30/90 over calendar days for two simple products."
+    model: ref_product_price_details
+
+    given:
+      - input: ref('dim_date')
+        rows:
+          - { date_key: 20250101, date: '2025-01-01' }
+          - { date_key: 20250102, date: '2025-01-02' }
+          - { date_key: 20250103, date: '2025-01-03' }
+          - { date_key: 20250104, date: '2025-01-04' }
+          - { date_key: 20250105, date: '2025-01-05' }
+          - { date_key: 20250106, date: '2025-01-06' }
+          - { date_key: 20250107, date: '2025-01-07' }
+
+      - input: ref('fact_product_price_daily')
+        rows:
+          # Product 101: constant price = 10 across 7 days -> all SMAs = 10
+          - { date_key: 20250101, product_key: 101, price: 10.0 }
+          - { date_key: 20250102, product_key: 101, price: 10.0 }
+          - { date_key: 20250103, product_key: 101, price: 10.0 }
+          - { date_key: 20250104, product_key: 101, price: 10.0 }
+          - { date_key: 20250105, product_key: 101, price: 10.0 }
+          - { date_key: 20250106, product_key: 101, price: 10.0 }
+          - { date_key: 20250107, product_key: 101, price: 10.0 }
+
+          # Product 202: ascending 1..7 -> SMA7 on 2025-01-07 = (1+..+7)/7 = 4.0
+          - { date_key: 20250101, product_key: 202, price: 1.0 }
+          - { date_key: 20250102, product_key: 202, price: 2.0 }
+          - { date_key: 20250103, product_key: 202, price: 3.0 }
+          - { date_key: 20250104, product_key: 202, price: 4.0 }
+          - { date_key: 20250105, product_key: 202, price: 5.0 }
+          - { date_key: 20250106, product_key: 202, price: 6.0 }
+          - { date_key: 20250107, product_key: 202, price: 7.0 }
+
+    overrides:
+      macros:
+        is_incremental: false
+
+    expect:
+      rows:
+        # Product 101 (constant 10)
+        - { date: '2025-01-01', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+        - { date: '2025-01-02', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+        - { date: '2025-01-03', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+        - { date: '2025-01-04', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+        - { date: '2025-01-05', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+        - { date: '2025-01-06', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+        - { date: '2025-01-07', id: '101', price: 10.0, sma7: 10.0, sma15: 10.0, sma30: 10.0 }
+
+        # Product 202 (1..7)
+        - { date: '2025-01-01', id: '202', price: 1.0, sma7: 1.0,  sma15: 1.0,  sma30: 1.0 }
+        - { date: '2025-01-02', id: '202', price: 2.0, sma7: 1.5,  sma15: 1.5,  sma30: 1.5 }
+        - { date: '2025-01-03', id: '202', price: 3.0, sma7: 2.0,  sma15: 2.0,  sma30: 2.0 }
+        - { date: '2025-01-04', id: '202', price: 4.0, sma7: 2.5,  sma15: 2.5,  sma30: 2.5 }
+        - { date: '2025-01-05', id: '202', price: 5.0, sma7: 3.0,  sma15: 3.0,  sma30: 3.0 }
+        - { date: '2025-01-06', id: '202', price: 6.0, sma7: 3.5,  sma15: 3.5,  sma30: 3.5 }
+        - { date: '2025-01-07', id: '202', price: 7.0, sma7: 4.0,  sma15: 4.0,  sma30: 4.0 }
+
+
+  # ---------- ref_product_price_details ----------
+  - name: ref_products_latest_price_and_categories
+    description: "Aggregates distinct categories/subcategories and picks latest price by date."
+    model: ref_products
+
+    given:
+      - input: ref('dim_date')
+        rows:
+          - { date_key: 20250101, date: '2025-01-01' }
+          - { date_key: 20250102, date: '2025-01-02' }
+          - { date_key: 20250103, date: '2025-01-03' }
+
+      - input: ref('dim_category')
+        rows:
+          - { category_key: 11, category: 'Aceites', subcategory: 'Oliva' }
+          - { category_key: 22, category: 'Bebidas', subcategory: 'Agua' }
+
+      - input: ref('dim_product')
+        rows:
+          - { product_key: 101, name: 'Aceite X', size: '1 L', image_url: 'img101.jpg' }
+          - { product_key: 202, name: 'Agua Y',   size: '1.5 L', image_url: 'img202.jpg' }
+
+      # fact table (two days for product 101, single day for 202)
+      - input: ref('fact_product_price_daily')
+        rows:
+          # Product 101 appears under two categories across days
+          - { date_key: 20250101, product_key: 101, category_key: 11, price: 10.0 }
+          - { date_key: 20250102, product_key: 101, category_key: 22, price: 12.0 }
+          # Product 202 single category/day
+          - { date_key: 20250103, product_key: 202, category_key: 22, price: 1.5 }
+
+    overrides:
+      macros:
+        is_incremental: false
+      vars:
+        ref_latest_price_days: 5000
+
+    expect:
+      rows:
+        # Product 101:
+        # - categories/subcategories aggregated DISTINCT with alphabetical order by category/subcategory
+        # - latest price = 12.0 (on 2025-01-02)
+        - { id: '101', name: 'Aceite X', size: '1 L',
+            categories: 'Aceites | Bebidas',
+            subcategories: 'Oliva | Agua',
+            price: 12.0, image_url: 'img101.jpg' }
+
+        # Product 202: single category, latest price = 1.5
+        - { id: '202', name: 'Agua Y', size: '1.5 L',
+            categories: 'Bebidas',
+            subcategories: 'Agua',
+            price: 1.5, image_url: 'img202.jpg' }
