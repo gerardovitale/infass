@@ -5,16 +5,12 @@ on:
     - cron: "0 5 * * *"
   workflow_dispatch:
 
-env:
-  APP_NAME: infass
-  GCP_REGION: europe-southwest1
-
 jobs:
   trigger-ingestor:
     uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
-      region: ${{ env.GCP_REGION }}
-      app_name: ${{ env.APP_NAME }}
+      region: europe-southwest1
+      app_name: infass
       component: ingestor
       args: "https://tienda.mercadona.es,gs://infass-merc/merc"
     secrets:
@@ -24,8 +20,8 @@ jobs:
     needs: trigger-ingestor
     uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
-      region: ${{ env.GCP_REGION }}
-      app_name: ${{ env.APP_NAME }}
+      region: europe-southwest1
+      app_name: infass
       component: transformer-v2
       args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.incremental_merc"
     secrets:
