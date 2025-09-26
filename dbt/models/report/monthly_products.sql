@@ -17,13 +17,13 @@
 
 WITH year_month_agg_merc AS (
     SELECT
-        d.month_start_date AS year_month_period,
+        d.month_start_date             AS year_month_period,
         src.product_key,
         src.category_key,
-        MIN_BY(d.date, d.date) AS earliest_date,
-        MAX_BY(d.date, d.date) AS latest_date,
-        MIN_BY(price, d.date) AS earliest_price,
-        MAX_BY(price, d.date) AS latest_price,
+        MIN_BY(d.date, d.date)         AS earliest_date,
+        MAX_BY(d.date, d.date)         AS latest_date,
+        MIN_BY(price, d.date)          AS earliest_price,
+        MAX_BY(price, d.date)          AS latest_price,
         MIN_BY(original_price, d.date) AS earliest_orig_price,
         MAX_BY(original_price, d.date) AS latest_orig_price
     FROM {{ ref("fact_product_price_daily") }} AS src

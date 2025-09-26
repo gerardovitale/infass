@@ -194,3 +194,108 @@ models:
         description: "Average clipped original price variation percentage across products in the category for the year-month period"
         data_type: float
         tests: [ not_null ]
+
+
+  - name: product_price_report
+    description: "Merc product level price report"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - product_key
+
+    columns:
+      - name: product_key
+        description: "The unique identifier of the product"
+        data_type: string
+        tests: [ not_null, unique ]
+
+      - name: name
+        description: "The name of the product"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: size
+        description: "The size of the product"
+        data_type: string
+        tests: [ not_null ]
+
+      - name: latest_date
+        description: "The latest date available of the product price"
+        data_type: date
+        tests: [ not_null ]
+
+      - name: latest_price
+        description: "The latest available price of the product"
+        data_type: float
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      ####### Month-To-Date #######
+      - name: mtd_start_date
+        description: "The month-to-date start date"
+        data_type: date
+
+      - name: mtd_price
+        description: "The month-to-date price of the product"
+        data_type: float
+
+      - name: mtd_price_var_abs
+        description: "The month-to-date price absolute variation of the product"
+        data_type: float
+
+      - name: mtd_price_var_pct
+        description: "The month-to-date price percentage variation of the product"
+        data_type: float
+
+      ####### 3-Month-To-Date #######
+      - name: mtd3_start_date
+        description: "The 3-month-to-date start date"
+        data_type: date
+
+      - name: mtd3_price
+        description: "The 3-month-to-date price of the product"
+        data_type: float
+
+      - name: mtd3_price_var_abs
+        description: "The 3-month-to-date price absolute variation of the product"
+        data_type: float
+
+      - name: mtd3_price_var_pct
+        description: "The 3-month-to-date price percentage variation of the product"
+        data_type: float
+
+      ####### 6-Month-To-Date #######
+      - name: mtd6_start_date
+        description: "The 6-month-to-date start date"
+        data_type: date
+
+      - name: mtd6_price
+        description: "The 6-month-to-date price of the product"
+        data_type: float
+
+      - name: mtd6_price_var_abs
+        description: "The 6-month-to-date price absolute variation of the product"
+        data_type: float
+
+      - name: mtd6_price_var_pct
+        description: "The 6-month-to-date price percentage variation of the product"
+        data_type: float
+
+      ####### Year-To-Date #######
+      - name: ytd_start_date
+        description: "The year-to-date start date"
+        data_type: date
+
+      - name: ytd_price
+        description: "The year-to-date price of the product"
+        data_type: float
+
+      - name: ytd_price_var_abs
+        description: "The year-to-date price absolute variation of the product"
+        data_type: float
+
+      - name: ytd_price_var_pct
+        description: "The year-to-date price percentage variation of the product"
+        data_type: float
