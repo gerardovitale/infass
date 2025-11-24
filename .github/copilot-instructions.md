@@ -1,46 +1,73 @@
-# Copilot Instructions for infass Monorepo
+# Onboarding Instructions for infass Monorepo
 
-This repository (monorepo alike) contains multiple independent modules, each with its own README describing its purpose,
-input/output data, configuration, and usage.
+Purpose
+- Short: help an automated coding agent (and new contributors) understand the repo quickly and work safely and efficiently.
+- Scope: broad, repo-level guidance that applies across all modules (each module is independent and has its own README).
 
-## General Guidelines
+What this repo does (summary)
+- A monorepo containing multiple independent modules/services for data ingestion, transformation, and downstream tooling. Each module is self-contained with its own README describing inputs, outputs, config, and usage.
 
-- **Best agile and software development practices must be followed for all new features and bug fixes:**
-  - Make small, incremental changes.
-  - Write thorough tests for all code (unit, integration, and end-to-end where applicable).
-  - Use TDD (Test-Driven Development) whenever possible.
-  - Apply the Single Responsibility Principle: each function/class/module should have one clear purpose.
-  - Ensure code is readable, maintainable, and well-documented.
-  - Use clear commit messages and PR descriptions.
-  - Update README files and documentation as needed.
+Tech stack
+- Languages: TypeScript, JavaScript, Python, C, C++, SQL
+- Tooling: npm / Node.js, pip / Python, make, GitHub Actions, Terraform (infrastructure changes), DBT (transformations), common linters (ESLint/Prettier, flake8/black)
+- OS: Primary developer environment is macOS
 
-- **Module-Specific Practices:**
-  - Read the README in each module before making changes.
-  - Respect the input/output schema and configuration described in each module’s documentation.
-  - Ensure compatibility with CI/CD workflows and deployment jobs defined in [workflows](workflows/).
+Project structure (typical)
+- `README.md` — repo overview
+- `Makefile` — common build/test commands
+- `workflows/` — GitHub Actions workflows (CI/CD)
+- `modules/` or top-level folders — independent modules (each with its own `README.md`)
+- `requirements.txt` / `pyproject.toml` — Python deps
+- `package.json` — Node packages
+- `*.tf` (if present) — Terraform for infra
+Note: Always read the module `README.md` before making changes.
 
-- **Testing:**
-  - All new code must include corresponding tests.
-  - Run the full test suite before merging changes.
-  - Use mocks and stubs for external dependencies in tests.
+Coding guidelines
+- Small, incremental commits and clear commit messages.
+- Tests required for new code: unit + integration as applicable. Use TDD when possible.
+- Follow Single Responsibility Principle; keep functions/classes focused.
+- Add/update documentation and READMEs when behavior or interfaces change.
+- Lint and format code: run repo linters before committing (e.g., `npm run lint`, `black .`, `flake8`).
+- Never commit secrets or `.env` with credentials. Use GitHub Actions secrets for CI.
 
-- **Infrastructure:**
-  - Infrastructure changes must be made via Terraform files and follow the established patterns.
-  - Validate and plan Terraform changes before applying.
+Bootstrapping (macOS, minimal)
+- Install runtime managers (recommended): `brew install nvm pyenv` or use system Node/Python.
+- Node: `nvm install --lts && nvm use --lts`
+- Install JS deps: `npm install` (run in the relevant module directory if multiple packages)
+- Python: `pyenv install <version> && pyenv local <version>` then `pip install -r requirements.txt`
+- Run tests: `npm test` and/or `pytest`
+- Common make targets: `make test`, `make build`, `make lint` (check `Makefile`)
 
-- **CI/CD:**
-  - All modules are built and tested via GitHub Actions workflows:
-    - [ci-cd.yaml](workflows/ci-cd.yml)
-    - [trigger-ingestor.yaml](workflows/trigger-ingestor.yaml)
-    - [trigger-transformer.yaml](workflows/trigger-transformer.yaml)
-    - [trigger-dbt.yml](workflows/trigger-transformations.yml)
-  - Ensure your changes do not break existing workflows or deployments.
+Avoiding common failures
+- Confirm working directory for commands (module vs repo root).
+- Install correct Node/Python versions matching lockfiles.
+- Look for and follow module-specific setup in each `README.md`.
+- If a CI job fails locally, inspect `workflows/` for environment variables and steps to replicate.
 
-## References
+Search and inspection tips
+- Find todos/hacks: `rg "TODO|FIXME|HACK" -n` or `git grep -n "TODO\|FIXME\|HACK"`
+- Find workflows: list `workflows/` (CI config names: `ci-cd.yml`, `trigger-ingestor.yaml`, `trigger-transformer.yaml`, `trigger-transformations.yml`)
+- List Terraform: `rg --glob '!node_modules' "provider" -n`
 
-- See each module’s README for details on architecture, data flow, configuration, and usage.
-- See the Makefile for common build, test, and deployment commands.
+Infrastructure & CI notes
+- Infra changes must be Terraform-based. Run `terraform plan` and follow repo conventions for state.
+- CI is GitHub Actions; use repo `workflows/` files as the canonical workflow definitions.
 
----
+Validation / sample feature workflow
+1. Choose a module and read `README.md`.
+2. Create a branch: `git checkout -b feat/<module>-<short-desc>`
+3. Add tests first (TDD), implement minimal code change, run unit tests locally.
+4. Run lints and formatters.
+5. Push branch and open PR describing changes and test results.
+6. If CI fails, reproduce the failing job locally (inspect `workflows/`), fix, rerun tests, update docs.
 
-**By following these instructions, you help ensure code quality, maintainability, and reliability across all modules in the infass monorepo.**
+Resources
+- `README.md` (module-level)
+- `Makefile`
+- `workflows/` directory for CI flows
+- Look for `requirements.txt`, `package.json`, and any `*.tf` files
+
+Conventions summary
+- Tests required; small commits; update READMEs; avoid committing secrets; run lints; use module READMEs as source of truth.
+
+If uncertain: read the module `README.md` and check the related workflow in `workflows/` before running commands that modify infrastructure or production data.
