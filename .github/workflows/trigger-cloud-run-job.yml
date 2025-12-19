@@ -37,7 +37,7 @@ jobs:
           credentials_json: ${{ secrets.gcp_credentials }}
 
       - name: Set up gcloud CLI
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3.0.1
 
       - name: Trigger Cloud Run Job
         shell: bash
