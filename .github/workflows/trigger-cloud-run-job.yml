@@ -38,6 +38,8 @@ jobs:
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v3.0.1
+        with:
+          version: '539.0.0'
 
       - name: Trigger Cloud Run Job
         shell: bash
