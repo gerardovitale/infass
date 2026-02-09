@@ -6,6 +6,9 @@
 ext/
 ext/transformer_output/
 *.duckdb
+*.db
+*.db-shm
+*.db-wal
 insights/data/
 
 # Byte-compiled / optimized / DLL files
