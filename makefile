@@ -185,3 +185,24 @@ retl.test:
 
 retl.fetch_sqlite:
 	retl/venv/bin/python3 retl/fetch_gcs_sqlite.py
+
+
+# Insights
+insights.test:
+	@echo "####################################################################################################"
+	@echo "Running Insights tests"
+	scripts/run-docker-test.sh insights
+
+insights.run:
+	cd insights/ && docker buildx build -f Dockerfile -t insights .
+	docker run --rm \
+		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
+		-v $(GCP_API_CREDS_PATH):/app/key.json \
+		-v ./insights/data:/app/data \
+		-e BQ_PROJECT_ID=$(BQ_PROJECT_ID) \
+		-e BQ_DATASET_ID=$(BQ_DATASET_ID) \
+		-e ANTHROPIC_API_KEY=$(ANTHROPIC_API_KEY) \
+		-e GMAIL_ADDRESS=$(GMAIL_ADDRESS) \
+		-e GMAIL_APP_PASSWORD=$(GMAIL_APP_PASSWORD) \
+		-e NEWSLETTER_RECIPIENTS=$(NEWSLETTER_RECIPIENTS) \
+		insights:latest

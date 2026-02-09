@@ -4,3 +4,5 @@ sqlglot==26.28.1
 pandas==2.3.0
 google-cloud-storage==2.18.2
 jupyterlab==4.4.6
+openai==1.109.1
+google-cloud-bigquery==3.34.0

@@ -8,6 +8,7 @@ source scripts/logger.sh
 SUBDIRS=(
   "dbt"
   "api"
+  "insights"
   "ingestor"
   "transformer"
   "retl"
