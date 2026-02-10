@@ -60,7 +60,7 @@ Pre-commit hooks handle linting automatically. Manual runs:
 
 ## Tech Stack
 
-- **Backend:** Python 3.9, FastAPI, pandas, SQLAlchemy
+- **Backend:** Python 3.13, FastAPI, pandas, SQLAlchemy
 - **Frontend:** Next.js 15, React 19, TypeScript, TailwindCSS, Recharts
 - **Data:** BigQuery, SQLite, dbt, Apache Arrow
 - **Infrastructure:** GCP Cloud Run, Terraform, Docker
