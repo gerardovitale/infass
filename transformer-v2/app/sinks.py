@@ -3,6 +3,7 @@ import re
 from abc import ABC
 from datetime import date
 from datetime import datetime
+from io import BytesIO
 from io import StringIO
 from typing import Iterable
 from typing import Optional
@@ -13,7 +14,7 @@ from google.cloud.bigquery import LoadJobConfig
 from google.cloud.storage import Blob as StorageBlob
 from google.cloud.storage import Client as StorageClient
 
-CSV_PATTERN_FILE_NAME = re.compile(r"\d{4}-\d{2}-\d{2}")
+DATE_PATTERN_FILE_NAME = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,7 @@ class Storage(Sink):
 
         logger.info(f"Read {len(df_list)} objects")
         if not df_list:
-            logger.info("No matching CSV blobs found. Returning empty DataFrame.")
+            logger.info("No matching blobs found. Returning empty DataFrame.")
             return pd.DataFrame()
 
         df = pd.concat(df_list, ignore_index=True)
@@ -58,6 +59,9 @@ class Storage(Sink):
         logger.info(f"Reading {blob_name}")
         bucket = self.client.bucket(self.bucket_name)
         blob = bucket.blob(blob_name)
+        if blob_name.endswith(".parquet"):
+            with blob.open("rb") as f:
+                return pd.read_parquet(BytesIO(f.read()))
         with blob.open("r") as f:
             return pd.read_csv(StringIO(f.read()))
 
@@ -67,7 +71,7 @@ class Storage(Sink):
 
     @staticmethod
     def extract_date(filename: str) -> Optional[date]:
-        match = CSV_PATTERN_FILE_NAME.search(filename)
+        match = DATE_PATTERN_FILE_NAME.search(filename)
         if not match:
             return None
         try:

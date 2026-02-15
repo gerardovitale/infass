@@ -11,6 +11,37 @@ resource "google_storage_bucket" "infass_bucket" {
     enabled = true
   }
 
+  lifecycle_rule {
+    condition {
+      age = 30
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 90
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      num_newer_versions         = 1
+      days_since_noncurrent_time = 7
+      with_state                 = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
   labels = local.labels
 }
 
@@ -22,6 +53,37 @@ resource "google_storage_bucket" "landing_zone" {
 
   versioning {
     enabled = true
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 30
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 90
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      num_newer_versions         = 1
+      days_since_noncurrent_time = 7
+      with_state                 = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
   }
 
   labels = local.labels

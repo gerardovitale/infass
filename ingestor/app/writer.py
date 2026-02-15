@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from io import BytesIO
 from typing import Generator
 
 import pandas as pd
@@ -25,7 +26,7 @@ def write_data(
     if test_mode:
         write_pandas_to_local_csv(data_gen, dest_bucket_prefix)
     else:
-        write_pandas_to_bucket_as_csv(data_gen, dest_bucket_name, dest_bucket_prefix)
+        write_pandas_to_bucket_as_parquet(data_gen, dest_bucket_name, dest_bucket_prefix)
 
 
 def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], filename_prefix: str = "data") -> None:
@@ -49,6 +50,39 @@ def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], fil
         headers_written = True
 
     logger.info("Local write completed successfully.")
+
+
+def write_pandas_to_bucket_as_parquet(
+    data_gen: Generator[pd.DataFrame, None, None], bucket_name: str, bucket_prefix: str
+) -> None:
+    logger.info(f"Writing Parquet data to bucket: {bucket_name}, prefix: {bucket_prefix}")
+
+    storage_client = GCSClientSingleton.get_client()
+    bucket = storage_client.get_bucket(bucket_name)
+    if not bucket:
+        logger.error(f"Couldn't get the bucket: {bucket_name}")
+        raise Exception("Bucket not found")
+
+    logger.info(f"Got bucket with name: {bucket.name}")
+    date_str = datetime.now().date().isoformat()
+    chunk_index = 0
+
+    for df_chunk in data_gen:
+        if df_chunk.empty:
+            logger.info("Skipping empty chunk")
+            continue
+
+        blob_name = f"{bucket_prefix}/{date_str}_{chunk_index:03d}.parquet"
+        buffer = BytesIO()
+        df_chunk.to_parquet(buffer, index=False, engine="pyarrow", compression="snappy")
+        buffer.seek(0)
+
+        blob = bucket.blob(blob_name)
+        blob.upload_from_file(buffer, content_type="application/octet-stream")
+        logger.info(f"Uploaded {blob_name} ({buffer.getbuffer().nbytes} bytes)")
+        chunk_index += 1
+
+    logger.info(f"Upload completed successfully. {chunk_index} Parquet files written.")
 
 
 def write_pandas_to_bucket_as_csv(

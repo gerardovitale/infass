@@ -1,4 +1,6 @@
 from datetime import date
+from io import BytesIO
+from unittest.mock import MagicMock
 from unittest.mock import patch
 
 import pandas as pd
@@ -142,6 +144,44 @@ def test_build_dataframe_when_storage_blobs_iter_is_empty(test_storage, mock_sto
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Test: Storage read_blob
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+def test_read_blob_csv(test_storage, mock_storage_client_obj):
+    expected = pd.DataFrame({"col1": ["a", "b"]})
+    csv_content = expected.to_csv(index=False)
+    mock_blob = MagicMock()
+    mock_blob.open.return_value.__enter__ = MagicMock(return_value=MagicMock(read=MagicMock(return_value=csv_content)))
+    mock_blob.open.return_value.__exit__ = MagicMock(return_value=False)
+    mock_storage_client_obj.bucket.return_value.blob.return_value = mock_blob
+
+    actual = test_storage.read_blob("data/2024-01-01.csv")
+
+    mock_blob.open.assert_called_once_with("r")
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_read_blob_parquet(test_storage, mock_storage_client_obj):
+    expected = pd.DataFrame({"col1": ["a", "b"]})
+    buffer = BytesIO()
+    expected.to_parquet(buffer, index=False)
+    parquet_bytes = buffer.getvalue()
+
+    mock_blob = MagicMock()
+    mock_blob.open.return_value.__enter__ = MagicMock(
+        return_value=MagicMock(read=MagicMock(return_value=parquet_bytes))
+    )
+    mock_blob.open.return_value.__exit__ = MagicMock(return_value=False)
+    mock_storage_client_obj.bucket.return_value.blob.return_value = mock_blob
+
+    actual = test_storage.read_blob("data/2024-01-01_000.parquet")
+
+    mock_blob.open.assert_called_once_with("rb")
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Test: Storage filter_by_date
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -160,6 +200,21 @@ def test_filter_by_date_basic(test_storage):
         MockStorageBlob("data/2023-08-21-raw.csv", "mock_content"),
         MockStorageBlob("data/2023-08-22-raw.csv", "mock_content"),
         MockStorageBlob("data/2024-02-29-raw.csv", "mock_content"),
+    ]
+    result = test_storage.filter_by_date(files, "2023-08-20")
+    assert list(result) == expected
+
+
+def test_filter_by_date_with_parquet_files(test_storage):
+    files = [
+        MockStorageBlob("data/2023-08-20_000.parquet", "mock_content"),
+        MockStorageBlob("data/2023-08-21_000.parquet", "mock_content"),
+        MockStorageBlob("data/2023-08-21_001.parquet", "mock_content"),
+        MockStorageBlob("data/2023-08-19_000.parquet", "mock_content"),
+    ]
+    expected = [
+        MockStorageBlob("data/2023-08-21_000.parquet", "mock_content"),
+        MockStorageBlob("data/2023-08-21_001.parquet", "mock_content"),
     ]
     result = test_storage.filter_by_date(files, "2023-08-20")
     assert list(result) == expected
@@ -212,6 +267,9 @@ def test_filter_by_date_edge_case(test_storage):
         ("2023-13-01.csv", None),  # invalid month
         ("2023-00-01.csv", None),  # invalid month
         ("2023-12-32.csv", None),  # invalid day
+        ("merc/2024-01-15_000.parquet", date(2024, 1, 15)),
+        ("merc/2024-01-15_001.parquet", date(2024, 1, 15)),
+        ("prefix/2023-08-22.parquet", date(2023, 8, 22)),
     ],
 )
 def test_extract_date(filename, expected):
