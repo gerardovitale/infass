@@ -218,8 +218,7 @@ def get_carr_test_html():
                 <span class="product-card__price">4,99 €</span>
                 <span class="product-card__price-per-unit">83,17 €/kg</span>
                 <img class="product-card__image"
-                     src="data:image/gif;base64,placeholder"
-                     data-src="https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg?fit=crop&h=300">
+                     src="https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg?fit=crop&h=300">
             </div>
         </div>
         """
@@ -238,8 +237,7 @@ def get_carr_discount_html():
                 <span class="product-card__price--current">14,99 €</span>
                 <span class="product-card__price-per-unit">1,62 €/l</span>
                 <img class="product-card__image"
-                     src="data:image/gif;base64,placeholder"
-                     data-src="https://static.carrefour.es/hd_350x_/img_pim_food/aceite_001.jpg">
+                     src="https://static.carrefour.es/hd_350x_/img_pim_food/aceite_001.jpg">
             </div>
         </div>
         """
@@ -249,7 +247,11 @@ class TestCarrExtractProductData(TestCase):
 
     def test_extract_carr_product_data(self):
         html = get_carr_test_html()
-        result = list(extract_carr_product_data(html, "Bebidas"))
+        result = list(
+            extract_carr_product_data(
+                html, "Bebidas", "https://www.carrefour.es", "https://www.carrefour.es/supermercado/bebidas/cat20003/c"
+            )
+        )
         self.assertEqual(len(result), 1)
         self.assertEqual(
             result[0],
@@ -257,9 +259,11 @@ class TestCarrExtractProductData(TestCase):
                 "name": "Cerveza Mahou Clásica pack de 28 latas de 33 cl.",
                 "original_price": "4,99 €",
                 "discount_price": None,
-                "size": "83,17 €/kg",
+                "price_per_unit": "83,17 €/kg",
                 "category": "Bebidas",
                 "image_url": "https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg",
+                "product_url": "https://www.carrefour.es/supermercado/producto/cerveza-clasica",
+                "source_page": "https://www.carrefour.es/supermercado/bebidas/cat20003/c",
             },
         )
 
@@ -269,7 +273,7 @@ class TestCarrExtractProductData(TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["original_price"], "20,44 €")
         self.assertEqual(result[0]["discount_price"], "14,99 €")
-        self.assertEqual(result[0]["size"], "1,62 €/l")
+        self.assertEqual(result[0]["price_per_unit"], "1,62 €/l")
 
     def test_extract_carr_product_data_no_image(self):
         html = """
@@ -302,12 +306,11 @@ class TestCarrExtractProductData(TestCase):
 
 class TestGetCarrImageUrl(TestCase):
 
-    def test_image_url_from_data_src(self):
+    def test_image_url_from_src(self):
         html = """
         <div class="product-card__parent">
             <img class="product-card__image"
-                 src="data:image/gif;base64,placeholder"
-                 data-src="https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg">
+                 src="https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg">
         </div>
         """
         soup = BeautifulSoup(html, "html.parser")
@@ -318,7 +321,7 @@ class TestGetCarrImageUrl(TestCase):
         html = """
         <div>
             <img class="product-card__image"
-                 data-src="https://static.carrefour.es/img/product.jpg?fit=crop&h=300&w=300">
+                 src="https://static.carrefour.es/img/product.jpg?fit=crop&h=300&w=300">
         </div>
         """
         soup = BeautifulSoup(html, "html.parser")
@@ -331,7 +334,7 @@ class TestGetCarrImageUrl(TestCase):
         result = get_carr_image_url(soup)
         self.assertIsNone(result)
 
-    def test_image_url_no_data_src(self):
+    def test_image_url_data_uri_returns_none(self):
         html = '<div><img class="product-card__image" src="data:image/gif;base64,placeholder"></div>'
         soup = BeautifulSoup(html, "html.parser")
         result = get_carr_image_url(soup)

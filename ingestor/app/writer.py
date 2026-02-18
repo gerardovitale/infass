@@ -32,7 +32,7 @@ def write_data(
 def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], filename_prefix: str = "data") -> None:
     logger.info("Running in test mode 🧪")
     os.makedirs("data", exist_ok=True)
-    output_path = f"data/{filename_prefix}_{datetime.now().date().isoformat()}.csv"
+    output_path = f"data/{filename_prefix}_{datetime.now().isoformat(timespec='minutes')}.csv"
     logger.info(f"Writing data to local file: {output_path}")
 
     headers_written = False

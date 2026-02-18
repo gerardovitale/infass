@@ -6,6 +6,7 @@ from typing import Dict
 from typing import Generator
 from typing import List
 from typing import Optional
+from typing import Tuple
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
@@ -25,14 +26,18 @@ def get_carr_image_url(product_soup: BeautifulSoup) -> Optional[str]:
     image = product_soup.find("img", class_="product-card__image")
     if not image:
         return None
-    src = image.get("data-src")
+    src = image.get("src")
     if not src or not isinstance(src, str):
         return None
     parsed = urlparse(src.strip())
+    if parsed.scheme == "data":
+        return None
     return urlunparse(parsed._replace(query="", fragment=""))
 
 
-def extract_carr_product_data(page_source: str, category: str) -> Generator[Dict[str, Any], None, None]:
+def extract_carr_product_data(
+    page_source: str, category: str, base_url: str = "", source_page: str = ""
+) -> Generator[Dict[str, Any], None, None]:
     logger.info(f"Extracting Carrefour product data for category: {category}")
     if not page_source:
         return
@@ -57,16 +62,21 @@ def extract_carr_product_data(page_source: str, category: str) -> Generator[Dict
             original_price = price_el.text.strip() if price_el else None
             discount_price = None
 
-        size_el = product.select_one("span.product-card__price-per-unit")
-        size = size_el.text.strip() if size_el else None
+        price_per_unit_el = product.select_one("span.product-card__price-per-unit")
+        price_per_unit = price_per_unit_el.text.strip() if price_per_unit_el else None
+
+        href = title_link.get("href")
+        product_url = (base_url + href) if href else None
 
         yield {
             "name": name,
             "original_price": original_price,
             "discount_price": discount_price,
-            "size": size,
+            "price_per_unit": price_per_unit,
             "category": category,
             "image_url": get_carr_image_url(product),
+            "product_url": product_url,
+            "source_page": source_page,
         }
 
 
@@ -75,9 +85,13 @@ class CarrExtractor(Extractor):
     COOKIES_BUTTON_ID = "onetrust-reject-all-handler"
     CATEGORY_LINK_SELECTOR = ".nav-first-level-categories__slide a"
     PRODUCT_CARD_SELECTOR = ".product-card__parent"
+    PAGINATION_NEXT_SELECTOR = ".pagination__next"
+    PAGINATION_SELECTOR = ".pagination"
 
     def __init__(self, data_source_url: str, bucket_name: str, break_early: bool = False):
         super().__init__(data_source_url, bucket_name, break_early)
+        parsed = urlparse(data_source_url)
+        self.base_url = f"{parsed.scheme}://{parsed.netloc}"
 
     def accept_cookies(self, driver: webdriver.Chrome):
         logger.info("Rejecting cookies on Carrefour (looking for 'Reject All' button)")
@@ -125,8 +139,32 @@ class CarrExtractor(Extractor):
                 return
         raise Exception(f"Category link '{category_name}' not found in DOM")
 
+    def get_all_page_sources(self, driver: webdriver.Chrome) -> List[Tuple[str, str]]:
+        """Collect (page_url, page_source) tuples from all paginated pages of the current category."""
+        pages = []
+        while True:
+            pages.append((driver.current_url, driver.page_source))
+            try:
+                next_span = driver.find_element(By.CSS_SELECTOR, self.PAGINATION_NEXT_SELECTOR)
+                # The href lives on the parent <a> that wraps the span; a bare <span> means last page
+                parent = next_span.find_element(By.XPATH, "..")
+                if parent.tag_name != "a":
+                    break
+                next_url = parent.get_attribute("href")
+                if not next_url:
+                    break
+                logger.info(f"Navigating to next page: {next_url}")
+                driver.get(next_url)
+                WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, self.PAGINATION_SELECTOR))
+                )
+            except Exception:
+                break
+        logger.info(f"Collected {len(pages)} page(s) for category")
+        return pages
+
     def navigate_back_to_main(self, driver: webdriver.Chrome) -> bool:
-        driver.back()
+        driver.get(self.data_source_url)
         try:
             WebDriverWait(driver, self.WAIT_TIMEOUT).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, self.CATEGORY_LINK_SELECTOR))
@@ -164,13 +202,24 @@ class CarrExtractor(Extractor):
                         WebDriverWait(driver, self.WAIT_TIMEOUT).until(
                             EC.presence_of_element_located((By.CSS_SELECTOR, self.PRODUCT_CARD_SELECTOR))
                         )
+                        # Wait for the full product list to render (pagination appears once all products load).
+                        # Categories with fewer than 24 products may not have pagination; ignore the timeout.
+                        try:
+                            WebDriverWait(driver, 5).until(
+                                EC.presence_of_element_located((By.CSS_SELECTOR, self.PAGINATION_SELECTOR))
+                            )
+                        except Exception:
+                            pass
                     except Exception:
                         logger.warning(f"No product cards found for category {category_name} within timeout")
                         self.save_debug_html(driver, f"carr_no_products_{category_name}")
                         if not self.navigate_back_to_main(driver):
                             break
                         continue
-                    product_gen_list.append(extract_carr_product_data(driver.page_source, category_name))
+                    for page_url, page_source in self.get_all_page_sources(driver):
+                        product_gen_list.append(
+                            extract_carr_product_data(page_source, category_name, self.base_url, page_url)
+                        )
                 except Exception as e:
                     logger.error(f"Failed to extract category {category_name}: {e}")
                     self.save_debug_html(driver, f"carr_category_error_{category_name}")
