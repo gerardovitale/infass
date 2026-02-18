@@ -10,6 +10,7 @@ ext/transformer_output/
 *.db-shm
 *.db-wal
 insights/data/
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
