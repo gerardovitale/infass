@@ -49,6 +49,24 @@ ingestor.carr-local-run:
 		https://www.carrefour.es/supermercado \
 		gs://infass-carr/carr
 
+ingestor.merc-local-full-run:
+	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
+	docker run --rm --name ingestor \
+		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
+		-e TEST_MODE=full \
+		ingestor:latest \
+		https://tienda.mercadona.es \
+		gs://infass-merc/merc
+
+ingestor.carr-local-full-run:
+	cd ingestor/ && docker buildx build -f Dockerfile -t ingestor .
+	docker run --rm --name ingestor \
+		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
+		-e TEST_MODE=full \
+		ingestor:latest \
+		https://www.carrefour.es/supermercado \
+		gs://infass-carr/carr
+
 
 # TRANSFORMER
 transformer.test:

@@ -31,29 +31,32 @@ def ingest_data(data_source_url: str, dest_bucket_uri: str) -> None:
     logging.info("🚀 Starting data ingestion")
     bucket_name, bucket_prefix = dest_bucket_uri.replace("gs://", "").split("/")
 
-    is_test_mode = False
-    if os.getenv("TEST_MODE"):
-        logging.info(f"Running test mode with: TEST_MODE = {os.getenv('TEST_MODE')}")
-        is_test_mode = True
+    _test_mode_env = os.getenv("TEST_MODE", "").strip().lower()
+    is_test_mode = bool(_test_mode_env)
+    break_early = is_test_mode and _test_mode_env != "full"
 
-    extractor = get_extractor(data_source_url, bucket_name, is_test_mode)
+    if is_test_mode:
+        logging.info(f"Running test mode: TEST_MODE={_test_mode_env!r}, break_early={break_early}")
+
+    extractor = get_extractor(data_source_url, bucket_name, break_early)
     sources = extractor.get_page_sources()
     data_gen = build_data_gen(sources)
     write_data(data_gen, bucket_name, bucket_prefix, is_test_mode)
     logging.info("✅ Successfully ingested data")
 
 
-def get_extractor(data_source_url: str, bucket_name: str, test_mode: bool) -> Extractor:
+def get_extractor(data_source_url: str, bucket_name: str, break_early: bool = False) -> Extractor:
     logging.info(
-        f"Creating extractor for data_source_url={data_source_url}, bucket_name={bucket_name}, test_mode={test_mode},"
+        f"Creating extractor for data_source_url={data_source_url}, bucket_name={bucket_name}, "
+        f"break_early={break_early}"
     )
     if "mercadona" in data_source_url:
         logging.info("Using MercExtractor for Mercadona data source")
-        return MercExtractor(data_source_url, bucket_name, test_mode)
+        return MercExtractor(data_source_url, bucket_name, break_early)
 
     elif "carrefour" in data_source_url:
         logging.info("Using CarrExtractor for Carrefour data source")
-        return CarrExtractor(data_source_url, bucket_name, test_mode)
+        return CarrExtractor(data_source_url, bucket_name, break_early)
 
     else:
         logging.error("Unsupported data source URL")

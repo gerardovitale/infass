@@ -74,11 +74,19 @@ The processed data is uploaded to a Google Cloud Storage bucket in CSV format. T
 
 The module uses the following environment variables for configuration:
 
-| Variable Name          | Description                                                                                         |
-|------------------------|-----------------------------------------------------------------------------------------------------|
-| `TEST_MODE`            | Enables test mode to limit the number of categories processed and to write the output data locally. |
-| `INGESTION_MERC_PATH`  | The Google Cloud Storage bucket URI for data upload.                                                |
-| `INGESTOR_OUTPUT_PATH` | [Optional] Need when running locally in test mode to write the output data.                         |
+| Variable Name          | Description                                                                                                                                |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `TEST_MODE`            | Controls scraping scope and output destination. See table below for accepted values.                                                       |
+| `INGESTION_MERC_PATH`  | The Google Cloud Storage bucket URI for data upload.                                                                                       |
+| `INGESTOR_OUTPUT_PATH` | [Optional] Required when running locally (any `TEST_MODE` value) to mount the output directory for the local CSV.                         |
+
+### `TEST_MODE` values
+
+| Value      | Scraping scope       | Output              |
+|------------|----------------------|---------------------|
+| _(not set)_| All categories       | GCS Parquet (production) |
+| `full`     | All categories       | Local CSV           |
+| Any other  | First category only  | Local CSV           |
 
 ---
 
@@ -86,18 +94,30 @@ The module uses the following environment variables for configuration:
 
 ### Local Run
 
-1. Build the Docker image:
-    ```shell
-    docker buildx build -f Dockerfile -t ingestor .
-    ```
+Four `make` targets are available for local runs. All of them build the Docker image first and write output to `INGESTOR_OUTPUT_PATH` as a local CSV instead of uploading to GCS.
 
-2. Run the container:
-    ```shell
-    docker run --rm --name ingestor \
-		-v $(INGESTOR_OUTPUT_PATH):/app/data/ \
-   		-e TEST_MODE=true \
-		ingestor:latest
-    ```
+| Target | `TEST_MODE` | Scraping scope |
+|---|---|---|
+| `make ingestor.merc-local-run` | `true` | First category only (quick smoke-test) |
+| `make ingestor.carr-local-run` | `true` | First category only (quick smoke-test) |
+| `make ingestor.merc-local-full-run` | `full` | All categories (full validation) |
+| `make ingestor.carr-local-full-run` | `full` | All categories (full validation) |
+
+Example:
+```shell
+make ingestor.merc-local-full-run
+```
+
+Or manually:
+```shell
+docker buildx build -f Dockerfile -t ingestor .
+docker run --rm --name ingestor \
+    -v $(INGESTOR_OUTPUT_PATH):/app/data/ \
+    -e TEST_MODE=full \
+    ingestor:latest \
+    https://tienda.mercadona.es \
+    gs://infass-merc/merc
+```
 
 ### Local Unit Test
 

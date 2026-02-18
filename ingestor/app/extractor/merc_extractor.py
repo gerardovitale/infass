@@ -31,8 +31,8 @@ class MercExtractor(Extractor):
     SUBCATEGORY_SELECTOR = "ul li.category-item button"
     SUBCATEGORY_BUTTON_SELECTOR_TEMPLATE = "//button[contains(text(), '{0}')]"
 
-    def __init__(self, data_source_url: str, bucket_name: str, test_mode: bool):
-        super().__init__(data_source_url, bucket_name, test_mode)
+    def __init__(self, data_source_url: str, bucket_name: str, break_early: bool = False):
+        super().__init__(data_source_url, bucket_name, break_early)
 
     def accept_cookies(self, driver: webdriver.Chrome):
         logger.info("Accepting cookies")
@@ -143,8 +143,8 @@ class MercExtractor(Extractor):
                             self.extract_page_source_for_subcategory(driver, category_name, subcategory_name)
                         )
 
-                if self.test_mode:  # Stop after the first category in test mode
-                    logger.info("Running in test mode 🧪: Stopping after the first category")
+                if self.break_early:
+                    logger.info("Break-early mode: stopping after the first category")
                     break
 
             logger.info(f"Extracted {len(product_gen_list)} product data generators")

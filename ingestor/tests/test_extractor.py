@@ -4,6 +4,8 @@ from unittest.mock import patch
 
 from bs4 import BeautifulSoup
 from extractor import Extractor
+from extractor.carr_extractor import extract_carr_product_data
+from extractor.carr_extractor import get_carr_image_url
 from extractor.merc_extractor import extract_product_data
 from extractor.merc_extractor import get_image_url
 from tests.conf_test import BasicTestCase
@@ -173,8 +175,8 @@ class TestGetImageUrl(TestCase):
 
 
 class DummyExtractor(Extractor):
-    def __init__(self, data_source_url="url", bucket_name="bucket", test_mode=False):
-        super().__init__(data_source_url, bucket_name, test_mode)
+    def __init__(self, data_source_url="url", bucket_name="bucket", break_early=False):
+        super().__init__(data_source_url, bucket_name, break_early)
 
     def get_page_sources(self):
         return []
@@ -202,3 +204,135 @@ class TestExtractorGCS(TestCase):
             extractor.save_screenshot(driver, "file.png", "bucket")
             driver.save_screenshot.assert_called_with("file.png")
             mock_upload.assert_called()
+
+
+def get_carr_test_html():
+    return """
+        <div class="product-card__parent">
+            <div class="product-card__detail">
+                <h2 class="product-card__title">
+                    <a class="product-card__title-link" href="/supermercado/producto/cerveza-clasica">
+                        Cerveza Mahou Clásica pack de 28 latas de 33 cl.
+                    </a>
+                </h2>
+                <span class="product-card__price">4,99 €</span>
+                <span class="product-card__price-per-unit">83,17 €/kg</span>
+                <img class="product-card__image"
+                     src="data:image/gif;base64,placeholder"
+                     data-src="https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg?fit=crop&h=300">
+            </div>
+        </div>
+        """
+
+
+def get_carr_discount_html():
+    return """
+        <div class="product-card__parent">
+            <div class="product-card__detail">
+                <h2 class="product-card__title">
+                    <a class="product-card__title-link" href="/supermercado/producto/aceite-oliva">
+                        Aceite de oliva virgen extra
+                    </a>
+                </h2>
+                <span class="product-card__price--strikethrough">20,44 €</span>
+                <span class="product-card__price--current">14,99 €</span>
+                <span class="product-card__price-per-unit">1,62 €/l</span>
+                <img class="product-card__image"
+                     src="data:image/gif;base64,placeholder"
+                     data-src="https://static.carrefour.es/hd_350x_/img_pim_food/aceite_001.jpg">
+            </div>
+        </div>
+        """
+
+
+class TestCarrExtractProductData(TestCase):
+
+    def test_extract_carr_product_data(self):
+        html = get_carr_test_html()
+        result = list(extract_carr_product_data(html, "Bebidas"))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(
+            result[0],
+            {
+                "name": "Cerveza Mahou Clásica pack de 28 latas de 33 cl.",
+                "original_price": "4,99 €",
+                "discount_price": None,
+                "size": "83,17 €/kg",
+                "category": "Bebidas",
+                "image_url": "https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg",
+            },
+        )
+
+    def test_extract_carr_product_data_with_discount(self):
+        html = get_carr_discount_html()
+        result = list(extract_carr_product_data(html, "Alimentación"))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["original_price"], "20,44 €")
+        self.assertEqual(result[0]["discount_price"], "14,99 €")
+        self.assertEqual(result[0]["size"], "1,62 €/l")
+
+    def test_extract_carr_product_data_no_image(self):
+        html = """
+        <div class="product-card__parent">
+            <div class="product-card__detail">
+                <h2 class="product-card__title">
+                    <a class="product-card__title-link" href="/supermercado/producto/agua">
+                        Agua mineral natural
+                    </a>
+                </h2>
+                <span class="product-card__price">0,50 €</span>
+                <span class="product-card__price-per-unit">0,33 €/l</span>
+            </div>
+        </div>
+        """
+        result = list(extract_carr_product_data(html, "Bebidas"))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["name"], "Agua mineral natural")
+        self.assertIsNone(result[0]["image_url"])
+
+    def test_extract_carr_product_data_empty_page(self):
+        result = list(extract_carr_product_data("", "Bebidas"))
+        self.assertEqual(result, [])
+
+    def test_extract_carr_product_data_no_products(self):
+        html = "<html><body><div>No products here</div></body></html>"
+        result = list(extract_carr_product_data(html, "Bebidas"))
+        self.assertEqual(result, [])
+
+
+class TestGetCarrImageUrl(TestCase):
+
+    def test_image_url_from_data_src(self):
+        html = """
+        <div class="product-card__parent">
+            <img class="product-card__image"
+                 src="data:image/gif;base64,placeholder"
+                 data-src="https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg">
+        </div>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_carr_image_url(soup)
+        self.assertEqual(result, "https://static.carrefour.es/hd_350x_/img_pim_food/718559_00_1.jpg")
+
+    def test_image_url_strips_query_params(self):
+        html = """
+        <div>
+            <img class="product-card__image"
+                 data-src="https://static.carrefour.es/img/product.jpg?fit=crop&h=300&w=300">
+        </div>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_carr_image_url(soup)
+        self.assertEqual(result, "https://static.carrefour.es/img/product.jpg")
+
+    def test_image_url_no_image(self):
+        html = "<div><p>No image</p></div>"
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_carr_image_url(soup)
+        self.assertIsNone(result)
+
+    def test_image_url_no_data_src(self):
+        html = '<div><img class="product-card__image" src="data:image/gif;base64,placeholder"></div>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_carr_image_url(soup)
+        self.assertIsNone(result)
