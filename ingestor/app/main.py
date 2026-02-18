@@ -29,7 +29,7 @@ def parse_args():
 
 def ingest_data(data_source_url: str, dest_bucket_uri: str) -> None:
     logging.info("🚀 Starting data ingestion")
-    bucket_name, bucket_prefix = dest_bucket_uri.replace("gs://", "").split("/")
+    bucket_name, bucket_prefix = dest_bucket_uri.replace("gs://", "").split("/", maxsplit=1)
 
     _test_mode_env = os.getenv("TEST_MODE", "").strip().lower()
     is_test_mode = bool(_test_mode_env)

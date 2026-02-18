@@ -5,6 +5,8 @@ from io import BytesIO
 from typing import Generator
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 from gcs_client import GCSClientSingleton
 from google.auth.transport.requests import AuthorizedSession
 from google.cloud.storage import Client
@@ -57,32 +59,35 @@ def write_pandas_to_bucket_as_parquet(
 ) -> None:
     logger.info(f"Writing Parquet data to bucket: {bucket_name}, prefix: {bucket_prefix}")
 
-    storage_client = GCSClientSingleton.get_client()
-    bucket = storage_client.get_bucket(bucket_name)
-    if not bucket:
-        logger.error(f"Couldn't get the bucket: {bucket_name}")
-        raise Exception("Bucket not found")
+    buffer = BytesIO()
+    writer = None
+    chunks_written = 0
 
-    logger.info(f"Got bucket with name: {bucket.name}")
-    date_str = datetime.now().date().isoformat()
-    chunk_index = 0
-
-    for df_chunk in data_gen:
-        if df_chunk.empty:
+    for chunk in data_gen:
+        if chunk.empty:
             logger.info("Skipping empty chunk")
             continue
+        table = pa.Table.from_pandas(chunk, preserve_index=False)
+        if writer is None:
+            writer = pq.ParquetWriter(buffer, table.schema, compression="snappy")
+        writer.write_table(table)
+        chunks_written += 1
+        logger.info(f"Written chunk {chunks_written} ({len(chunk)} rows)")
 
-        blob_name = f"{bucket_prefix}/{date_str}_{chunk_index:03d}.parquet"
-        buffer = BytesIO()
-        df_chunk.to_parquet(buffer, index=False, engine="pyarrow", compression="snappy")
-        buffer.seek(0)
+    if writer:
+        writer.close()
 
-        blob = bucket.blob(blob_name)
-        blob.upload_from_file(buffer, content_type="application/octet-stream")
-        logger.info(f"Uploaded {blob_name} ({buffer.getbuffer().nbytes} bytes)")
-        chunk_index += 1
+    if chunks_written == 0:
+        logger.info("No data to write, skipping upload")
+        return
 
-    logger.info(f"Upload completed successfully. {chunk_index} Parquet files written.")
+    blob_name = f"{bucket_prefix}/{datetime.now().date().isoformat()}.parquet"
+    buffer.seek(0)
+    storage_client = GCSClientSingleton.get_client()
+    bucket = storage_client.get_bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    blob.upload_from_file(buffer, content_type="application/octet-stream")
+    logger.info(f"Uploaded {blob_name} ({buffer.getbuffer().nbytes} bytes)")
 
 
 def write_pandas_to_bucket_as_csv(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import logging
 from typing import Any
 from typing import Dict
@@ -216,10 +217,13 @@ class CarrExtractor(Extractor):
                         if not self.navigate_back_to_main(driver):
                             break
                         continue
-                    for page_url, page_source in self.get_all_page_sources(driver):
-                        product_gen_list.append(
+                    pages = self.get_all_page_sources(driver)
+                    product_gen_list.append(
+                        itertools.chain.from_iterable(
                             extract_carr_product_data(page_source, category_name, self.base_url, page_url)
+                            for page_url, page_source in pages
                         )
+                    )
                 except Exception as e:
                     logger.error(f"Failed to extract category {category_name}: {e}")
                     self.save_debug_html(driver, f"carr_category_error_{category_name}")

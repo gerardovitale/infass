@@ -53,18 +53,14 @@ def test_write_data_routes_to_parquet_in_prod_mode(mock_parquet, sample_data_gen
 
 
 @patch("writer.datetime")
-def test_write_parquet_uploads_one_file_per_chunk(mock_datetime, mock_gcs_client, sample_data_gen):
+def test_write_parquet_uploads_single_file(mock_datetime, mock_gcs_client, sample_data_gen):
     mock_datetime.now.return_value.date.return_value.isoformat.return_value = "2024-01-15"
     mock_client, mock_bucket = mock_gcs_client
 
     write_pandas_to_bucket_as_parquet(sample_data_gen(), "test-bucket", "merc")
 
-    assert mock_bucket.blob.call_count == 2
-    mock_bucket.blob.assert_any_call("merc/2024-01-15_000.parquet")
-    mock_bucket.blob.assert_any_call("merc/2024-01-15_001.parquet")
-
-    blob_mock = mock_bucket.blob.return_value
-    assert blob_mock.upload_from_file.call_count == 2
+    mock_bucket.blob.assert_called_once_with("merc/2024-01-15.parquet")
+    mock_bucket.blob.return_value.upload_from_file.assert_called_once()
 
 
 @patch("writer.datetime")
@@ -82,11 +78,10 @@ def test_write_parquet_uploads_valid_parquet_content(mock_datetime, mock_gcs_cli
 
     write_pandas_to_bucket_as_parquet(sample_data_gen(), "test-bucket", "merc")
 
-    assert len(uploaded_buffers) == 2
-    df0 = pd.read_parquet(uploaded_buffers[0])
-    pd.testing.assert_frame_equal(df0, pd.DataFrame({"col1": ["a", "b"], "col2": [1, 2]}))
-    df1 = pd.read_parquet(uploaded_buffers[1])
-    pd.testing.assert_frame_equal(df1, pd.DataFrame({"col1": ["c"], "col2": [3]}))
+    assert len(uploaded_buffers) == 1
+    df = pd.read_parquet(uploaded_buffers[0])
+    expected = pd.DataFrame({"col1": ["a", "b", "c"], "col2": [1, 2, 3]})
+    pd.testing.assert_frame_equal(df, expected)
 
 
 @patch("writer.datetime")
@@ -101,9 +96,7 @@ def test_write_parquet_skips_empty_chunks(mock_datetime, mock_gcs_client):
 
     write_pandas_to_bucket_as_parquet(gen_with_empty(), "test-bucket", "merc")
 
-    assert mock_bucket.blob.call_count == 2
-    mock_bucket.blob.assert_any_call("merc/2024-01-15_000.parquet")
-    mock_bucket.blob.assert_any_call("merc/2024-01-15_001.parquet")
+    mock_bucket.blob.assert_called_once_with("merc/2024-01-15.parquet")
 
 
 @patch("writer.datetime")
