@@ -1,19 +1,23 @@
 import os
 import sqlite3
+from datetime import datetime
 
 import pandas as pd
 from google.cloud import storage
 from google.oauth2.service_account import Credentials
 
+DT_NOW = datetime.now().isoformat(timespec="minutes").replace(":", "-")
 BUCKET_NAME = "infass-sqlite-bucket"
 PARAMS = [
     {
         "object_name": "infass-test-sqlite-api.db",
-        "local_path": "data/infass-test-sqlite-api.db",
+        "local_path": f"data/api/db/{DT_NOW}/infass-test-sqlite-api.db",
+        "csv_local_path": f"data/api/csv/{DT_NOW}",
     },
     {
         "object_name": "infass-sqlite-api.db",
-        "local_path": "data/infass-sqlite-api.db",
+        "local_path": f"data/api/db/{DT_NOW}/infass-sqlite-api.db",
+        "csv_local_path": f"data/api/csv/{DT_NOW}",
     },
 ]
 
@@ -45,7 +49,7 @@ def download_from_gcs(bucket_name: str, object_name: str, local_path: str) -> No
     print(f"✅ Downloaded `gs://{bucket_name}/{object_name}` to `{local_path}`")
 
 
-def inspect_sqlite(db_path: str) -> None:
+def inspect_sqlite(db_path: str, csv_local_path: str) -> None:
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -64,7 +68,7 @@ def inspect_sqlite(db_path: str) -> None:
                 continue
 
             print(f"🔍 Preview of `{table[0]}`:")
-            cursor.execute(f"SELECT * FROM {table[0]} LIMIT 5;")
+            cursor.execute(f"SELECT * FROM {table[0]};")
             column_names = [column[0] for column in cursor.description]
             print("Cursor description: ", column_names)
             rows = cursor.fetchall()
@@ -73,6 +77,7 @@ def inspect_sqlite(db_path: str) -> None:
             print("DataFrame preview:")
             print(df.head().to_string(index=False), "\n")
             df.info()
+            df.to_csv(os.path.join(csv_local_path, f"{table[0]}.csv"), index=False)
             print("\n" + "=" * 100 + "\n")
 
     conn.close()
@@ -83,7 +88,10 @@ if __name__ == "__main__":
     for param in PARAMS:
         object_name = param["object_name"]
         local_path = param["local_path"]
+        csv_local_path = param["csv_local_path"]
 
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        os.makedirs(csv_local_path, exist_ok=True)
+
         download_from_gcs(BUCKET_NAME, object_name, local_path)
-        inspect_sqlite(local_path)
+        inspect_sqlite(local_path, csv_local_path)
