@@ -61,6 +61,7 @@ def write_pandas_to_bucket_as_parquet(
 
     buffer = BytesIO()
     writer = None
+    file_schema = None
     chunks_written = 0
 
     for chunk in data_gen:
@@ -69,7 +70,10 @@ def write_pandas_to_bucket_as_parquet(
             continue
         table = pa.Table.from_pandas(chunk, preserve_index=False)
         if writer is None:
-            writer = pq.ParquetWriter(buffer, table.schema, compression="snappy")
+            file_schema = table.schema
+            writer = pq.ParquetWriter(buffer, file_schema, compression="snappy")
+        else:
+            table = table.cast(file_schema)
         writer.write_table(table)
         chunks_written += 1
         logger.info(f"Written chunk {chunks_written} ({len(chunk)} rows)")
