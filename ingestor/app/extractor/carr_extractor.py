@@ -85,6 +85,7 @@ class CarrExtractor(Extractor):
     WAIT_TIMEOUT = 30
     COOKIES_BUTTON_ID = "onetrust-reject-all-handler"
     CATEGORY_LINK_SELECTOR = ".nav-first-level-categories__slide a"
+    SUBCATEGORY_LINK_SELECTOR = ".nav-second-level-categories__slide a"
     PRODUCT_CARD_SELECTOR = ".product-card__parent"
     PAGINATION_NEXT_SELECTOR = ".pagination__next"
     PAGINATION_SELECTOR = ".pagination"
@@ -140,6 +141,19 @@ class CarrExtractor(Extractor):
                 return
         raise Exception(f"Category link '{category_name}' not found in DOM")
 
+    def get_subcategory_links(self, driver: webdriver.Chrome) -> List[Tuple[str, str]]:
+        """Return (name, href) tuples for second-level subcategories, if any."""
+        elements = driver.find_elements(By.CSS_SELECTOR, self.SUBCATEGORY_LINK_SELECTOR)
+        subcategories = []
+        for el in elements:
+            name = el.text.strip()
+            href = el.get_attribute("href") or ""
+            if name and href:
+                subcategories.append((name, href))
+        if subcategories:
+            logger.info(f"Found {len(subcategories)} subcategories: {[s[0] for s in subcategories]}")
+        return subcategories
+
     def get_all_page_sources(self, driver: webdriver.Chrome) -> List[Tuple[str, str]]:
         """Collect (page_url, page_source) tuples from all paginated pages of the current category."""
         pages = []
@@ -176,6 +190,36 @@ class CarrExtractor(Extractor):
             self.save_debug_html(driver, "carr_back_navigation_failed")
             return False
 
+    def _wait_for_products(self, driver: webdriver.Chrome, label: str) -> bool:
+        """Wait for product cards to appear. Returns True if products found."""
+        try:
+            WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, self.PRODUCT_CARD_SELECTOR))
+            )
+            # Wait for the full product list to render (pagination appears once all products load).
+            # Categories with fewer than 24 products may not have pagination; ignore the timeout.
+            try:
+                WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, self.PAGINATION_SELECTOR))
+                )
+            except Exception:
+                pass
+            return True
+        except Exception:
+            logger.warning(f"No product cards found for {label} within timeout")
+            self.save_debug_html(driver, f"carr_no_products_{label}")
+            return False
+
+    def _extract_products_from_current_page(
+        self, driver: webdriver.Chrome, category_label: str
+    ) -> Generator[Dict[str, Any], None, None]:
+        """Collect all paginated pages and return a chained product generator."""
+        pages = self.get_all_page_sources(driver)
+        return itertools.chain.from_iterable(
+            extract_carr_product_data(page_source, category_label, self.base_url, page_url)
+            for page_url, page_source in pages
+        )
+
     def get_page_sources(self) -> List[Generator[Dict[str, Any], None, None]]:
         logger.info("Getting Carrefour page content")
         driver = self.initialize_driver()
@@ -192,6 +236,7 @@ class CarrExtractor(Extractor):
             self.save_debug_html(driver, "carr_after_cookies")
             category_names = self.wait_for_category_links(driver)
             product_gen_list = []
+            stop = False
 
             for category_name in category_names:
                 navigated = False
@@ -199,31 +244,40 @@ class CarrExtractor(Extractor):
                     logger.info(f"Clicking category: {category_name}")
                     self.click_category(driver, category_name)
                     navigated = True
+
+                    # Check for subcategories before waiting for products
                     try:
-                        WebDriverWait(driver, self.WAIT_TIMEOUT).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, self.PRODUCT_CARD_SELECTOR))
+                        WebDriverWait(driver, 5).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, self.SUBCATEGORY_LINK_SELECTOR))
                         )
-                        # Wait for the full product list to render (pagination appears once all products load).
-                        # Categories with fewer than 24 products may not have pagination; ignore the timeout.
-                        try:
-                            WebDriverWait(driver, 5).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, self.PAGINATION_SELECTOR))
-                            )
-                        except Exception:
-                            pass
                     except Exception:
-                        logger.warning(f"No product cards found for category {category_name} within timeout")
-                        self.save_debug_html(driver, f"carr_no_products_{category_name}")
-                        if not self.navigate_back_to_main(driver):
-                            break
-                        continue
-                    pages = self.get_all_page_sources(driver)
-                    product_gen_list.append(
-                        itertools.chain.from_iterable(
-                            extract_carr_product_data(page_source, category_name, self.base_url, page_url)
-                            for page_url, page_source in pages
-                        )
-                    )
+                        pass
+
+                    subcategories = self.get_subcategory_links(driver)
+
+                    if subcategories:
+                        for subcat_name, subcat_href in subcategories:
+                            category_label = f"{category_name} > {subcat_name}"
+                            logger.info(f"Navigating to subcategory: {category_label} ({subcat_href})")
+                            driver.get(subcat_href)
+
+                            if not self._wait_for_products(driver, category_label):
+                                continue
+
+                            product_gen_list.append(self._extract_products_from_current_page(driver, category_label))
+
+                            if self.break_early:
+                                logger.info("Break-early mode: stopping after the first subcategory")
+                                stop = True
+                                break
+                    else:
+                        if not self._wait_for_products(driver, category_name):
+                            if not self.navigate_back_to_main(driver):
+                                break
+                            continue
+
+                        product_gen_list.append(self._extract_products_from_current_page(driver, category_name))
+
                 except Exception as e:
                     logger.error(f"Failed to extract category {category_name}: {e}")
                     self.save_debug_html(driver, f"carr_category_error_{category_name}")
@@ -232,8 +286,7 @@ class CarrExtractor(Extractor):
                     if not self.navigate_back_to_main(driver):
                         break
 
-                if self.break_early:
-                    logger.info("Break-early mode: stopping after the first category")
+                if stop or self.break_early:
                     break
 
             logger.info(f"Extracted {len(product_gen_list)} Carrefour product data generators")
