@@ -16,49 +16,6 @@ resource "google_project_iam_member" "cloud_run_job_transformer_storage_permissi
   role    = each.value
 }
 
-# Job Definition
-resource "google_cloud_run_v2_job" "transformer_job" {
-  name                = "${var.APP_NAME}-transformer-job"
-  location            = var.REGION
-  deletion_protection = false
-  labels              = local.labels
-
-  template {
-    template {
-      timeout         = "1200s"
-      max_retries     = 0
-      service_account = google_service_account.transformer_sa.email
-
-      containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer:${var.DOCKER_IMAGE_TAG_TRANSFORMER}"
-        resources {
-          limits = {
-            cpu    = "1"
-            memory = "2Gi"
-          }
-        }
-
-        env {
-          name  = "DATA_SOURCE"
-          value = google_storage_bucket.infass_bucket.name
-        }
-        env {
-          name  = "DESTINATION"
-          value = "${google_bigquery_dataset.infass_dataset.project}.${google_bigquery_dataset.infass_dataset.dataset_id}.merc"
-        }
-        env {
-          name  = "LIMIT"
-          value = var.TRANSFORMER_LIMIT
-        }
-        env {
-          name  = "WRITE_DISPOSITION"
-          value = var.TRANSFORMER_WRITE_DISPOSITION
-        }
-      }
-    }
-  }
-}
-
 # ------------------------------
 # Transformer V2 Job Definition
 # ------------------------------

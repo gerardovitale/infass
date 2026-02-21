@@ -11,7 +11,6 @@ setup:
 test-all:
 	@echo "Running tests for all components..."
 	@$(MAKE) -s ingestor.test
-	@$(MAKE) -s transformer.test
 	@$(MAKE) -s dbt.test
 	@$(MAKE) -s api.test
 	@$(MAKE) -s api.local-integration-test
@@ -66,25 +65,6 @@ ingestor.carr-local-full-run:
 		ingestor:latest \
 		https://www.carrefour.es/supermercado \
 		gs://infass-carr/carr
-
-
-# TRANSFORMER
-transformer.test:
-	@echo "####################################################################################################"
-	@echo "Running Transformer tests"
-	scripts/run-docker-test.sh transformer
-
-transformer.local-run:
-	cd transformer/ && docker buildx build -f Dockerfile -t transformer .
-	docker run --rm \
-		-v $(TRANSFORMER_OUTPUT_PATH):/app/data/ \
-		-v $(GCP_TRANSFORMER_CREDS_PATH):/app/key.json \
-		-e GOOGLE_APPLICATION_CREDENTIALS=/app/key.json \
-		-e DATA_SOURCE=infass-merc \
-		-e DESTINATION=$(GCP_PROJECT_ID).infass.merc \
-		-e LIMIT=7 \
-		-e IS_LOCAL_RUN=true \
-		transformer:latest
 
 
 # TRANSFORMER V2

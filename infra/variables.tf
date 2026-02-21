@@ -23,11 +23,6 @@ variable "DOCKER_IMAGE_TAG_INGESTOR" {
   description = "Docker image tag for the ingestor service"
 }
 
-variable "DOCKER_IMAGE_TAG_TRANSFORMER" {
-  type        = string
-  description = "Docker image tag for the transformer service"
-}
-
 variable "DOCKER_IMAGE_TAG_TRANSFORMER_V2" {
   type        = string
   description = "Docker image tag for the transformer-v2 service"
@@ -46,17 +41,6 @@ variable "DOCKER_IMAGE_TAG_RETL" {
 variable "GCP_USER" {
   type        = string
   description = "GCP user email"
-}
-
-variable "TRANSFORMER_LIMIT" {
-  type        = string
-  description = "Limit for the transformer job"
-  default     = "1000"
-}
-
-variable "TRANSFORMER_WRITE_DISPOSITION" {
-  type        = string
-  description = "Write disposition for the transformer job"
 }
 
 variable "UI_SERVICE_ACCOUNT_EMAIL" {

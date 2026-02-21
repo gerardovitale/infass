@@ -20,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ingestor: ${{ steps.filter.outputs.ingestor }}
-      transformer: ${{ steps.filter.outputs.transformer }}
       transformer-v2: ${{ steps.filter.outputs.transformer-v2 }}
       api: ${{ steps.filter.outputs.api }}
       ui: ${{ steps.filter.outputs.ui }}
@@ -41,8 +40,6 @@ jobs:
           filters: |
             ingestor:
               - 'ingestor/**'
-            transformer:
-              - 'transformer/**'
             transformer-v2:
               - 'transformer-v2/**'
             api:
@@ -62,7 +59,6 @@ jobs:
               - 'infra-ui/**'
             any-backend-service:
               - 'ingestor/**'
-              - 'transformer/**'
               - 'transformer-v2/**'
               - 'api/**'
               - 'retl/**'
@@ -79,15 +75,6 @@ jobs:
     uses: ./.github/workflows/test-service.yml
     with:
       service: ingestor
-
-  test-transformer:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.transformer == 'true' ||
-      inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
-    with:
-      service: transformer
 
   test-transformer-v2:
     needs: detect-changes
@@ -146,19 +133,6 @@ jobs:
     uses: ./.github/workflows/build-service.yml
     with:
       service: ingestor
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  build-transformer:
-    needs: [detect-changes, test-transformer]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.transformer == 'true' ||
-       inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
-    with:
-      service: transformer
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -237,7 +211,6 @@ jobs:
     needs:
       - detect-changes
       - build-ingestor
-      - build-transformer
       - build-transformer-v2
       - build-api
       - build-retl
@@ -253,8 +226,6 @@ jobs:
       TF_VAR_REGION: europe-southwest1
       TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       TF_VAR_GCP_USER: ${{ secrets.GCP_USER }}
-      TF_VAR_TRANSFORMER_WRITE_DISPOSITION: WRITE_TRUNCATE  # WRITE_APPEND
-      # TF_VAR_TRANSFORMER_LIMIT: -1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -305,7 +276,6 @@ jobs:
 
           {
             echo "tag_INGESTOR=$(resolve_tag INGESTOR '${{ needs.detect-changes.outputs.ingestor }}')"
-            echo "tag_TRANSFORMER=$(resolve_tag TRANSFORMER '${{ needs.detect-changes.outputs.transformer }}')"
             echo "tag_TRANSFORMER_V2=$(resolve_tag TRANSFORMER_V2 '${{ needs.detect-changes.outputs['transformer-v2'] }}')"
             echo "tag_API=$(resolve_tag API '${{ needs.detect-changes.outputs.api }}')"
             echo "tag_RETL=$(resolve_tag RETL '${{ needs.detect-changes.outputs.retl }}')"
@@ -317,7 +287,6 @@ jobs:
         run: |
           terraform plan \
             -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
-            -var "DOCKER_IMAGE_TAG_TRANSFORMER=${{ steps.tags.outputs.tag_TRANSFORMER }}" \
             -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
             -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
             -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
@@ -328,7 +297,6 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
-            -var "DOCKER_IMAGE_TAG_TRANSFORMER=${{ steps.tags.outputs.tag_TRANSFORMER }}" \
             -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
             -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
             -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"

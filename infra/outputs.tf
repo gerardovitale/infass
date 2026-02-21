@@ -2,10 +2,6 @@ output "docker_image_tag_ingestor" {
   value = var.DOCKER_IMAGE_TAG_INGESTOR
 }
 
-output "docker_image_tag_transformer" {
-  value = var.DOCKER_IMAGE_TAG_TRANSFORMER
-}
-
 output "docker_image_tag_transformer_v2" {
   value = var.DOCKER_IMAGE_TAG_TRANSFORMER_V2
 }
