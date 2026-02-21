@@ -31,3 +31,6 @@ class ProductSearchResponse(BaseModel):
     query: str
     total_results: int
     results: List[Product]
+    limit: int
+    offset: int
+    has_more: bool

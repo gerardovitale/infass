@@ -30,21 +30,25 @@ def test_search_returns_expected_response(product_service, mock_product_reposito
         },
     ]
     mock_product_repository.search_products.return_value = fake_products
+    mock_product_repository.count_search_products.return_value = 1
 
-    products = product_service.search("Cola")
+    products, total_count = product_service.search("Cola")
 
     assert isinstance(products, list)
     assert len(products) == 1
     assert products[0].name == "coca-cola"
+    assert total_count == 1
 
 
 def test_search_returns_empty_response(product_service, mock_product_repository):
     mock_product_repository.search_products.return_value = []
+    mock_product_repository.count_search_products.return_value = 0
 
-    products = product_service.search("nonexistent")
+    products, total_count = product_service.search("nonexistent")
 
     assert isinstance(products, list)
     assert len(products) == 0
+    assert total_count == 0
 
 
 def test_return_bad_request_when_search_term_empty(product_service, mock_product_repository):

@@ -16,7 +16,7 @@ class SQLiteProductRepository(ProductRepository):
         self.check_db_path_exist(db_path)
         self.db_path = db_path
 
-    def search_products(self, search_term: str) -> list[dict]:
+    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> list[dict]:
         logger.info(f"SQLiteRepo - Searching products with term '{search_term}' using FTS5 table if available")
         fts_query = """
                 SELECT p.id,
@@ -29,17 +29,38 @@ class SQLiteProductRepository(ProductRepository):
                 FROM products AS p
                 JOIN products_fts ON p.id = products_fts.id
                 WHERE products_fts MATCH :search
+                LIMIT :limit OFFSET :offset
                 """
-        search_term_fts = search_term.strip().lower()
-        if not search_term_fts.endswith("*"):
-            search_term_fts += "*"
+        search_term_fts = self._prepare_fts_term(search_term)
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            rows = cursor.execute(fts_query, {"search": search_term_fts}).fetchall()
+            rows = cursor.execute(fts_query, {"search": search_term_fts, "limit": limit, "offset": offset}).fetchall()
             logger.info(
                 f"SQLiteRepo - Found {len(rows)} products for term '{search_term}' (fts query: '{search_term_fts}')"
             )
             return self.map_rows(rows, cursor)
+
+    def count_search_products(self, search_term: str) -> int:
+        logger.info(f"SQLiteRepo - Counting products with term '{search_term}'")
+        count_query = """
+                SELECT COUNT(*)
+                FROM products AS p
+                JOIN products_fts ON p.id = products_fts.id
+                WHERE products_fts MATCH :search
+                """
+        search_term_fts = self._prepare_fts_term(search_term)
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            count = cursor.execute(count_query, {"search": search_term_fts}).fetchone()[0]
+            logger.info(f"SQLiteRepo - Total count for term '{search_term}': {count}")
+            return count
+
+    @staticmethod
+    def _prepare_fts_term(search_term: str) -> str:
+        search_term_fts = search_term.strip().lower()
+        if not search_term_fts.endswith("*"):
+            search_term_fts += "*"
+        return search_term_fts
 
     def get_enriched_product(self, product_id: str):
         def map_enriched_product(mapped_rows):
