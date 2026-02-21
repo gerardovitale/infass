@@ -14,7 +14,8 @@ const makeProduct = (id: string): Product => ({
 let intersectionCallback: (entries: { isIntersecting: boolean }[]) => void;
 
 beforeEach(() => {
-    (global as any).IntersectionObserver = jest.fn((cb) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (global as any).IntersectionObserver = jest.fn((cb: (entries: { isIntersecting: boolean }[]) => void) => {
         intersectionCallback = cb;
         return {
             observe: jest.fn(),
