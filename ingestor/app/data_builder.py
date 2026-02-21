@@ -6,6 +6,7 @@ from typing import Generator
 from typing import List
 
 import pandas as pd
+from timing import timed_phase
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ def build_df(product_gen: Generator[Dict[str, Any], None, None]) -> pd.DataFrame
     return df
 
 
+@timed_phase("data_building")
 def build_data_gen(
     product_gen_list: List[Generator[Dict[str, Any], None, None]],
 ) -> Generator[pd.DataFrame, None, None]:

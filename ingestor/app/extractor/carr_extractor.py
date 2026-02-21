@@ -17,6 +17,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from timing import timed_phase
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +202,7 @@ class CarrExtractor(Extractor):
             for page_url, page_source in pages
         )
 
+    @timed_phase("extraction")
     def get_page_sources(self) -> List[Generator[Dict[str, Any], None, None]]:
         logger.info("Getting Carrefour page content")
         driver = self.initialize_driver()

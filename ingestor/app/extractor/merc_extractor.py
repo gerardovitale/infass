@@ -16,6 +16,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.expected_conditions import presence_of_element_located
 from selenium.webdriver.support.ui import WebDriverWait
+from timing import timed_phase
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,7 @@ class MercExtractor(Extractor):
         )
         return extract_product_data(driver.page_source, f"{category_name} > {subcategory_name}")
 
+    @timed_phase("extraction")
     def get_page_sources(self) -> List[Generator[Dict[str, Any], None, None]]:
         logger.info("Getting page content")
         driver = self.initialize_driver()

@@ -1,18 +1,45 @@
+import json
 import logging
 import os
 import sys
+from datetime import datetime
+from datetime import timezone
 
 from data_builder import build_data_gen
 from extractor import Extractor
 from extractor.carr_extractor import CarrExtractor
 from extractor.merc_extractor import MercExtractor
+from timing import timed_phase
 from writer import write_data
 
+
 # LOGGING
-logging.basicConfig(
-    format="%(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
+class _JsonFormatter(logging.Formatter):
+    _EXTRA_FIELDS = ("phase", "duration_seconds", "duration_minutes")
+
+    def format(self, record):
+        log_entry = {
+            "severity": record.levelname,
+            "message": record.getMessage(),
+            "logger": record.name,
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+        }
+        for field in self._EXTRA_FIELDS:
+            value = getattr(record, field, None)
+            if value is not None:
+                log_entry[field] = value
+        return json.dumps(log_entry)
+
+
+def _setup_logging():
+    handler = logging.StreamHandler()
+    handler.setFormatter(_JsonFormatter())
+    logging.root.handlers.clear()
+    logging.root.addHandler(handler)
+    logging.root.setLevel(logging.INFO)
+
+
+_setup_logging()
 
 
 def parse_args():
@@ -27,6 +54,7 @@ def parse_args():
     return bucket_uri, data_source_url
 
 
+@timed_phase("total")
 def ingest_data(data_source_url: str, dest_bucket_uri: str) -> None:
     logging.info("🚀 Starting data ingestion")
     bucket_name, bucket_prefix = dest_bucket_uri.replace("gs://", "").split("/", maxsplit=1)
@@ -42,7 +70,6 @@ def ingest_data(data_source_url: str, dest_bucket_uri: str) -> None:
     sources = extractor.get_page_sources()
     data_gen = build_data_gen(sources)
     write_data(data_gen, bucket_name, bucket_prefix, is_test_mode)
-    logging.info("✅ Successfully ingested data")
 
 
 def get_extractor(

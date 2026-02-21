@@ -12,6 +12,7 @@ from google.auth.transport.requests import AuthorizedSession
 from google.cloud.storage import Client
 from google.resumable_media.common import InvalidResponse
 from google.resumable_media.requests import ResumableUpload
+from timing import timed_phase
 
 CHUNK_SIZE = 256 * 1024  # 256 KiB
 GCP_STORAGE_RESUMABLE_UPLOAD_URL = "https://www.googleapis.com/upload/storage/v1/b/{0}/o?uploadType=resumable"
@@ -19,6 +20,7 @@ GCP_STORAGE_RESUMABLE_UPLOAD_URL = "https://www.googleapis.com/upload/storage/v1
 logger = logging.getLogger(__name__)
 
 
+@timed_phase("writing")
 def write_data(
     data_gen: Generator[pd.DataFrame, None, None],
     dest_bucket_name: str,
