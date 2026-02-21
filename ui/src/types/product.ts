@@ -18,4 +18,7 @@ export type PriceDetail = {
 export type ProductResponse = {
     results: Product[];
     total_results: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
 };
