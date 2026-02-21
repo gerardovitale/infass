@@ -90,8 +90,8 @@ class CarrExtractor(Extractor):
     PAGINATION_NEXT_SELECTOR = ".pagination__next"
     PAGINATION_SELECTOR = ".pagination"
 
-    def __init__(self, data_source_url: str, bucket_name: str, break_early: bool = False):
-        super().__init__(data_source_url, bucket_name, break_early)
+    def __init__(self, data_source_url: str, bucket_name: str, break_early: bool = False, is_test_mode: bool = False):
+        super().__init__(data_source_url, bucket_name, break_early, is_test_mode)
         parsed = urlparse(data_source_url)
         self.base_url = f"{parsed.scheme}://{parsed.netloc}"
 

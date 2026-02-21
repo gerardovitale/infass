@@ -171,8 +171,8 @@ class TestGetImageUrl(TestCase):
 
 
 class DummyExtractor(Extractor):
-    def __init__(self, data_source_url="url", bucket_name="bucket", break_early=False):
-        super().__init__(data_source_url, bucket_name, break_early)
+    def __init__(self, data_source_url="url", bucket_name="bucket", break_early=False, is_test_mode=False):
+        super().__init__(data_source_url, bucket_name, break_early, is_test_mode)
 
     def get_page_sources(self):
         return []
@@ -193,13 +193,54 @@ class TestExtractorGCS(TestCase):
             mock_bucket.blob.assert_called_with("dest.png")
             mock_blob.upload_from_filename.assert_called_with("file.png")
 
-    def test_save_screenshot_calls_upload_and_saves_file(self):
-        extractor = DummyExtractor("url", "bucket", False)
+    def test_save_screenshot_uploads_to_gcs_when_not_test_mode(self):
+        extractor = DummyExtractor("url", "bucket", False, is_test_mode=False)
         driver = MagicMock()
         with patch.object(DummyExtractor, "upload_to_gcs") as mock_upload:
-            extractor.save_screenshot(driver, "file.png", "bucket")
+            extractor.save_screenshot(driver, "file.png", "screenshots")
             driver.save_screenshot.assert_called_with("file.png")
-            mock_upload.assert_called()
+            mock_upload.assert_called_once()
+
+    @patch("extractor.os.makedirs")
+    def test_save_screenshot_saves_locally_when_test_mode(self, mock_makedirs):
+        extractor = DummyExtractor("url", "bucket", False, is_test_mode=True)
+        driver = MagicMock()
+        with patch.object(DummyExtractor, "upload_to_gcs") as mock_upload:
+            extractor.save_screenshot(driver, "file.png", "screenshots")
+            mock_makedirs.assert_called_once_with("data/debug", exist_ok=True)
+            driver.save_screenshot.assert_called_once()
+            mock_upload.assert_not_called()
+            saved_path = driver.save_screenshot.call_args[0][0]
+            self.assertTrue(saved_path.startswith("data/debug/"))
+            self.assertIn("file", saved_path)
+
+    @patch("extractor.os.makedirs")
+    def test_save_debug_html_uploads_to_gcs_when_not_test_mode(self, mock_makedirs):
+        extractor = DummyExtractor("url", "bucket", False, is_test_mode=False)
+        driver = MagicMock()
+        driver.page_source = "<html></html>"
+        driver.current_url = "http://example.com"
+        with (
+            patch.object(DummyExtractor, "upload_to_gcs") as mock_upload,
+            patch("builtins.open", MagicMock()),
+        ):
+            extractor.save_debug_html(driver, "test_label")
+            mock_upload.assert_called_once()
+            gcs_dest = mock_upload.call_args[0][2]
+            self.assertTrue(gcs_dest.startswith("debug_html/"))
+
+    @patch("extractor.os.makedirs")
+    def test_save_debug_html_saves_locally_only_when_test_mode(self, mock_makedirs):
+        extractor = DummyExtractor("url", "bucket", False, is_test_mode=True)
+        driver = MagicMock()
+        driver.page_source = "<html></html>"
+        driver.current_url = "http://example.com"
+        with (
+            patch.object(DummyExtractor, "upload_to_gcs") as mock_upload,
+            patch("builtins.open", MagicMock()),
+        ):
+            extractor.save_debug_html(driver, "test_label")
+            mock_upload.assert_not_called()
 
 
 def get_carr_test_html():

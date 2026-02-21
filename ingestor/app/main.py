@@ -38,25 +38,27 @@ def ingest_data(data_source_url: str, dest_bucket_uri: str) -> None:
     if is_test_mode:
         logging.info(f"Running test mode: TEST_MODE={_test_mode_env!r}, break_early={break_early}")
 
-    extractor = get_extractor(data_source_url, bucket_name, break_early)
+    extractor = get_extractor(data_source_url, bucket_name, break_early, is_test_mode)
     sources = extractor.get_page_sources()
     data_gen = build_data_gen(sources)
     write_data(data_gen, bucket_name, bucket_prefix, is_test_mode)
     logging.info("✅ Successfully ingested data")
 
 
-def get_extractor(data_source_url: str, bucket_name: str, break_early: bool = False) -> Extractor:
+def get_extractor(
+    data_source_url: str, bucket_name: str, break_early: bool = False, is_test_mode: bool = False
+) -> Extractor:
     logging.info(
         f"Creating extractor for data_source_url={data_source_url}, bucket_name={bucket_name}, "
-        f"break_early={break_early}"
+        f"break_early={break_early}, is_test_mode={is_test_mode}"
     )
     if "mercadona" in data_source_url:
         logging.info("Using MercExtractor for Mercadona data source")
-        return MercExtractor(data_source_url, bucket_name, break_early)
+        return MercExtractor(data_source_url, bucket_name, break_early, is_test_mode)
 
     elif "carrefour" in data_source_url:
         logging.info("Using CarrExtractor for Carrefour data source")
-        return CarrExtractor(data_source_url, bucket_name, break_early)
+        return CarrExtractor(data_source_url, bucket_name, break_early, is_test_mode)
 
     else:
         logging.error("Unsupported data source URL")

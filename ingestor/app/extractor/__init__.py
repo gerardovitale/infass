@@ -22,10 +22,11 @@ DEBUG_DIR = "data/debug"
 
 
 class Extractor(metaclass=ABCMeta):
-    def __init__(self, data_source_url: str, bucket_name: str, break_early: bool = False):
+    def __init__(self, data_source_url: str, bucket_name: str, break_early: bool = False, is_test_mode: bool = False):
         self.data_source_url = data_source_url
         self.bucket_name = bucket_name
         self.break_early = break_early
+        self.is_test_mode = is_test_mode
 
     @abstractmethod
     def get_page_sources(self) -> List[Generator[Dict[str, Any], None, None]]:
@@ -79,17 +80,22 @@ class Extractor(metaclass=ABCMeta):
         bucket_name_prefix: str = "screenshots",
     ):
         try:
-            driver.save_screenshot(filename)
-            logger.info(f"Screenshot saved as {filename}")
-            timestamp = datetime.now(timezone.utc).isoformat()
-            gcs_dest = f"{bucket_name_prefix}/{filename.replace('.png', '')}_{timestamp}.png"
-            self.upload_to_gcs(filename, self.bucket_name, gcs_dest)
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
+            if self.is_test_mode:
+                os.makedirs(DEBUG_DIR, exist_ok=True)
+                filepath = os.path.join(DEBUG_DIR, f"{filename.replace('.png', '')}_{timestamp}.png")
+                driver.save_screenshot(filepath)
+                logger.info(f"Screenshot saved locally to {filepath}")
+            else:
+                driver.save_screenshot(filename)
+                logger.info(f"Screenshot saved as {filename}")
+                gcs_dest = f"{bucket_name_prefix}/{filename.replace('.png', '')}_{timestamp}.png"
+                self.upload_to_gcs(filename, self.bucket_name, gcs_dest)
         except Exception as e:
             logger.error(f"Failed to save screenshot: {e}")
             raise
 
-    @staticmethod
-    def save_debug_html(driver: webdriver.Chrome, label: str):
+    def save_debug_html(self, driver: webdriver.Chrome, label: str, bucket_name_prefix: str = "debug_html"):
         try:
             os.makedirs(DEBUG_DIR, exist_ok=True)
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
@@ -98,5 +104,8 @@ class Extractor(metaclass=ABCMeta):
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(driver.page_source)
             logger.info(f"Debug HTML saved to {filepath} (URL: {driver.current_url})")
+            if not self.is_test_mode:
+                gcs_dest = f"{bucket_name_prefix}/{filename}"
+                self.upload_to_gcs(filepath, self.bucket_name, gcs_dest)
         except Exception as e:
             logger.error(f"Failed to save debug HTML: {e}")
