@@ -29,7 +29,6 @@ jobs:
       dbt: ${{ steps.filter.outputs.dbt }}
       infra: ${{ steps.filter.outputs.infra }}
       infra-ui: ${{ steps.filter.outputs.infra-ui }}
-      workflows: ${{ steps.filter.outputs.workflows }}
       any-backend-service: ${{ steps.filter.outputs.any-backend-service }}
     steps:
       - name: Checkout Code
@@ -61,8 +60,6 @@ jobs:
               - 'infra/**'
             infra-ui:
               - 'infra-ui/**'
-            workflows:
-              - '.github/workflows/**'
             any-backend-service:
               - 'ingestor/**'
               - 'transformer/**'
@@ -78,7 +75,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.ingestor == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -88,7 +84,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.transformer == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -98,7 +93,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs['transformer-v2'] == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -108,7 +102,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.api == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -118,7 +111,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.ui == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -128,7 +120,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.retl == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -138,7 +129,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.insights == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/test-service.yml
     with:
@@ -152,7 +142,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.ingestor == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -166,7 +155,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.transformer == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -180,7 +168,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs['transformer-v2'] == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -194,7 +181,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.api == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -208,7 +194,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.ui == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -222,7 +207,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.retl == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -236,7 +220,6 @@ jobs:
     if: >-
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.insights == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     uses: ./.github/workflows/build-service.yml
     with:
@@ -263,7 +246,6 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.any-backend-service == 'true' ||
        needs.detect-changes.outputs.infra == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     env:
       TF_VAR_APP_NAME: infass
@@ -304,7 +286,6 @@ jobs:
         working-directory: ./infra
         run: |
           FORCE="${{ inputs.force_all }}"
-          WF="${{ needs.detect-changes.outputs.workflows }}"
 
           # Read current tags from Terraform state (last successful apply).
           # For unchanged services we re-use the existing tag so Terraform
@@ -315,7 +296,7 @@ jobs:
 
           resolve_tag() {
             local KEY="$1" CHANGED="$2"
-            if [[ "$CHANGED" == "true" || "$FORCE" == "true" || "$WF" == "true" ]]; then
+            if [[ "$CHANGED" == "true" || "$FORCE" == "true" ]]; then
               echo "${GITHUB_SHA::7}"
             else
               current_tag "docker_image_tag_$(echo "$KEY" | tr '[:upper:]' '[:lower:]')"
@@ -365,7 +346,6 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.ui == 'true' ||
        needs.detect-changes.outputs.infra-ui == 'true' ||
-       needs.detect-changes.outputs.workflows == 'true' ||
        inputs.force_all == true)
     env:
       TF_VAR_APP_NAME: infass
@@ -403,8 +383,7 @@ jobs:
         working-directory: ./infra-ui
         run: |
           if [[ "${{ needs.detect-changes.outputs.ui }}" == "true" \
-              || "${{ inputs.force_all }}" == "true" \
-              || "${{ needs.detect-changes.outputs.workflows }}" == "true" ]]; then
+              || "${{ inputs.force_all }}" == "true" ]]; then
             echo "docker_tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           else
             echo "docker_tag=$(terraform output -raw docker_image_tag 2>/dev/null || echo "${GITHUB_SHA::7}")" >> "$GITHUB_OUTPUT"
@@ -427,7 +406,6 @@ jobs:
     needs: detect-changes
     if: >-
       needs.detect-changes.outputs.dbt == 'true' ||
-      needs.detect-changes.outputs.workflows == 'true' ||
       inputs.force_all == true
     uses: ./.github/workflows/run-dbt.yml
     with:
