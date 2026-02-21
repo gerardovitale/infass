@@ -4,6 +4,10 @@ import { Product } from '@/types';
 import { render, screen } from '@testing-library/react';
 import { ProductDetail } from './ProductDetail';
 
+jest.mock('next/navigation', () => ({
+    useRouter: () => ({ back: jest.fn() }),
+}));
+
 describe('ProductDetail', () => {
     const mockProduct: Product = {
         id: '1',
