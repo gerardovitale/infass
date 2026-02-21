@@ -28,7 +28,7 @@ export const ProductCard = ({ product }: Props) => {
                     </div>
                 </div>
                 <span className="text-blue-600 font-bold text-lg">
-                    €{product.current_price.toFixed(2)}
+                    €{product.current_price?.toFixed(2) ?? '-'}
                 </span>
             </div>
         </Link>
