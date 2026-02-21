@@ -164,7 +164,7 @@ resource "google_cloud_run_v2_job" "ingestor_carr_job" {
 
   template {
     template {
-      timeout         = "1200s"
+      timeout         = "2000s"
       max_retries     = 1
       service_account = google_service_account.ingestor_sa.email
 
