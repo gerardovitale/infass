@@ -60,7 +60,7 @@ resource "google_cloud_run_v2_service" "api_service" {
   deletion_protection = false
 
   template {
-    timeout         = "5s"
+    timeout         = "30s"
     service_account = google_service_account.api_service_account.email
 
     containers {
