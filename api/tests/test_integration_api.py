@@ -110,6 +110,9 @@ def test_search_products_integration(client):
                 "image_url": "http://img2",
             },
         ],
+        "limit": 20,
+        "offset": 0,
+        "has_more": False,
     }
     resp = client.get("/products/search", params={"search_term": "apple"})
     assert resp.status_code == 200
@@ -127,6 +130,9 @@ def test_search_no_results_returns_empty(client):
         "query": "nonexistent",
         "total_results": 0,
         "results": [],
+        "limit": 20,
+        "offset": 0,
+        "has_more": False,
     }
     resp = client.get("/products/search", params={"search_term": "nonexistent"})
     assert resp.status_code == 200
