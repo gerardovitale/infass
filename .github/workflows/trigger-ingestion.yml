@@ -11,8 +11,18 @@ jobs:
     with:
       region: europe-southwest1
       app_name: infass
-      component: ingestor
+      component: ingestor-merc
       args: "https://tienda.mercadona.es,gs://infass-merc/merc"
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
+
+  trigger-ingestor-carr:
+    uses: ./.github/workflows/trigger-cloud-run-job.yml
+    with:
+      region: europe-southwest1
+      app_name: infass
+      component: ingestor-carr
+      args: "https://www.carrefour.es,gs://infass-carr/carr"
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 

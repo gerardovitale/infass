@@ -45,8 +45,18 @@ resource "google_storage_bucket" "infass_bucket" {
   labels = local.labels
 }
 
-resource "google_storage_bucket" "landing_zone" {
-  name          = "${var.APP_NAME}-ingestor-landing-zone"
+
+resource "google_storage_bucket_iam_member" "bucket_permissions" {
+  bucket = google_storage_bucket.infass_bucket.name
+  member = "serviceAccount:${google_service_account.ingestor_sa.email}"
+  role   = "roles/storage.legacyBucketWriter"
+}
+
+# ------------------------------
+# Carrefour Bucket
+# ------------------------------
+resource "google_storage_bucket" "carr_bucket" {
+  name          = "${var.APP_NAME}-carr"
   force_destroy = false
   location      = var.REGION
   storage_class = "STANDARD"
@@ -89,8 +99,8 @@ resource "google_storage_bucket" "landing_zone" {
   labels = local.labels
 }
 
-resource "google_storage_bucket_iam_member" "bucket_permissions" {
-  bucket = google_storage_bucket.infass_bucket.name
+resource "google_storage_bucket_iam_member" "carr_bucket_permissions" {
+  bucket = google_storage_bucket.carr_bucket.name
   member = "serviceAccount:${google_service_account.ingestor_sa.email}"
   role   = "roles/storage.legacyBucketWriter"
 }
@@ -115,10 +125,10 @@ resource "google_project_iam_member" "cloud_run_job_ingestor_storage_permissions
 }
 
 # ------------------------------
-# Cloud Run Job for Ingestor
+# Cloud Run Job for Ingestor (Mercadona)
 # ------------------------------
 resource "google_cloud_run_v2_job" "ingestor_job" {
-  name                = "${var.APP_NAME}-ingestor"
+  name                = "${var.APP_NAME}-ingestor-merc"
   location            = var.REGION
   deletion_protection = false
   labels              = local.labels
@@ -130,6 +140,36 @@ resource "google_cloud_run_v2_job" "ingestor_job" {
       service_account = google_service_account.ingestor_sa.email
 
       containers {
+        name  = "ingestor-merc"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG}"
+        resources {
+          limits = {
+            cpu    = "1"
+            memory = "2Gi"
+          }
+        }
+      }
+    }
+  }
+}
+
+# ------------------------------
+# Cloud Run Job for Ingestor (Carrefour)
+# ------------------------------
+resource "google_cloud_run_v2_job" "ingestor_carr_job" {
+  name                = "${var.APP_NAME}-ingestor-carr"
+  location            = var.REGION
+  deletion_protection = false
+  labels              = local.labels
+
+  template {
+    template {
+      timeout         = "1200s"
+      max_retries     = 1
+      service_account = google_service_account.ingestor_sa.email
+
+      containers {
+        name  = "ingestor-carr"
         image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG}"
         resources {
           limits = {
