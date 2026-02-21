@@ -22,23 +22,16 @@ resource "google_service_account" "cicd_service_account" {
 resource "google_project_iam_member" "cicd_service_account_roles" {
   depends_on = [google_project_service.required_apis]
   for_each = toset([
-    "roles/storage.admin",
+    "roles/storage.objectAdmin",
     "roles/run.admin",
-    "roles/iam.serviceAccountAdmin",
-    "roles/iam.serviceAccountTokenCreator",
+    "roles/iam.serviceAccountUser",
     "roles/iam.workloadIdentityUser",
-    "roles/resourcemanager.projectIamAdmin",
   ])
   project = var.PROJECT
   member  = "serviceAccount:${google_service_account.cicd_service_account.email}"
   role    = each.value
 }
 
-resource "google_project_iam_member" "cicd_service_account_act_as" {
-  project = var.PROJECT
-  member  = "serviceAccount:${google_service_account.cicd_service_account.email}"
-  role    = "roles/iam.serviceAccountUser"
-}
 output "cicd_service_account_email" {
   value = google_service_account.cicd_service_account.email
 }

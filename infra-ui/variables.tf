@@ -1,3 +1,8 @@
+variable "PROJECT" {
+  type        = string
+  description = "GCP Project ID"
+}
+
 variable "GCP_API_URL" {
   type        = string
   description = "Products API URL"

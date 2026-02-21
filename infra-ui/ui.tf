@@ -17,8 +17,13 @@ resource "google_cloud_run_v2_service" "ui_service" {
   invoker_iam_disabled = true
 
   template {
-    timeout         = "5s"
+    timeout         = "30s"
     service_account = google_service_account.cloud_run_ui_sa.email
+
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 3
+    }
 
     containers {
       name  = "${var.APP_NAME}-ui"
@@ -26,6 +31,14 @@ resource "google_cloud_run_v2_service" "ui_service" {
       ports {
         container_port = 8080
       }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+      }
+
       env {
         name  = "API_BASE_URL"
         value = var.GCP_API_URL
@@ -34,9 +47,32 @@ resource "google_cloud_run_v2_service" "ui_service" {
         name  = "USE_API_MOCKS"
         value = "false"
       }
+
+      startup_probe {
+        http_get {
+          path = "/"
+          port = 8080
+        }
+        initial_delay_seconds = 2
+        period_seconds        = 5
+        failure_threshold     = 3
+      }
+
+      liveness_probe {
+        http_get {
+          path = "/"
+          port = 8080
+        }
+        period_seconds    = 15
+        failure_threshold = 3
+      }
     }
-
-
   }
+}
 
+# ------------------------------
+# Outputs
+# ------------------------------
+output "ui_service_url" {
+  value = google_cloud_run_v2_service.ui_service.uri
 }
