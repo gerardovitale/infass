@@ -11,9 +11,14 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'search_term is required' }, { status: 400 });
     }
 
-    const client = await getClient();
-    const res = await client.fetch(
-        `${process.env.API_BASE_URL}/products/search?search_term=${encodeURIComponent(searchTerm)}&limit=${limit}&offset=${offset}`
-    );
-    return NextResponse.json(res.data);
+    try {
+        const client = await getClient();
+        const res = await client.fetch(
+            `${process.env.API_BASE_URL}/products/search?search_term=${encodeURIComponent(searchTerm)}&limit=${limit}&offset=${offset}`
+        );
+        return NextResponse.json(res.data);
+    } catch (error) {
+        console.error('Search API error:', error);
+        return NextResponse.json({ error: 'Failed to fetch search results' }, { status: 502 });
+    }
 }

@@ -18,6 +18,12 @@ export default function InfiniteProductList({ initialProducts, initialHasMore, s
     const [offset, setOffset] = useState(limit);
     const sentinelRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        setProducts(initialProducts);
+        setHasMore(initialHasMore);
+        setOffset(limit);
+    }, [searchTerm, initialProducts, initialHasMore, limit]);
+
     const loadMore = useCallback(async () => {
         if (isLoading || !hasMore) return;
         setIsLoading(true);

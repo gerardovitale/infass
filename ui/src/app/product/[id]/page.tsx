@@ -7,8 +7,15 @@ import { PageProps } from '../../../../.next/types/app/layout';
 export default async function ProductPage({ params }: PageProps) {
     const { id } = await params;
     const URL = `${process.env.API_BASE_URL}/products/${id}`;
-    const client = await getClient();
-    const res = await client.fetch(URL);
+    let res;
+    try {
+        const client = await getClient();
+        res = await client.fetch(URL);
+    } catch (error) {
+        const cause = error instanceof Error ? error.cause : undefined;
+        console.error('Failed to fetch product:', error, 'cause:', JSON.stringify(cause));
+        throw error;
+    }
     if (res.status !== 200) {
         switch (res.status) {
             case 404:
