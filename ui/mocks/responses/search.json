@@ -4,48 +4,56 @@
             "id": "1",
             "name": "Product 1",
             "size": "Size M",
+            "categories": "Category 1",
+            "subcategories": "Subcategory 1",
             "current_price": 19.99,
-            "category": "Category 1",
-            "priceDetails": [
+            "price_details": [
                 {
-                    "date": "Jan 2023",
-                    "max_available": 4200,
+                    "date": "2023-01-15",
+                    "price": 4200,
+                    "sma7": 4000,
                     "sma15": 2100,
                     "sma30": 1400
                 },
                 {
-                    "date": "Feb 2023",
-                    "max_available": 3500,
+                    "date": "2023-02-15",
+                    "price": 3500,
+                    "sma7": 3400,
                     "sma15": 2000,
                     "sma30": 1350
                 },
                 {
-                    "date": "Mar 2023",
-                    "max_available": 5000,
+                    "date": "2023-03-15",
+                    "price": 5000,
+                    "sma7": 4800,
                     "sma15": 2500,
                     "sma30": 1500
                 },
                 {
-                    "date": "Apr 2023",
-                    "max_available": 4800,
+                    "date": "2023-04-15",
+                    "price": 4800,
+                    "sma7": 4700,
                     "sma15": 2400,
                     "sma30": 1450
                 },
                 {
-                    "date": "May 2023",
-                    "max_available": 4700,
+                    "date": "2023-05-15",
+                    "price": 4700,
+                    "sma7": 4600,
                     "sma15": 2400,
                     "sma30": 1450
                 },
                 {
-                    "date": "Jun 2023",
-                    "max_available": 5000,
+                    "date": "2023-06-15",
+                    "price": 5000,
+                    "sma7": 4900,
                     "sma15": 2800,
                     "sma30": 1450
                 },
                 {
-                    "date": "Jul 2023",
-                    "max_available": 5100,
+                    "date": "2023-07-15",
+                    "price": 5100,
+                    "sma7": 5000,
                     "sma15": 2400,
                     "sma30": 1450
                 }
@@ -55,15 +63,19 @@
             "id": "2",
             "name": "Product 2",
             "size": "Size L",
+            "categories": "Category 1",
+            "subcategories": "Subcategory 2",
             "current_price": 29.99,
-            "category": "Category 1"
+            "price_details": []
         },
         {
             "id": "3",
             "name": "Product 3",
             "size": "Size S",
+            "categories": "Category 1",
+            "subcategories": "Subcategory 3",
             "current_price": 39.99,
-            "category": "Category 1"
+            "price_details": []
         }
     ]
 }

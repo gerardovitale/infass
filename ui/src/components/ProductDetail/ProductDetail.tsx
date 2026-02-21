@@ -1,7 +1,7 @@
 'use client';
 
 import { Product } from '@/types';
-import Image from 'next/image';
+import { ProductImage } from '@/components/ProductImage/ProductImage';
 import { useRouter } from 'next/navigation';
 import { ProductDetailChart } from './ProductDetailChart';
 
@@ -9,7 +9,6 @@ type Props = {
     product: Product;
 };
 export const ProductDetail = ({ product }: Props) => {
-    const fallbackImage = '/images/default-image.png';
     const router = useRouter();
 
     return (
@@ -32,8 +31,8 @@ export const ProductDetail = ({ product }: Props) => {
                     <p className="text-xl font-bold text-blue-600">
                         {product.current_price?.toFixed(2) ?? '-'}€
                     </p>
-                    <Image
-                        src={product.image_url || fallbackImage}
+                    <ProductImage
+                        src={product.image_url}
                         alt={product.name}
                         width={200}
                         height={200}
