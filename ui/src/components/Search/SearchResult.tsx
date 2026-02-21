@@ -1,4 +1,5 @@
 import { getClient } from '@/auth/getClient';
+import { logger } from '@/lib/logger';
 import { ProductResponse } from '@/types';
 import NoResults from '../ProductList/NoResults';
 import InfiniteProductList from '../ProductList/InfiniteProductList';
@@ -10,15 +11,11 @@ type Props = {
 };
 
 export default async function SearchResult(props: Props) {
-    console.log('About to fetch search results for:', props.productSearched);
-    console.log('API Base URL:', process.env.API_BASE_URL);
-
     try {
         const client = await getClient();
         const res = await client.fetch(
             `${process.env.API_BASE_URL}/products/search?search_term=${props.productSearched}&limit=${SEARCH_LIMIT}&offset=0`
         );
-        console.log('Fetch response:', res);
         const response = res.data as ProductResponse;
         if (!response || response.total_results === 0) {
             return <NoResults />;
@@ -33,7 +30,7 @@ export default async function SearchResult(props: Props) {
             />
         );
     } catch (error) {
-        console.error('Error fetching search results:', error);
+        logger.error('Error fetching search results', error instanceof Error ? error : undefined);
         return <NoResults />;
     }
 }

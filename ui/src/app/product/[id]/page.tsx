@@ -1,4 +1,5 @@
 import { getClient } from '@/auth/getClient';
+import { logger } from '@/lib/logger';
 import { ProductDetail } from '@/components/ProductDetail/ProductDetail';
 import { Product } from '@/types';
 import { notFound } from 'next/navigation';
@@ -12,8 +13,7 @@ export default async function ProductPage({ params }: PageProps) {
         const client = await getClient();
         res = await client.fetch(URL);
     } catch (error) {
-        const cause = error instanceof Error ? error.cause : undefined;
-        console.error('Failed to fetch product:', error, 'cause:', JSON.stringify(cause));
+        logger.error('Failed to fetch product', error instanceof Error ? error : undefined);
         throw error;
     }
     if (res.status !== 200) {

@@ -1,4 +1,5 @@
 import { getClient } from '@/auth/getClient';
+import { logger } from '@/lib/logger';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
         );
         return NextResponse.json(res.data);
     } catch (error) {
-        console.error('Search API error:', error);
+        logger.error('Search API error', error instanceof Error ? error : undefined);
         return NextResponse.json({ error: 'Failed to fetch search results' }, { status: 502 });
     }
 }
