@@ -108,7 +108,8 @@ class CarrExtractor(Extractor):
         except Exception as e:
             logger.info(f"No 'Reject All' cookies consent dialog found or error: {e}")
 
-    def wait_for_category_links(self, driver: webdriver.Chrome) -> List[str]:
+    def get_category_links(self, driver: webdriver.Chrome) -> List[Tuple[str, str]]:
+        """Return (name, href) tuples for top-level categories."""
         logger.info("Waiting for Carrefour category links to load")
         try:
             WebDriverWait(driver, self.WAIT_TIMEOUT).until(
@@ -121,7 +122,7 @@ class CarrExtractor(Extractor):
             return []
 
         elements = driver.find_elements(By.CSS_SELECTOR, self.CATEGORY_LINK_SELECTOR)
-        category_names = []
+        categories = []
         for el in elements:
             name = el.text.strip()
             href = el.get_attribute("href") or ""
@@ -129,17 +130,9 @@ class CarrExtractor(Extractor):
                 continue
             if "/cat" not in href:
                 continue
-            category_names.append(name)
-        logger.info(f"Found {len(category_names)} Carrefour categories: {category_names}")
-        return category_names
-
-    def click_category(self, driver: webdriver.Chrome, category_name: str):
-        elements = driver.find_elements(By.CSS_SELECTOR, self.CATEGORY_LINK_SELECTOR)
-        for el in elements:
-            if el.text.strip() == category_name:
-                driver.execute_script("arguments[0].click();", el)
-                return
-        raise Exception(f"Category link '{category_name}' not found in DOM")
+            categories.append((name, href))
+        logger.info(f"Found {len(categories)} Carrefour categories: {[c[0] for c in categories]}")
+        return categories
 
     def get_subcategory_links(self, driver: webdriver.Chrome) -> List[Tuple[str, str]]:
         """Return (name, href) tuples for second-level subcategories, if any."""
@@ -177,18 +170,6 @@ class CarrExtractor(Extractor):
                 break
         logger.info(f"Collected {len(pages)} page(s) for category")
         return pages
-
-    def navigate_back_to_main(self, driver: webdriver.Chrome) -> bool:
-        driver.get(self.data_source_url)
-        try:
-            WebDriverWait(driver, self.WAIT_TIMEOUT).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, self.CATEGORY_LINK_SELECTOR))
-            )
-            return True
-        except Exception:
-            logger.error("Failed to navigate back to main page after category extraction")
-            self.save_debug_html(driver, "carr_back_navigation_failed")
-            return False
 
     def _wait_for_products(self, driver: webdriver.Chrome, label: str) -> bool:
         """Wait for product cards to appear. Returns True if products found."""
@@ -234,16 +215,14 @@ class CarrExtractor(Extractor):
                 logger.warning(f"Cookie handling failed: {e}")
 
             self.save_debug_html(driver, "carr_after_cookies")
-            category_names = self.wait_for_category_links(driver)
+            categories = self.get_category_links(driver)
             product_gen_list = []
             stop = False
 
-            for category_name in category_names:
-                navigated = False
+            for category_name, category_href in categories:
                 try:
-                    logger.info(f"Clicking category: {category_name}")
-                    self.click_category(driver, category_name)
-                    navigated = True
+                    logger.info(f"Navigating to category: {category_name} ({category_href})")
+                    driver.get(category_href)
 
                     # Check for subcategories before waiting for products
                     try:
@@ -272,8 +251,6 @@ class CarrExtractor(Extractor):
                                 break
                     else:
                         if not self._wait_for_products(driver, category_name):
-                            if not self.navigate_back_to_main(driver):
-                                break
                             continue
 
                         product_gen_list.append(self._extract_products_from_current_page(driver, category_name))
@@ -281,10 +258,6 @@ class CarrExtractor(Extractor):
                 except Exception as e:
                     logger.error(f"Failed to extract category {category_name}: {e}")
                     self.save_debug_html(driver, f"carr_category_error_{category_name}")
-
-                if navigated:
-                    if not self.navigate_back_to_main(driver):
-                        break
 
                 if stop or self.break_early:
                     break
