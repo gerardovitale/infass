@@ -22,7 +22,7 @@ jobs:
       region: europe-southwest1
       app_name: infass
       component: ingestor-carr
-      args: "https://www.carrefour.es,gs://infass-carr/carr"
+      args: "https://www.carrefour.es/supermercado,gs://infass-carr/carr"
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
