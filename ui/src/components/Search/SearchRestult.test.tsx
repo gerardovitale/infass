@@ -2,6 +2,18 @@ import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
 import SearchResult from './SearchResult';
 
+jest.mock('../ProductList/InfiniteProductList', () => {
+    return function MockInfiniteProductList(props: { initialProducts: { id: string }[] }) {
+        return (
+            <ul>
+                {props.initialProducts.map((p) => (
+                    <li key={p.id}>{p.id}</li>
+                ))}
+            </ul>
+        );
+    };
+});
+
 const mockedProducts = {
     results: [
         {
@@ -20,6 +32,9 @@ const mockedProducts = {
         },
     ],
     total_results: 2,
+    limit: 20,
+    offset: 0,
+    has_more: false,
 };
 const fetchMock = jest.fn();
 
@@ -53,7 +68,7 @@ describe('SearchResult', () => {
     it('should render an empty list if no search results are found', async () => {
         fetchMock.mockResolvedValueOnce({
             status: 200,
-            data: { results: [], total_results: 0 },
+            data: { results: [], total_results: 0, limit: 20, offset: 0, has_more: false },
         });
         const { queryByText } = await renderSearchPage();
         const noResults = queryByText('No products found');

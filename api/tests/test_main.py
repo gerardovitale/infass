@@ -32,7 +32,7 @@ def override_product_search_response():
         ),
     ]
     service = MagicMock()
-    service.search.return_value = test_product_search_response
+    service.search.return_value = (test_product_search_response, 1)
     return service
 
 
@@ -40,7 +40,12 @@ def test_search_endpoint(client):
     app.dependency_overrides[get_product_service] = override_product_search_response
     response = client.get("/products/search", params={"search_term": "cola"})
     assert response.status_code == 200
-    assert response.json()["query"] == "cola"
+    data = response.json()
+    assert data["query"] == "cola"
+    assert data["total_results"] == 1
+    assert data["limit"] == 20
+    assert data["offset"] == 0
+    assert data["has_more"] is False
     app.dependency_overrides.clear()
 
 
@@ -49,6 +54,44 @@ def test_search_endpoint_empty(client):
     response = client.get("/products/search", params={"search_term": ""})
     assert response.status_code == 400
     assert response.json() == {"detail": "Search term cannot be empty"}
+    app.dependency_overrides.clear()
+
+
+def test_search_endpoint_with_pagination(client):
+    products = [
+        Product(
+            id=str(i),
+            name=f"Product {i}",
+            size="100ml",
+            categories="Cat",
+            subcategories="Sub",
+            current_price=1.0,
+            image_url=None,
+        )
+        for i in range(5)
+    ]
+    service = MagicMock()
+    service.search.return_value = (products, 25)
+    app.dependency_overrides[get_product_service] = lambda: service
+    response = client.get("/products/search", params={"search_term": "product", "limit": 5, "offset": 0})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_results"] == 25
+    assert data["limit"] == 5
+    assert data["offset"] == 0
+    assert data["has_more"] is True
+    assert len(data["results"]) == 5
+    app.dependency_overrides.clear()
+
+
+def test_search_endpoint_limit_validation(client):
+    app.dependency_overrides[get_product_service] = override_product_search_response
+    response = client.get("/products/search", params={"search_term": "cola", "limit": 200})
+    assert response.status_code == 422
+    response = client.get("/products/search", params={"search_term": "cola", "limit": 0})
+    assert response.status_code == 422
+    response = client.get("/products/search", params={"search_term": "cola", "offset": -1})
+    assert response.status_code == 422
     app.dependency_overrides.clear()
 
 
