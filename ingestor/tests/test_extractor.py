@@ -50,10 +50,6 @@ class TestExtractor(BasicTestCase):
         self.addCleanup(logger_patch.stop)
         self.mock_logger = logger_patch.start()
 
-        time_patch = patch("extractor.merc_extractor.time.sleep")
-        self.addCleanup(time_patch.stop)
-        self.mock_sleep = time_patch.start()
-
         self.test_html = get_test_html()
 
     def test_extract_product_data(self):

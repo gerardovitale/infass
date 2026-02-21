@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any
 from typing import Dict
 from typing import Generator
@@ -12,6 +11,7 @@ from bs4 import BeautifulSoup
 from extractor import Extractor
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.expected_conditions import presence_of_element_located
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class MercExtractor(Extractor):
     POSTAL_CODE = "28050"
-    WAIT_CONTENT_TIME_SLEEP = 2
+    WAIT_TIMEOUT = 10
     COOKIES_BUTTON_XPATH = "//button[contains(text(), 'Aceptar')]"
     POSTAL_CODE_INPUT_BOX_SELECTOR = "[data-testid='postal-code-checker-input']"
     CATEGORY_SELECTOR = ".category-menu__item button span label"
@@ -41,21 +41,38 @@ class MercExtractor(Extractor):
 
     def enter_postal_code(self, driver: webdriver.Chrome):
         logger.info(f"Entering postal code: {self.POSTAL_CODE}")
-        wait = WebDriverWait(driver, 10)
+        wait = WebDriverWait(driver, self.WAIT_TIMEOUT)
         postal_code_input = wait.until(
             presence_of_element_located((By.CSS_SELECTOR, self.POSTAL_CODE_INPUT_BOX_SELECTOR))
         )
         postal_code_input.send_keys(self.POSTAL_CODE)
         postal_code_input.send_keys(Keys.ENTER)
         logger.info("Waiting for main content to load after entering postal code")
-        time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
+        WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+            presence_of_element_located((By.CSS_SELECTOR, self.CATEGORY_BUTTON_SELECTOR))
+        )
+
+    @staticmethod
+    def _click_element(by: str, value: str):
+        def _attempt(driver):
+            element = driver.find_element(by, value)
+            element.click()
+            return True
+
+        return _attempt
 
     def navigate_to_categories(self, driver: webdriver.Chrome):
         logger.info("Clicking the Categories button to view categories")
         try:
-            categories_button = driver.find_element(By.CSS_SELECTOR, self.CATEGORY_BUTTON_SELECTOR)
-            categories_button.click()
-            time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
+            wait = WebDriverWait(
+                driver,
+                self.WAIT_TIMEOUT,
+                ignored_exceptions=[StaleElementReferenceException, NoSuchElementException],
+            )
+            wait.until(self._click_element(By.CSS_SELECTOR, self.CATEGORY_BUTTON_SELECTOR))
+            WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+                presence_of_element_located((By.CSS_SELECTOR, self.CATEGORY_SELECTOR))
+            )
         except NoSuchElementException:
             logger.error(
                 f"Could not find categories button. URL: {driver.current_url}\n"
@@ -85,7 +102,9 @@ class MercExtractor(Extractor):
             subcategory_button.click()
 
         logger.info(f"Extracting page source for category '{category_name}', subcategory '{subcategory_name}'")
-        time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
+        WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+            presence_of_element_located((By.CSS_SELECTOR, "[data-testid='product-cell']"))
+        )
         return extract_product_data(driver.page_source, f"{category_name} > {subcategory_name}")
 
     def get_page_sources(self) -> List[Generator[Dict[str, Any], None, None]]:
@@ -94,7 +113,9 @@ class MercExtractor(Extractor):
 
         try:
             driver.get(self.data_source_url)
-            time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
+            WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+                presence_of_element_located((By.XPATH, self.COOKIES_BUTTON_XPATH))
+            )
 
             try:
                 self.accept_cookies(driver)
@@ -118,7 +139,9 @@ class MercExtractor(Extractor):
                         By.XPATH, self.CATEGORY_BUTTON_SELECTOR_TEMPLATE.format(category_name)
                     )
                     category_button.click()
-                    time.sleep(self.WAIT_CONTENT_TIME_SLEEP)
+                    WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+                        presence_of_element_located((By.CSS_SELECTOR, self.SUBCATEGORY_SELECTOR))
+                    )
                 except NoSuchElementException:
                     logger.error(
                         f"Could not find category button for '{category_name}'. URL: {driver.current_url}\n"
