@@ -30,7 +30,7 @@ resource "google_cloud_run_v2_job" "transformer_job" {
       service_account = google_service_account.transformer_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer:${var.DOCKER_IMAGE_TAG_TRANSFORMER}"
         resources {
           limits = {
             cpu    = "1"
@@ -76,7 +76,7 @@ resource "google_cloud_run_v2_job" "transformer_v2_job" {
       service_account = google_service_account.transformer_sa.email
 
       containers {
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer-v2:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/${var.APP_NAME}-transformer-v2:${var.DOCKER_IMAGE_TAG_TRANSFORMER_V2}"
 
         volume_mounts {
           name       = local.volume_name

@@ -3,90 +3,268 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main # Trigger on pushes to the main branch
-    paths:
-      - "**" # Trigger when any file is modified
+      - main
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: "Force all jobs to run"
+        type: boolean
+        default: false
 
 jobs:
-  test:
-    name: Tests
+  # ---------------------------------------------------------------------------
+  # Change detection
+  # ---------------------------------------------------------------------------
+  detect-changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [ ingestor, transformer, transformer-v2, api, ui, retl, insights ]
+    outputs:
+      ingestor: ${{ steps.filter.outputs.ingestor }}
+      transformer: ${{ steps.filter.outputs.transformer }}
+      transformer-v2: ${{ steps.filter.outputs.transformer-v2 }}
+      api: ${{ steps.filter.outputs.api }}
+      ui: ${{ steps.filter.outputs.ui }}
+      retl: ${{ steps.filter.outputs.retl }}
+      insights: ${{ steps.filter.outputs.insights }}
+      dbt: ${{ steps.filter.outputs.dbt }}
+      infra: ${{ steps.filter.outputs.infra }}
+      infra-ui: ${{ steps.filter.outputs.infra-ui }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      any-backend-service: ${{ steps.filter.outputs.any-backend-service }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4.2.2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.7.1
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4.2.3
+      - name: Detect file changes
+        uses: dorny/paths-filter@v3
+        id: filter
         with:
-          path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile.test', matrix.service)) }}
-          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
+          filters: |
+            ingestor:
+              - 'ingestor/**'
+            transformer:
+              - 'transformer/**'
+            transformer-v2:
+              - 'transformer-v2/**'
+            api:
+              - 'api/**'
+            ui:
+              - 'ui/**'
+            retl:
+              - 'retl/**'
+            insights:
+              - 'insights/**'
+            dbt:
+              - 'dbt/**'
+              - '.dbt/**'
+            infra:
+              - 'infra/**'
+            infra-ui:
+              - 'infra-ui/**'
+            workflows:
+              - '.github/workflows/**'
+            any-backend-service:
+              - 'ingestor/**'
+              - 'transformer/**'
+              - 'transformer-v2/**'
+              - 'api/**'
+              - 'retl/**'
+              - 'insights/**'
 
-      - name: Build Test Container
-        working-directory: ${{ matrix.service }}
-        run: |
-          docker buildx build --load \
-            --cache-from=type=local,src=/tmp/.buildx-cache-${{ matrix.service }} \
-            --cache-to=type=local,dest=/tmp/.buildx-cache-${{ matrix.service }} \
-            -f Dockerfile.test -t test-image .
+  # ---------------------------------------------------------------------------
+  # Test jobs
+  # ---------------------------------------------------------------------------
+  test-ingestor:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.ingestor == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: ingestor
 
-      - name: Run Tests
-        working-directory: ${{ matrix.service }}
-        run: docker run --rm test-image
+  test-transformer:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.transformer == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: transformer
 
-  build-and-push:
-    name: Build and Push
-    runs-on: ubuntu-latest
-    needs: test
-    strategy:
-      matrix:
-        service: [ ingestor, transformer, transformer-v2, api, ui, retl, insights ]
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4.2.2
+  test-transformer-v2:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs['transformer-v2'] == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: transformer-v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.7.1
+  test-api:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.api == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: api
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4.2.3
-        with:
-          path: /tmp/.buildx-cache-${{ matrix.service }}
-          key: ${{ runner.os }}-buildx-${{ matrix.service }}-${{ hashFiles(format('{0}/Dockerfile', matrix.service)) }}
-          restore-keys: ${{ runner.os }}-buildx-${{ matrix.service }}-
+  test-ui:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.ui == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: ui
 
-      - name: Log in to Docker Registry
-        uses: docker/login-action@v3.3.0
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+  test-retl:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.retl == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: retl
 
-      - name: Build Docker Image
-        working-directory: ${{ matrix.service }}
-        run: |
-          docker buildx build --load \
-            --cache-from=type=local,src=/tmp/.buildx-cache-${{ matrix.service }} \
-            --cache-to=type=local,dest=/tmp/.buildx-cache-${{ matrix.service }} \
-            -t ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} .
+  test-insights:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.insights == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
+    uses: ./.github/workflows/test-service.yml
+    with:
+      service: insights
 
-      - name: Push Docker Image
-        working-directory: ${{ matrix.service }}
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7}
-          docker tag ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:${GITHUB_SHA::7} \
-            ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/infass-${{ matrix.service }}:latest
+  # ---------------------------------------------------------------------------
+  # Build jobs
+  # ---------------------------------------------------------------------------
+  build-ingestor:
+    needs: [detect-changes, test-ingestor]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.ingestor == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: ingestor
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
+  build-transformer:
+    needs: [detect-changes, test-transformer]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.transformer == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: transformer
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  build-transformer-v2:
+    needs: [detect-changes, test-transformer-v2]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs['transformer-v2'] == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: transformer-v2
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  build-api:
+    needs: [detect-changes, test-api]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.api == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: api
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  build-ui:
+    needs: [detect-changes, test-ui]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.ui == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: ui
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  build-retl:
+    needs: [detect-changes, test-retl]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.retl == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: retl
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  build-insights:
+    needs: [detect-changes, test-insights]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.insights == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
+    uses: ./.github/workflows/build-service.yml
+    with:
+      service: insights
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+  # ---------------------------------------------------------------------------
+  # Terraform deploy
+  # ---------------------------------------------------------------------------
   terraform-deploy:
     name: Deploy infra with tf
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs:
+      - detect-changes
+      - build-ingestor
+      - build-transformer
+      - build-transformer-v2
+      - build-api
+      - build-retl
+      - build-insights
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.any-backend-service == 'true' ||
+       needs.detect-changes.outputs.infra == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
     env:
       TF_VAR_APP_NAME: infass
       TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
@@ -97,7 +275,7 @@ jobs:
       # TF_VAR_TRANSFORMER_LIMIT: -1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -121,20 +299,74 @@ jobs:
         working-directory: ./infra
         run: terraform init
 
+      - name: Determine Docker image tags
+        id: tags
+        working-directory: ./infra
+        run: |
+          FORCE="${{ inputs.force_all }}"
+          WF="${{ needs.detect-changes.outputs.workflows }}"
+
+          # Read current tags from Terraform state (last successful apply).
+          # For unchanged services we re-use the existing tag so Terraform
+          # sees no diff and skips redeployment.
+          current_tag() {
+            terraform output -raw "$1" 2>/dev/null || echo "${GITHUB_SHA::7}"
+          }
+
+          resolve_tag() {
+            local KEY="$1" CHANGED="$2"
+            if [[ "$CHANGED" == "true" || "$FORCE" == "true" || "$WF" == "true" ]]; then
+              echo "${GITHUB_SHA::7}"
+            else
+              current_tag "docker_image_tag_$(echo "$KEY" | tr '[:upper:]' '[:lower:]')"
+            fi
+          }
+
+          {
+            echo "tag_INGESTOR=$(resolve_tag INGESTOR '${{ needs.detect-changes.outputs.ingestor }}')"
+            echo "tag_TRANSFORMER=$(resolve_tag TRANSFORMER '${{ needs.detect-changes.outputs.transformer }}')"
+            echo "tag_TRANSFORMER_V2=$(resolve_tag TRANSFORMER_V2 '${{ needs.detect-changes.outputs['transformer-v2'] }}')"
+            echo "tag_API=$(resolve_tag API '${{ needs.detect-changes.outputs.api }}')"
+            echo "tag_RETL=$(resolve_tag RETL '${{ needs.detect-changes.outputs.retl }}')"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Plan Terraform changes
         id: plan
         working-directory: ./infra
-        run: terraform plan -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+        run: |
+          terraform plan \
+            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
+            -var "DOCKER_IMAGE_TAG_TRANSFORMER=${{ steps.tags.outputs.tag_TRANSFORMER }}" \
+            -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
+            -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
+            -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
 
       - name: Apply Terraform changes
         id: apply
         working-directory: ./infra
-        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+        run: |
+          terraform apply -auto-approve \
+            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
+            -var "DOCKER_IMAGE_TAG_TRANSFORMER=${{ steps.tags.outputs.tag_TRANSFORMER }}" \
+            -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
+            -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
+            -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
 
+  # ---------------------------------------------------------------------------
+  # Terraform deploy (UI)
+  # ---------------------------------------------------------------------------
   terraform-ui-deploy:
     name: Deploy UI with tf
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs:
+      - detect-changes
+      - build-ui
+    if: >-
+      always() && !failure() && !cancelled() &&
+      (needs.detect-changes.outputs.ui == 'true' ||
+       needs.detect-changes.outputs.infra-ui == 'true' ||
+       needs.detect-changes.outputs.workflows == 'true' ||
+       inputs.force_all == true)
     env:
       TF_VAR_APP_NAME: infass
       TF_VAR_REGION: europe-southwest1
@@ -142,7 +374,7 @@ jobs:
       TF_VAR_GCP_API_URL: ${{ vars.GCP_API_URL }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4.2.2
 
       - name: Authenticate to Google Cloud
         id: auth
@@ -166,17 +398,37 @@ jobs:
         working-directory: ./infra-ui
         run: terraform init
 
+      - name: Determine Docker image tag
+        id: tag
+        working-directory: ./infra-ui
+        run: |
+          if [[ "${{ needs.detect-changes.outputs.ui }}" == "true" \
+              || "${{ inputs.force_all }}" == "true" \
+              || "${{ needs.detect-changes.outputs.workflows }}" == "true" ]]; then
+            echo "docker_tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          else
+            echo "docker_tag=$(terraform output -raw docker_image_tag 2>/dev/null || echo "${GITHUB_SHA::7}")" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Plan Terraform changes
         id: plan
         working-directory: ./infra-ui
-        run: terraform plan -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+        run: terraform plan -var "DOCKER_IMAGE_TAG=${{ steps.tag.outputs.docker_tag }}"
 
       - name: Apply Terraform changes
         id: apply
         working-directory: ./infra-ui
-        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${GITHUB_SHA::7}"
+        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${{ steps.tag.outputs.docker_tag }}"
 
+  # ---------------------------------------------------------------------------
+  # dbt
+  # ---------------------------------------------------------------------------
   build-dbt:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.dbt == 'true' ||
+      needs.detect-changes.outputs.workflows == 'true' ||
+      inputs.force_all == true
     uses: ./.github/workflows/run-dbt.yml
     with:
       dbt_profile: infass

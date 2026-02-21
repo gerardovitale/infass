@@ -18,9 +18,29 @@ variable "DOCKER_HUB_USERNAME" {
   description = "DockerHub username"
 }
 
-variable "DOCKER_IMAGE_TAG" {
+variable "DOCKER_IMAGE_TAG_INGESTOR" {
   type        = string
-  description = "Tag to be use when pull image from docker hub"
+  description = "Docker image tag for the ingestor service"
+}
+
+variable "DOCKER_IMAGE_TAG_TRANSFORMER" {
+  type        = string
+  description = "Docker image tag for the transformer service"
+}
+
+variable "DOCKER_IMAGE_TAG_TRANSFORMER_V2" {
+  type        = string
+  description = "Docker image tag for the transformer-v2 service"
+}
+
+variable "DOCKER_IMAGE_TAG_API" {
+  type        = string
+  description = "Docker image tag for the api service"
+}
+
+variable "DOCKER_IMAGE_TAG_RETL" {
+  type        = string
+  description = "Docker image tag for the retl service"
 }
 
 variable "GCP_USER" {

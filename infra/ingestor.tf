@@ -141,7 +141,7 @@ resource "google_cloud_run_v2_job" "ingestor_job" {
 
       containers {
         name  = "ingestor-merc"
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG_INGESTOR}"
         resources {
           limits = {
             cpu    = "1"
@@ -170,7 +170,7 @@ resource "google_cloud_run_v2_job" "ingestor_carr_job" {
 
       containers {
         name  = "ingestor-carr"
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG_INGESTOR}"
         resources {
           limits = {
             cpu    = "1"

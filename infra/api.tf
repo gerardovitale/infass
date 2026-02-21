@@ -65,7 +65,7 @@ resource "google_cloud_run_v2_service" "api_service" {
 
     containers {
       name  = "infass-api"
-      image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-api:${var.DOCKER_IMAGE_TAG}"
+      image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-api:${var.DOCKER_IMAGE_TAG_API}"
       ports {
         container_port = 8080
       }
@@ -124,7 +124,7 @@ resource "google_cloud_run_v2_job" "reversed_etl_job" {
 
       containers {
         name  = "infass-reversed-etl"
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG_RETL}"
         resources {
           limits = {
             cpu    = "1"
@@ -174,7 +174,7 @@ resource "google_cloud_run_v2_job" "test_reversed_etl_job" {
 
       containers {
         name  = "infass-reversed-etl"
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG}"
+        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-retl:${var.DOCKER_IMAGE_TAG_RETL}"
         volume_mounts {
           name       = local.volume_name
           mount_path = local.volume_mount_path
