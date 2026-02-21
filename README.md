@@ -1,1 +1,3 @@
 [![CI/CD Pipeline](https://github.com/gerardovitale/infass/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/gerardovitale/infass/actions/workflows/ci-cd.yml)
+[![Trigger Ingestor](https://github.com/gerardovitale/infass/actions/workflows/trigger-ingestion.yml/badge.svg)](https://github.com/gerardovitale/infass/actions/workflows/trigger-ingestion.yml)
+[![Trigger Transformations and Reversed ETL](https://github.com/gerardovitale/infass/actions/workflows/trigger-transformations.yml/badge.svg)](https://github.com/gerardovitale/infass/actions/workflows/trigger-transformations.yml)
