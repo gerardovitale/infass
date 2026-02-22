@@ -8,9 +8,11 @@ from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from urllib.parse import urljoin
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
 
+import requests as http_requests
 from bs4 import BeautifulSoup
 from extractor import Extractor
 from selenium import webdriver
@@ -83,7 +85,7 @@ def extract_carr_product_data(
 
 
 class CarrExtractor(Extractor):
-    WAIT_TIMEOUT = 30
+    WAIT_TIMEOUT = 10
     COOKIES_BUTTON_ID = "onetrust-reject-all-handler"
     CATEGORY_LINK_SELECTOR = ".nav-first-level-categories__slide a"
     SUBCATEGORY_LINK_SELECTOR = ".nav-second-level-categories__slide a"
@@ -148,27 +150,102 @@ class CarrExtractor(Extractor):
             logger.info(f"Found {len(subcategories)} subcategories: {[s[0] for s in subcategories]}")
         return subcategories
 
+    @staticmethod
+    def _build_requests_session(driver: webdriver.Chrome) -> http_requests.Session:
+        """Transfer cookies and user-agent from Selenium to a requests Session."""
+        session = http_requests.Session()
+        for cookie in driver.get_cookies():
+            session.cookies.set(cookie["name"], cookie["value"], domain=cookie.get("domain", ""))
+        user_agent = driver.execute_script("return navigator.userAgent")
+        session.headers.update({"User-Agent": user_agent})
+        return session
+
+    @staticmethod
+    def _try_requests_fetch(session: http_requests.Session, url: str) -> Optional[str]:
+        """Fetch a page via HTTP and return HTML if product cards are present (SSR), else None."""
+        try:
+            resp = session.get(url, timeout=15)
+            resp.raise_for_status()
+            if "product-card__parent" in resp.text:
+                return resp.text
+        except Exception as e:
+            logger.debug(f"requests fetch failed for {url}: {e}")
+        return None
+
+    def _find_next_page_url(self, driver: webdriver.Chrome) -> Optional[str]:
+        """Find the next-page URL from the pagination 'next' button. Returns None on last page."""
+        try:
+            next_span = driver.find_element(By.CSS_SELECTOR, self.PAGINATION_NEXT_SELECTOR)
+            parent = next_span.find_element(By.XPATH, "..")
+            if parent.tag_name != "a":
+                return None
+            return parent.get_attribute("href") or None
+        except Exception:
+            return None
+
+    def _find_next_page_url_from_html(self, page_source: str) -> Optional[str]:
+        """Extract the next-page URL from static HTML (for requests-fetched pages)."""
+        soup = BeautifulSoup(page_source, "html.parser")
+        next_span = soup.select_one(self.PAGINATION_NEXT_SELECTOR)
+        if not next_span:
+            return None
+        parent = next_span.parent
+        if not parent or parent.name != "a":
+            return None
+        href = parent.get("href")
+        if not href:
+            return None
+        if not href.startswith("http"):
+            href = urljoin(self.base_url, href)
+        return href
+
     def get_all_page_sources(self, driver: webdriver.Chrome) -> List[Tuple[str, str]]:
         """Collect (page_url, page_source) tuples from all paginated pages of the current category."""
-        pages = []
-        while True:
-            pages.append((driver.current_url, driver.page_source))
-            try:
-                next_span = driver.find_element(By.CSS_SELECTOR, self.PAGINATION_NEXT_SELECTOR)
-                # The href lives on the parent <a> that wraps the span; a bare <span> means last page
-                parent = next_span.find_element(By.XPATH, "..")
-                if parent.tag_name != "a":
-                    break
-                next_url = parent.get_attribute("href")
+        pages = [(driver.current_url, driver.page_source)]
+
+        # Find the first next-page URL using Selenium (proven approach)
+        next_url = self._find_next_page_url(driver)
+        if not next_url:
+            logger.info("Collected 1 page(s) for category (no pagination)")
+            return pages
+
+        # Probe SSR: try fetching the next page via requests
+        session = self._build_requests_session(driver)
+        probe_html = self._try_requests_fetch(session, next_url)
+
+        if probe_html is not None:
+            # SSR confirmed — use requests for all remaining pages
+            logger.info("SSR detected, using requests for pagination")
+            pages.append((next_url, probe_html))
+            current_html = probe_html
+
+            # Follow next-page links via HTML parsing
+            while True:
+                next_url = self._find_next_page_url_from_html(current_html)
                 if not next_url:
                     break
-                logger.info(f"Navigating to next page: {next_url}")
-                driver.get(next_url)
-                WebDriverWait(driver, self.WAIT_TIMEOUT).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, self.PAGINATION_SELECTOR))
-                )
-            except Exception:
-                break
+                html = self._try_requests_fetch(session, next_url)
+                if html is None:
+                    logger.warning(f"SSR fetch failed for {next_url}, stopping pagination")
+                    break
+                pages.append((next_url, html))
+                current_html = html
+        else:
+            # CSR fallback — use Selenium for all pagination (original approach)
+            logger.info("CSR detected, using Selenium for pagination")
+            while next_url:
+                try:
+                    logger.info(f"Navigating to next page: {next_url}")
+                    driver.get(next_url)
+                    WebDriverWait(driver, self.WAIT_TIMEOUT).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, self.PRODUCT_CARD_SELECTOR))
+                    )
+                    pages.append((driver.current_url, driver.page_source))
+                    next_url = self._find_next_page_url(driver)
+                except Exception:
+                    logger.warning(f"Failed to load page {next_url}, stopping pagination")
+                    break
+
         logger.info(f"Collected {len(pages)} page(s) for category")
         return pages
 
@@ -181,7 +258,7 @@ class CarrExtractor(Extractor):
             # Wait for the full product list to render (pagination appears once all products load).
             # Categories with fewer than 24 products may not have pagination; ignore the timeout.
             try:
-                WebDriverWait(driver, 5).until(
+                WebDriverWait(driver, 2).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, self.PAGINATION_SELECTOR))
                 )
             except Exception:
@@ -209,14 +286,17 @@ class CarrExtractor(Extractor):
 
         try:
             driver.get(self.data_source_url)
-            self.save_debug_html(driver, "carr_initial_load")
+            if self.is_test_mode:
+                self.save_debug_html(driver, "carr_initial_load")
 
             try:
                 self.accept_cookies(driver)
             except Exception as e:
                 logger.warning(f"Cookie handling failed: {e}")
 
-            self.save_debug_html(driver, "carr_after_cookies")
+            if self.is_test_mode:
+                self.save_debug_html(driver, "carr_after_cookies")
+
             categories = self.get_category_links(driver)
             product_gen_list = []
             stop = False
@@ -228,7 +308,7 @@ class CarrExtractor(Extractor):
 
                     # Check for subcategories before waiting for products
                     try:
-                        WebDriverWait(driver, 5).until(
+                        WebDriverWait(driver, 2).until(
                             EC.presence_of_element_located((By.CSS_SELECTOR, self.SUBCATEGORY_LINK_SELECTOR))
                         )
                     except Exception:

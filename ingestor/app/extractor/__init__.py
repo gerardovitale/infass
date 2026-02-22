@@ -44,6 +44,10 @@ class Extractor(metaclass=ABCMeta):
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--blink-settings=imagesEnabled=false")
+        chrome_options.add_argument("--disable-default-apps")
+        chrome_options.add_argument("--disable-translate")
+        chrome_options.add_argument("--disable-background-networking")
+        chrome_options.add_argument("--disable-remote-fonts")
         chrome_options.page_load_strategy = "eager"
         chrome_options.add_argument(
             "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
