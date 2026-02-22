@@ -17,8 +17,8 @@ type Props = {
 };
 
 export const ProductDetailChart = ({ data }: Props) => {
-    const [showSMA15, setShowSMA15] = useState(true);
-    const [showSMA30, setShowSMA30] = useState(true);
+    const [showSMA15, setShowSMA15] = useState(false);
+    const [showSMA30, setShowSMA30] = useState(false);
 
     return (
         <div className="p-4 border rounded-xl bg-white shadow-md">
