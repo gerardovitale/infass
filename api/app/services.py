@@ -20,7 +20,7 @@ class ProductService:
         logger.info(f"ProductService - Found {len(products)} products (total: {total_count}) for query '{query}'")
         return [Product(**product) for product in products], total_count
 
-    def get_enriched_product(self, product_id: str) -> EnrichedProduct:
-        logger.info(f"ProductService - Getting enriched product for product_id '{product_id}'")
-        enriched_product = self.repo.get_enriched_product(product_id)
+    def get_enriched_product(self, product_id: str, months: int = 6) -> EnrichedProduct:
+        logger.info(f"ProductService - Getting enriched product for product_id '{product_id}' (months={months})")
+        enriched_product = self.repo.get_enriched_product(product_id, months=months)
         return EnrichedProduct(**enriched_product)

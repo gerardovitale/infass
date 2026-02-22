@@ -1,6 +1,8 @@
 import os
 import sqlite3
 import tempfile
+from datetime import date
+from datetime import timedelta
 
 import pytest
 from app.main import app
@@ -9,15 +11,22 @@ from app.repositories.sqlite_product_repo import SQLiteProductRepository
 from app.services import ProductService
 from fastapi.testclient import TestClient
 
+TODAY = date.today()
+RECENT_DATE_1 = (TODAY - timedelta(days=10)).isoformat()
+RECENT_DATE_2 = (TODAY - timedelta(days=9)).isoformat()
+OLD_DATE = (TODAY - timedelta(days=365)).isoformat()
+
 TEST_PRODUCTS = [
     ("1", "Apple Juice", "1L", "Beverages", "Juices", 2.99, "http://img1"),
     ("2", "Green Apple", "500g", "Fruits", "Apples", 1.99, "http://img2"),
+    ("3", "Old Product", "750ml", "Beverages", "Juices", 3.49, "http://img3"),
 ]
 
 TEST_PRICE_DETAILS = [
-    ("1", "2025-06-10", 2.89, 2.99, 2.99, 2.99),
-    ("1", "2025-06-11", 2.99, 2.89, 2.89, 2.89),
-    ("2", "2025-06-11", 1.99, None, None, None),
+    ("1", RECENT_DATE_1, 2.89, 2.99, 2.99, 2.99),
+    ("1", RECENT_DATE_2, 2.99, 2.89, 2.89, 2.89),
+    ("2", RECENT_DATE_2, 1.99, None, None, None),
+    ("3", OLD_DATE, 3.49, 3.49, 3.49, 3.49),
 ]
 
 
@@ -144,7 +153,7 @@ def test_search_no_results_returns_empty(client):
 # ----------------------------------------------------------------------------------------------------------------------
 test_cases = [
     {
-        "description": "Get enriched product with valid ID",
+        "description": "Get enriched product with valid ID returns recent price details",
         "id": 1,
         "expected_status": 200,
         "expected_response": {
@@ -157,14 +166,14 @@ test_cases = [
             "image_url": "http://img1",
             "price_details": [
                 {
-                    "date": "2025-06-10",
+                    "date": RECENT_DATE_1,
                     "price": 2.89,
                     "sma7": 2.99,
                     "sma15": 2.99,
                     "sma30": 2.99,
                 },
                 {
-                    "date": "2025-06-11",
+                    "date": RECENT_DATE_2,
                     "price": 2.99,
                     "sma7": 2.89,
                     "sma15": 2.89,
@@ -187,7 +196,7 @@ test_cases = [
             "image_url": "http://img2",
             "price_details": [
                 {
-                    "date": "2025-06-11",
+                    "date": RECENT_DATE_2,
                     "price": 1.99,
                     "sma7": None,
                     "sma15": None,
@@ -199,6 +208,12 @@ test_cases = [
     {
         "description": "Get enriched product with non-existent ID",
         "id": 999,
+        "expected_status": 404,
+        "expected_response": {"detail": "Product not found or no price details available"},
+    },
+    {
+        "description": "Product with only old price details returns 404 (filtered by 6-month window)",
+        "id": 3,
         "expected_status": 404,
         "expected_response": {"detail": "Product not found or no price details available"},
     },

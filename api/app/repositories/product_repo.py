@@ -15,5 +15,6 @@ class ProductRepository(ABC):
     def count_search_products(self, search_term: str) -> int:
         raise NotImplementedError()
 
-    def get_enriched_product(self, search_term: str) -> dict:
+    @abstractmethod
+    def get_enriched_product(self, product_id: str, months: int = 6) -> dict:
         raise NotImplementedError()

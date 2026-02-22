@@ -62,7 +62,7 @@ class SQLiteProductRepository(ProductRepository):
             search_term_fts += "*"
         return search_term_fts
 
-    def get_enriched_product(self, product_id: str):
+    def get_enriched_product(self, product_id: str, months: int = 6):
         def map_enriched_product(mapped_rows):
             base_keys = ["id", "name", "size", "categories", "subcategories", "current_price", "image_url"]
             detail_keys = ["date", "price", "sma7", "sma15", "sma30"]
@@ -70,7 +70,7 @@ class SQLiteProductRepository(ProductRepository):
             product["price_details"] = [{k: d[k] for k in detail_keys} for d in mapped_rows]
             return product
 
-        logger.info(f"SQLiteRepo - Getting enriched product by id: '{product_id}'")
+        logger.info(f"SQLiteRepo - Getting enriched product by id: '{product_id}' (months={months})")
         query = """
                 SELECT p.id,
                        p.name,
@@ -88,10 +88,12 @@ class SQLiteProductRepository(ProductRepository):
                          JOIN product_price_details AS ppd
                               ON p.id = ppd.id
                 WHERE p.id = :product_id
+                  AND ppd.date >= date('now', :months_offset)
                 """
+        months_offset = f"-{months} months"
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            rows = cursor.execute(query, {"product_id": product_id}).fetchall()
+            rows = cursor.execute(query, {"product_id": product_id, "months_offset": months_offset}).fetchall()
             logger.info(f"SQLiteRepo - Found {len(rows)} records for product_id '{product_id}'")
             if not rows:
                 logger.warning(f"SQLiteRepo - No product found for id: '{product_id}'")

@@ -41,6 +41,9 @@ class BigQueryProductRepository(ProductRepository):
         logger.info(f"BigQuery: Found {len(results)} products for term '{search_term}'")
         return results
 
+    def get_enriched_product(self, product_id: str, months: int = 6) -> dict:
+        raise NotImplementedError("get_enriched_product is not implemented for BigQuery repository")
+
     def count_search_products(self, search_term: str) -> int:
         logger.info(f"BigQuery: Counting products with term '{search_term}'")
         query = f"""

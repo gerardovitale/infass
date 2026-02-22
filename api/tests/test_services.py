@@ -62,4 +62,44 @@ def test_return_bad_request_when_search_term_empty(product_service, mock_product
 # Test: get_enriched_product
 # ----------------------------------------------------------------------------------------------------------------------
 def test_get_enriched_product_returns_expected_response(product_service, mock_product_repository):
-    pass
+    fake_enriched = {
+        "id": "123",
+        "name": "coca-cola",
+        "size": "330ml",
+        "categories": "Beverages",
+        "subcategories": "Sodas",
+        "current_price": 1.25,
+        "image_url": "https://example.com/image.jpg",
+        "price_details": [
+            {"date": "2025-06-12", "price": 1.25, "sma7": None, "sma15": None, "sma30": None},
+        ],
+    }
+    mock_product_repository.get_enriched_product.return_value = fake_enriched
+
+    result = product_service.get_enriched_product("123")
+
+    mock_product_repository.get_enriched_product.assert_called_once_with("123", months=6)
+    assert result.id == "123"
+    assert result.name == "coca-cola"
+    assert len(result.price_details) == 1
+
+
+def test_get_enriched_product_passes_months_to_repository(product_service, mock_product_repository):
+    fake_enriched = {
+        "id": "456",
+        "name": "water",
+        "size": "1L",
+        "categories": "Beverages",
+        "subcategories": "Water",
+        "current_price": 0.50,
+        "image_url": None,
+        "price_details": [
+            {"date": "2025-06-12", "price": 0.50, "sma7": None, "sma15": None, "sma30": None},
+        ],
+    }
+    mock_product_repository.get_enriched_product.return_value = fake_enriched
+
+    result = product_service.get_enriched_product("456", months=12)
+
+    mock_product_repository.get_enriched_product.assert_called_once_with("456", months=12)
+    assert result.id == "456"
