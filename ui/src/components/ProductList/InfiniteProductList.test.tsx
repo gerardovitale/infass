@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, act, waitFor } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import InfiniteProductList from './InfiniteProductList';
 import { Product } from '@/types';
 
@@ -71,8 +71,8 @@ describe('InfiniteProductList', () => {
         );
     });
 
-    it('does not render sentinel when has_more is false', () => {
-        const { container } = render(
+    it('does not render spinner when has_more is false', () => {
+        render(
             <InfiniteProductList
                 initialProducts={[makeProduct('1')]}
                 initialHasMore={false}
@@ -80,7 +80,40 @@ describe('InfiniteProductList', () => {
                 limit={20}
             />
         );
-        // No sentinel div with spinner should be present
-        expect(container.querySelector('.animate-spin')).toBeNull();
+        expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+    });
+
+    it('shows spinner while loading more products and hides it after', async () => {
+        let resolveResponse: (value: unknown) => void;
+        const responsePromise = new Promise((resolve) => {
+            resolveResponse = resolve;
+        });
+
+        (global.fetch as jest.Mock).mockReturnValueOnce({
+            json: () => responsePromise,
+        });
+
+        render(
+            <InfiniteProductList
+                initialProducts={[makeProduct('1')]}
+                initialHasMore={true}
+                searchTerm="test"
+                limit={1}
+            />
+        );
+
+        await act(async () => {
+            intersectionCallback([{ isIntersecting: true }]);
+        });
+
+        expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+
+        await act(async () => {
+            resolveResponse!({ results: [makeProduct('2')], has_more: false });
+        });
+
+        await waitFor(() => {
+            expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+        });
     });
 });

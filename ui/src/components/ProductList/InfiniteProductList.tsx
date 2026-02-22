@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Product } from '@/types';
 import { ProductList } from './ProductList';
+import { Spinner } from '@/components/Spinner/Spinner';
 
 type Props = {
     initialProducts: Product[];
@@ -60,10 +61,8 @@ export default function InfiniteProductList({ initialProducts, initialHasMore, s
         <>
             <ProductList products={products} />
             {hasMore && (
-                <div ref={sentinelRef} className="flex justify-center py-8">
-                    {isLoading && (
-                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500" />
-                    )}
+                <div ref={sentinelRef}>
+                    {isLoading && <Spinner />}
                 </div>
             )}
         </>
