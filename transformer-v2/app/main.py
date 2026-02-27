@@ -97,6 +97,7 @@ def get_pipeline_config() -> dict:
         "merc": {
             "transformer": MercTransformer,
             "write_config": {
+                "create_disposition": "CREATE_IF_NEEDED",
                 "write_disposition": "WRITE_APPEND",
                 "schema": MERC_SCHEMA,
                 "time_partitioning": TimePartitioning(
@@ -109,6 +110,7 @@ def get_pipeline_config() -> dict:
         "carr": {
             "transformer": CarrTransformer,
             "write_config": {
+                "create_disposition": "CREATE_IF_NEEDED",
                 "write_disposition": "WRITE_APPEND",
                 "schema": CARR_SCHEMA,
                 "time_partitioning": TimePartitioning(
