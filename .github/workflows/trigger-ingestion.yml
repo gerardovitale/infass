@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  trigger-ingestor:
+  trigger-ingestor-merc:
     uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
       region: europe-southwest1
@@ -26,13 +26,24 @@ jobs:
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
-  trigger-transformer:
-    needs: trigger-ingestor
+  trigger-transformer-merc:
+    needs: trigger-ingestor-merc
     uses: ./.github/workflows/trigger-cloud-run-job.yml
     with:
       region: europe-southwest1
       app_name: infass
       component: transformer-v2
       args: "--gcs-source-bucket,infass-merc,--product,merc,--bq-destination-table,inflation-assistant.infass.stg_merc"
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
+
+  trigger-transformer-carr:
+    needs: trigger-ingestor-carr
+    uses: ./.github/workflows/trigger-cloud-run-job.yml
+    with:
+      region: europe-southwest1
+      app_name: infass
+      component: transformer-v2
+      args: "--gcs-source-bucket,infass-carr,--product,carr,--bq-destination-table,inflation-assistant.infass.stg_carr"
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
