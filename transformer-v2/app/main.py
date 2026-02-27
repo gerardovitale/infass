@@ -5,10 +5,12 @@ import logging
 
 from google.cloud.bigquery import TimePartitioning
 from google.cloud.bigquery import TimePartitioningType
+from schemas import CARR_SCHEMA
 from schemas import MERC_SCHEMA
 from sinks import BigQuery
 from sinks import Sink
 from sinks import Storage
+from transformers import CarrTransformer
 from transformers import MercTransformer
 from transformers import Transformer
 from txn_rec import TransactionRecorder
@@ -104,7 +106,18 @@ def get_pipeline_config() -> dict:
                 "clustering_fields": ["name", "size"],
             },
         },
-        "carr": {},
+        "carr": {
+            "transformer": CarrTransformer,
+            "write_config": {
+                "write_disposition": "WRITE_APPEND",
+                "schema": CARR_SCHEMA,
+                "time_partitioning": TimePartitioning(
+                    type_=TimePartitioningType.DAY,
+                    field="date",
+                ),
+                "clustering_fields": ["name", "size"],
+            },
+        },
         "dia": {},
     }
 
@@ -124,7 +137,15 @@ def run_transformer(
     )
     last_txn = txn_recorder.get_last_txn_if_exists()
     data = data_source.fetch_data(last_txn_date=last_txn.max_date if last_txn else None)
+    if data.empty:
+        logging.warning("No input data found. Skipping transform/write/record.")
+        return
+
     transformed_data = transformer.transform(data)
+    if transformed_data.empty:
+        logging.warning("No rows left after transformation. Skipping write/record.")
+        return
+
     destination.write_data(transformed_data)
     txn_recorder.record(*get_min_max_dates(transformed_data))
 

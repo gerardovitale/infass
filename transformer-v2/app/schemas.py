@@ -12,3 +12,5 @@ MERC_SCHEMA = [
     SchemaField("original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),
 ]
+
+CARR_SCHEMA = MERC_SCHEMA.copy()
