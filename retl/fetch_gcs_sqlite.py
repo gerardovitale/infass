@@ -11,13 +11,18 @@ BUCKET_NAME = "infass-sqlite-bucket"
 PARAMS = [
     {
         "object_name": "infass-test-sqlite-api.db",
-        "local_path": f"data/api/db/{DT_NOW}/infass-test-sqlite-api.db",
-        "csv_local_path": f"data/api/csv/{DT_NOW}",
+        "local_path": f"data/test-api/db/{DT_NOW}/infass-test-sqlite-api.db",
+        "csv_local_path": f"data/test-api/csv/{DT_NOW}",
     },
     {
         "object_name": "infass-sqlite-api.db",
         "local_path": f"data/api/db/{DT_NOW}/infass-sqlite-api.db",
         "csv_local_path": f"data/api/csv/{DT_NOW}",
+    },
+    {
+        "object_name": "infass-transformer-sqlite.db",
+        "local_path": f"data/transformer-v2/db/{DT_NOW}/infass-transformer-sqlite.db",
+        "csv_local_path": f"data/transformer-v2/csv/{DT_NOW}",
     },
 ]
 
