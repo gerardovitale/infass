@@ -16,7 +16,7 @@ def get_test_html():
         <div data-testid="product-cell" class="product-cell product-cell--actionable">
             <button class="product-cell__content-link" data-testid="open-product-detail">
                 <div class="product-cell__image-wrapper" aria-hidden="true">
-                    <img alt="Sample Product" src="sample.jpg" loading="lazy">
+                    <img alt="Sample Product" src="https://example.com/sample.jpg" loading="lazy">
                     <span class="product-cell__image-overlay"></span>
                 </div>
                 <div class="product-cell__info">
@@ -60,7 +60,7 @@ class TestExtractor(BasicTestCase):
             "discount_price": "1,53 €",
             "size": "Paquete 1 kg",
             "category": category,
-            "image_url": "sample.jpg",
+            "image_url": "https://example.com/sample.jpg",
         }
         actual_output = extract_product_data(self.test_html, category)
         self.assertIsNotNone(actual_output)
@@ -165,6 +165,18 @@ class TestGetImageUrl(TestCase):
 
     def test_image_tag_without_src(self):
         html = '<div><img alt="no src attribute"></div>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_image_url(soup)
+        assert result is None
+
+    def test_relative_url_returns_none(self):
+        html = '<div><img src="/images/product.jpg"></div>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_image_url(soup)
+        assert result is None
+
+    def test_protocol_relative_url_returns_none(self):
+        html = '<div><img src="//cdn.example.com/image.jpg"></div>'
         soup = BeautifulSoup(html, "html.parser")
         result = get_image_url(soup)
         assert result is None
@@ -373,6 +385,18 @@ class TestGetCarrImageUrl(TestCase):
 
     def test_image_url_data_uri_returns_none(self):
         html = '<div><img class="product-card__image" src="data:image/gif;base64,placeholder"></div>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_carr_image_url(soup)
+        self.assertIsNone(result)
+
+    def test_image_url_relative_returns_none(self):
+        html = '<div><img class="product-card__image" src="/images/product.jpg"></div>'
+        soup = BeautifulSoup(html, "html.parser")
+        result = get_carr_image_url(soup)
+        self.assertIsNone(result)
+
+    def test_image_url_protocol_relative_returns_none(self):
+        html = '<div><img class="product-card__image" src="//cdn.carrefour.es/img/product.jpg"></div>'
         soup = BeautifulSoup(html, "html.parser")
         result = get_carr_image_url(soup)
         self.assertIsNone(result)

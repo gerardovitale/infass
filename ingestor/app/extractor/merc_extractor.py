@@ -186,7 +186,10 @@ def get_image_url(soup: BeautifulSoup) -> Optional[str]:
     src = image.get("src")
     if not src or not isinstance(src, str):
         return None
-    return src.strip().split("?")[0]
+    url = src.strip().split("?")[0]
+    if not url.startswith(("http://", "https://")):
+        return None
+    return url
 
 
 def extract_product_data(page_source: str, category: str) -> Generator[Dict[str, Any], None, None] | None:

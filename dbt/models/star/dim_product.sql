@@ -64,7 +64,12 @@ upserts as (
     incoming.size,
 
     -- Type-1: overwrite with the newest non-null image if present, else keep old
-    coalesce(incoming.new_image_url, hist.old_image_url) as image_url,
+    -- Null out URLs that don't start with http(s):// to pass schema tests
+    case
+      when regexp_contains(coalesce(incoming.new_image_url, hist.old_image_url), r'^https?://')
+      then coalesce(incoming.new_image_url, hist.old_image_url)
+      else null
+    end as image_url,
 
     -- Preserve earliest seen; extend latest seen
     least(coalesce(hist.first_seen_date, incoming.min_obs_date), incoming.min_obs_date) as first_seen_date,

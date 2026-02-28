@@ -34,7 +34,7 @@ def get_carr_image_url(product_soup: BeautifulSoup) -> Optional[str]:
     if not src or not isinstance(src, str):
         return None
     parsed = urlparse(src.strip())
-    if parsed.scheme == "data":
+    if parsed.scheme not in ("http", "https"):
         return None
     return urlunparse(parsed._replace(query="", fragment=""))
 

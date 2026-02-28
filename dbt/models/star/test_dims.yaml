@@ -26,15 +26,15 @@ unit_tests:
       - input: source('infass', 'stg_merc')
         rows:
           # first observation
-          - { date: 2025-01-01, name: "Aceite X", size: "1 L", image_url: "img1.jpg",
+          - { date: 2025-01-01, name: "Aceite X", size: "1 L", image_url: "https://example.com/img1.jpg",
               category: "Aceites", subcategory: "Oliva", price: 10.0, original_price: 10.0, discount_price: null }
           # later observation with new image and discount
-          - { date: 2025-01-03, name: "Aceite X", size: "1 L", image_url: "img2.jpg",
+          - { date: 2025-01-03, name: "Aceite X", size: "1 L", image_url: "https://example.com/img2.jpg",
               category: "Aceites", subcategory: "Oliva", price: 8.0, original_price: 10.0, discount_price: 8.0 }
     overrides:
       macros:
         is_incremental: false
     expect:
       rows:
-        - { name: "Aceite X", size: "1 L", image_url: "img2.jpg",
+        - { name: "Aceite X", size: "1 L", image_url: "https://example.com/img2.jpg",
             first_seen_date: 2025-01-01, last_seen_date: 2025-01-03 }
