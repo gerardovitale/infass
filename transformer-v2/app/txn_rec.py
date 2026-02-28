@@ -119,7 +119,9 @@ class TxnRecSQLite(TransactionRecorder):
             cursor.execute(
                 f"SELECT product, data_source, destination, occurred_at, min_date, max_date "
                 f"FROM {self.table_name} "
-                f"ORDER BY id DESC LIMIT 1"
+                f"WHERE product = ? AND data_source = ? AND destination = ? "
+                f"ORDER BY id DESC LIMIT 1",
+                (self.product, self.data_source, self.destination),
             )
             row = cursor.fetchone()
             if row:

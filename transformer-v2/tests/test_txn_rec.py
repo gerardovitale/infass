@@ -189,6 +189,39 @@ def test_txn_rec_sqlite_get_last_txn_if_exists_after_multiple_records(sqlite_db_
     assert last_txn.max_date == "2025-09-01"
 
 
+def test_txn_rec_sqlite_get_last_txn_if_exists_filters_by_product(sqlite_db_path):
+    merc_recorder = TxnRecSQLite(
+        db_path=sqlite_db_path,
+        product="merc",
+        data_source="gcs_merc",
+        destination="bq_merc",
+    )
+    carr_recorder = TxnRecSQLite(
+        db_path=sqlite_db_path,
+        product="carr",
+        data_source="gcs_carr",
+        destination="bq_carr",
+    )
+
+    merc_recorder.record("2025-01-01", "2025-06-01")
+    carr_recorder.record("2025-03-01", "2025-08-01")
+    merc_recorder.record("2025-02-01", "2025-09-01")
+
+    last_carr_txn = carr_recorder.get_last_txn_if_exists()
+    assert last_carr_txn is not None
+    assert last_carr_txn.product == "carr"
+    assert last_carr_txn.data_source == "gcs_carr"
+    assert last_carr_txn.destination == "bq_carr"
+    assert last_carr_txn.min_date == "2025-03-01"
+    assert last_carr_txn.max_date == "2025-08-01"
+
+    last_merc_txn = merc_recorder.get_last_txn_if_exists()
+    assert last_merc_txn is not None
+    assert last_merc_txn.product == "merc"
+    assert last_merc_txn.min_date == "2025-02-01"
+    assert last_merc_txn.max_date == "2025-09-01"
+
+
 def test_txn_rec_sqlite_get_last_txn_if_exists_with_null_dates(sqlite_db_path):
     test_recorder = TxnRecSQLite(
         db_path=sqlite_db_path,
