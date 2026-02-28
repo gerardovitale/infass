@@ -93,7 +93,7 @@ def test_txn_rec_sqlite_record_with_valid_data(mock_datetime, sqlite_db_path):
 
     test_recorder.record(min_date, max_date)
 
-    rows = get_sqlite_rows(sqlite_db_path, test_recorder.table_name)
+    rows = get_sqlite_rows(sqlite_db_path, "transactions")
     assert len(rows) == 1
     assert rows[0] == expected_transaction
 
@@ -123,7 +123,7 @@ def test_txn_rec_sqlite_record_with_valid_data_when_min_max_dates_are_none(mock_
 
     test_recorder.record(min_date, max_date)
 
-    rows = get_sqlite_rows(sqlite_db_path, test_recorder.table_name)
+    rows = get_sqlite_rows(sqlite_db_path, "transactions")
     assert len(rows) == 1
     assert rows[0] == expected_transaction
 
@@ -170,7 +170,7 @@ def test_txn_rec_sqlite_get_last_txn_if_exists_with_existing_txns(mock_datetime,
     test_recorder.record(test_min_date, test_max_date)
     last_txn = test_recorder.get_last_txn_if_exists()
 
-    assert last_txn == expected_txn
+    assert last_txn.model_dump(exclude={"id"}) == expected_txn.model_dump(exclude={"id"})
 
 
 def test_txn_rec_sqlite_get_last_txn_if_exists_after_multiple_records(sqlite_db_path):

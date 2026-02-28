@@ -8,7 +8,11 @@ from abc import abstractmethod
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from sqlmodel import create_engine
+from sqlmodel import Field
+from sqlmodel import select
+from sqlmodel import Session
+from sqlmodel import SQLModel
 
 logger = logging.getLogger(__name__)
 
@@ -23,18 +27,20 @@ class TransactionRecorder(ABC):
         raise NotImplementedError()
 
 
-class Transaction(BaseModel):
+class Transaction(SQLModel, table=True):
+    __tablename__ = "transactions"
+    __table_args__ = {"extend_existing": True}
+
+    id: Optional[int] = Field(default=None, primary_key=True)
     product: str
     data_source: str
     destination: str
     occurred_at: str
-    min_date: Optional[str]
-    max_date: Optional[str]
+    min_date: Optional[str] = None
+    max_date: Optional[str] = None
 
 
 class TxnRecSQLite(TransactionRecorder):
-
-    table_name = "transactions"
 
     def __init__(self, db_path: str, product: str, data_source: str, destination: str):
         logger.info(
@@ -46,6 +52,8 @@ class TxnRecSQLite(TransactionRecorder):
         self.data_source = data_source
         self.destination = destination
         self._validate_db()
+        self.engine = create_engine(f"sqlite:///{db_path}")
+        SQLModel.metadata.create_all(self.engine)
 
     def _validate_db(self) -> None:
         logger.info("Validating SQLite database")
@@ -74,64 +82,23 @@ class TxnRecSQLite(TransactionRecorder):
         logger.info(f"Recording transaction for product: {self.product}")
         txn = self.create_txn_obj(min_date, max_date)
         logger.info(f"Transaction to be recorded: {txn}")
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {self.table_name}
-                (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    product TEXT,
-                    data_source TEXT,
-                    destination TEXT,
-                    occurred_at TEXT,
-                    min_date TEXT,
-                    max_date TEXT
-                );
-                """
-            )
-            cursor.execute(
-                f"INSERT INTO {self.table_name} "
-                "(product, data_source, destination, occurred_at, min_date, max_date) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (
-                    txn.product,
-                    txn.data_source,
-                    txn.destination,
-                    txn.occurred_at,
-                    txn.min_date,
-                    txn.max_date,
-                ),
-            )
-            conn.commit()
+        with Session(self.engine) as session:
+            session.add(txn)
+            session.commit()
         logger.info("Transaction recorded successfully")
 
     def get_last_txn_if_exists(self) -> Transaction | None:
         logger.info("Fetching last transaction")
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-
-            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{self.table_name}';")
-            if not cursor.fetchone():
-                logger.info(f"Table does not exist yet: {self.table_name}")
-                return None
-
-            cursor.execute(
-                f"SELECT product, data_source, destination, occurred_at, min_date, max_date "
-                f"FROM {self.table_name} "
-                f"WHERE product = ? AND data_source = ? AND destination = ? "
-                f"ORDER BY id DESC LIMIT 1",
-                (self.product, self.data_source, self.destination),
+        with Session(self.engine) as session:
+            statement = (
+                select(Transaction)
+                .where(Transaction.product == self.product)
+                .where(Transaction.data_source == self.data_source)
+                .where(Transaction.destination == self.destination)
+                .order_by(Transaction.id.desc())
+                .limit(1)
             )
-            row = cursor.fetchone()
-            if row:
-                txn = Transaction(
-                    product=row[0],
-                    data_source=row[1],
-                    destination=row[2],
-                    occurred_at=row[3],
-                    min_date=row[4],
-                    max_date=row[5],
-                )
+            txn = session.exec(statement).first()
+            if txn:
                 logger.info(f"Last transaction found: {txn}")
-                return txn
+            return txn
