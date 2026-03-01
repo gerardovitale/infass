@@ -63,11 +63,22 @@ resource "google_cloud_run_v2_service" "api_service" {
     timeout         = "30s"
     service_account = google_service_account.api_service_account.email
 
+    scaling {
+      min_instance_count = 1
+      max_instance_count = 3
+    }
+
     containers {
       name  = "infass-api"
       image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-api:${var.DOCKER_IMAGE_TAG_API}"
       ports {
         container_port = 8080
+      }
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "1Gi"
+        }
       }
       volume_mounts {
         name       = local.volume_name
@@ -76,6 +87,21 @@ resource "google_cloud_run_v2_service" "api_service" {
       env {
         name  = "SQLITE_DB_PATH"
         value = "${local.volume_mount_path}/${local.sqlite_db_name}"
+      }
+      startup_probe {
+        tcp_socket {
+          port = 8080
+        }
+        initial_delay_seconds = 2
+        period_seconds        = 5
+        failure_threshold     = 3
+      }
+      liveness_probe {
+        tcp_socket {
+          port = 8080
+        }
+        period_seconds    = 15
+        failure_threshold = 3
       }
     }
 
