@@ -4,7 +4,7 @@ import pandas as pd
 from main import get_pipeline_config
 from main import parse_args
 from main import run_transformer
-from schemas import CARR_SCHEMA
+from schemas import BQ_SCHEMA
 from transformers import CarrTransformer
 
 
@@ -27,7 +27,7 @@ def test_parse_args_with_carr_product(monkeypatch):
 def test_get_pipeline_config_contains_carr_transformer():
     config = get_pipeline_config()
     assert config["carr"]["transformer"] is CarrTransformer
-    assert config["carr"]["write_config"]["schema"] == CARR_SCHEMA
+    assert config["carr"]["write_config"]["schema"] == BQ_SCHEMA
 
 
 def test_run_transformer_skips_pipeline_on_empty_source_data():

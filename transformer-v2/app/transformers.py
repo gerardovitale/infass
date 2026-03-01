@@ -1,4 +1,5 @@
 import logging
+import re
 import unicodedata
 from abc import ABC
 from abc import abstractmethod
@@ -17,6 +18,8 @@ OUTPUT_SCHEMA = {
     "price": "float32",
     "original_price": "float32",
     "discount_price": "float32",
+    "price_per_unit": "float32",
+    "unit": "string",
 }
 
 
@@ -47,7 +50,7 @@ def transform_merc(df: pd.DataFrame) -> pd.DataFrame:
         return build_empty_transformed_df()
 
     logger.info(f"Starting data transformation with df shape {df.shape}")
-    df = ensure_columns(df, {"size": pd.NA})
+    df = ensure_columns(df, {"size": pd.NA, "price_per_unit": pd.NA, "unit": pd.NA})
     df = cats_date_column(df)
     df = cast_price_columns_as_float32(df)
     df = split_category_subcategory(df)
@@ -65,10 +68,8 @@ def transform_carr(df: pd.DataFrame) -> pd.DataFrame:
         return build_empty_transformed_df()
 
     logger.info(f"Starting Carrefour data transformation with df shape {df.shape}")
-    columns_to_keep = ["date", "name", "size", "category", "image_url", "original_price", "discount_price"]
-    available_columns = [col for col in columns_to_keep if col in df.columns]
-    df = df[available_columns].copy()
-    df = ensure_columns(df, {"size": pd.NA, "image_url": pd.NA, "discount_price": pd.NA})
+    df = ensure_columns(df, {"size": pd.NA, "image_url": pd.NA, "discount_price": pd.NA, "price_per_unit": pd.NA})
+    df = parse_price_per_unit(df)
     df = cats_date_column(df)
     df = cast_price_columns_as_float32(df)
     df = split_category_subcategory(df)
@@ -77,6 +78,20 @@ def transform_carr(df: pd.DataFrame) -> pd.DataFrame:
     df = add_price_column(df)
     df = round_price_columns(df)
     return df[list(OUTPUT_SCHEMA.keys())]
+
+
+def parse_price_per_unit(df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Parsing price_per_unit column")
+    col = df["price_per_unit"].astype("string")
+    df["unit"] = col.str.extract(r"€/(\w+)", flags=re.IGNORECASE)[0]
+    df["price_per_unit"] = (
+        col.str.replace(r"€/\w+", "", regex=True)
+        .str.replace("€", "", regex=False)
+        .str.replace(",", ".", regex=False)
+        .str.replace(" ", "", regex=False)
+    )
+    df["price_per_unit"] = pd.to_numeric(df["price_per_unit"], errors="coerce").astype("float32")
+    return df
 
 
 def cats_date_column(df: pd.DataFrame) -> pd.DataFrame:
@@ -126,11 +141,12 @@ def standardize_string_columns(df: pd.DataFrame) -> pd.DataFrame:
             "size": "string",
             "category": "category",
             "subcategory": "category",
+            "unit": "string",
         }
         return _df.astype(dtype_map)
 
     logger.info("Standardizing string columns")
-    string_columns = ["name", "size", "category", "subcategory"]
+    string_columns = ["name", "size", "category", "subcategory", "unit"]
     for column in string_columns:
         if column not in df.columns:
             df[column] = pd.NA
@@ -164,7 +180,7 @@ def add_price_column(df: pd.DataFrame) -> pd.DataFrame:
 
 def round_price_columns(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Rounding price columns to 2 decimal places")
-    price_columns = ["original_price", "discount_price", "price"]
+    price_columns = ["original_price", "discount_price", "price", "price_per_unit"]
     df[price_columns] = df[price_columns].round(2).astype("float32")
     return df
 

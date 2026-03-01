@@ -1,6 +1,6 @@
 from google.cloud.bigquery import SchemaField
 
-MERC_SCHEMA = [
+BQ_SCHEMA = [
     SchemaField("date", "DATE"),
     SchemaField("dedup_id", "INTEGER"),
     SchemaField("name", "STRING"),
@@ -11,6 +11,6 @@ MERC_SCHEMA = [
     SchemaField("price", "FLOAT"),
     SchemaField("original_price", "FLOAT"),
     SchemaField("discount_price", "FLOAT"),
+    SchemaField("price_per_unit", "FLOAT"),
+    SchemaField("unit", "STRING"),
 ]
-
-CARR_SCHEMA = MERC_SCHEMA.copy()

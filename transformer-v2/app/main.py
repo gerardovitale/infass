@@ -5,8 +5,7 @@ import logging
 
 from google.cloud.bigquery import TimePartitioning
 from google.cloud.bigquery import TimePartitioningType
-from schemas import CARR_SCHEMA
-from schemas import MERC_SCHEMA
+from schemas import BQ_SCHEMA
 from sinks import BigQuery
 from sinks import Sink
 from sinks import Storage
@@ -99,7 +98,7 @@ def get_pipeline_config() -> dict:
             "write_config": {
                 "create_disposition": "CREATE_IF_NEEDED",
                 "write_disposition": "WRITE_APPEND",
-                "schema": MERC_SCHEMA,
+                "schema": BQ_SCHEMA,
                 "time_partitioning": TimePartitioning(
                     type_=TimePartitioningType.DAY,
                     field="date",
@@ -112,12 +111,12 @@ def get_pipeline_config() -> dict:
             "write_config": {
                 "create_disposition": "CREATE_IF_NEEDED",
                 "write_disposition": "WRITE_APPEND",
-                "schema": CARR_SCHEMA,
+                "schema": BQ_SCHEMA,
                 "time_partitioning": TimePartitioning(
                     type_=TimePartitioningType.DAY,
                     field="date",
                 ),
-                "clustering_fields": ["name", "size"],
+                "clustering_fields": ["name"],
             },
         },
         "dia": {},

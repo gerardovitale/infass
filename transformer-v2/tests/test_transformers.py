@@ -13,6 +13,7 @@ from transformers import cats_date_column
 from transformers import deduplicate_products_with_diff_prices_per_date
 from transformers import ensure_columns
 from transformers import OUTPUT_SCHEMA
+from transformers import parse_price_per_unit
 from transformers import round_price_columns
 from transformers import split_category_subcategory
 from transformers import standardize_string_columns
@@ -277,6 +278,7 @@ def test_round_price_columns_rounds_to_two_decimals():
             "original_price": pd.array([1.705, 2.999], dtype="float32"),
             "discount_price": pd.array([0.555, 1.004], dtype="float32"),
             "price": pd.array([1.705, 2.999], dtype="float32"),
+            "price_per_unit": pd.array([1.705, 2.999], dtype="float32"),
         }
     )
 
@@ -325,6 +327,8 @@ def test_carr_transformer_end_to_end_data_correctness_with_fixture():
     assert row0["date"] == pd.Timestamp("2026-02-21")
     assert row0["category"] == "frescos"
     assert row0["subcategory"] == "ofertas en productos frescos"
+    assert row0["price_per_unit"] == pytest.approx(1.89, abs=1e-2)
+    assert row0["unit"] == "kg"
 
     # Row 5 (index 5): Tomate ensalada - has both original and discount price
     row5 = actual.iloc[5]
@@ -332,6 +336,13 @@ def test_carr_transformer_end_to_end_data_correctness_with_fixture():
     assert row5["original_price"] == pytest.approx(1.79, abs=1e-2)
     assert row5["discount_price"] == pytest.approx(1.69, abs=1e-2)
     assert row5["price"] == pytest.approx(1.69, abs=1e-2)
+    assert row5["price_per_unit"] == pytest.approx(1.69, abs=1e-2)
+    assert row5["unit"] == "kg"
+
+    # Row 7 (index 7): Puerro - unit is "ud"
+    row7 = actual.iloc[7]
+    assert row7["price_per_unit"] == pytest.approx(1.85, abs=1e-2)
+    assert row7["unit"] == "ud"
 
     # Row 13 (index 13): Tomate rosa - has both prices
     row13 = actual.iloc[13]
@@ -396,3 +407,37 @@ def test_integration_pipeline_correctness_with_crafted_data():
     # Row 2: different date
     assert result["date"].iloc[2] == pd.Timestamp("2026-02-22")
     assert result["dedup_id"].iloc[2] == 1
+
+    # All rows should have null price_per_unit and unit (crafted data has none)
+    assert result["price_per_unit"].isna().all()
+    assert result["unit"].isna().all()
+
+
+# ---------------------------------------------------------------------------
+# Unit tests for parse_price_per_unit
+# ---------------------------------------------------------------------------
+
+
+def test_parse_price_per_unit_extracts_value_and_unit():
+    df = pd.DataFrame({"price_per_unit": ["1,89 €/kg", "1,85 €/ud", "10,43 €/kg"]})
+
+    actual = parse_price_per_unit(df)
+
+    assert actual["price_per_unit"].iloc[0] == pytest.approx(1.89, abs=1e-2)
+    assert actual["price_per_unit"].iloc[1] == pytest.approx(1.85, abs=1e-2)
+    assert actual["price_per_unit"].iloc[2] == pytest.approx(10.43, abs=1e-2)
+    assert list(actual["unit"]) == ["kg", "ud", "kg"]
+    assert actual["price_per_unit"].dtype == "float32"
+
+
+def test_parse_price_per_unit_handles_nulls():
+    df = pd.DataFrame({"price_per_unit": [pd.NA, "2,25 €/kg", None]})
+
+    actual = parse_price_per_unit(df)
+
+    assert pd.isna(actual["price_per_unit"].iloc[0])
+    assert actual["price_per_unit"].iloc[1] == pytest.approx(2.25, abs=1e-2)
+    assert pd.isna(actual["price_per_unit"].iloc[2])
+    assert pd.isna(actual["unit"].iloc[0])
+    assert actual["unit"].iloc[1] == "kg"
+    assert pd.isna(actual["unit"].iloc[2])
