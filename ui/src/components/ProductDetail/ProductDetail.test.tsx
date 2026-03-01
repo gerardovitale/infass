@@ -31,7 +31,7 @@ describe('ProductDetail', () => {
 
         const image = screen.getByAltText('Test Product') as HTMLImageElement;
         expect(decodeURIComponent(image.src)).toContain(
-            '/images/default-image.png'
+            '/images/default-image.svg'
         );
     });
 

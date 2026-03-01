@@ -2,6 +2,10 @@ import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
 import SearchResult from './SearchResult';
 
+jest.mock('next/cache', () => ({
+    unstable_cache: (fn: Function) => fn,
+}));
+
 jest.mock('../ProductList/InfiniteProductList', () => {
     return function MockInfiniteProductList(props: { initialProducts: { id: string }[] }) {
         return (

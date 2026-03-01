@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
-const FALLBACK_IMAGE = '/images/default-image.png';
+const FALLBACK_IMAGE = '/images/default-image.svg';
 const ALLOWED_HOSTNAMES = ['prod-mercadona.imgix.net'];
 
 function isAllowedSrc(src?: string): boolean {

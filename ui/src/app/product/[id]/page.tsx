@@ -3,15 +3,26 @@ import { logger } from '@/lib/logger';
 import { ProductDetail } from '@/components/ProductDetail/ProductDetail';
 import { Product } from '@/types';
 import { notFound } from 'next/navigation';
+import { unstable_cache } from 'next/cache';
 import { PageProps } from '../../../../.next/types/app/layout';
+
+const CACHE_REVALIDATE_SECONDS = 300;
+
+const fetchProduct = unstable_cache(
+    async (productId: string) => {
+        const client = await getClient();
+        const res = await client.fetch(`${process.env.API_BASE_URL}/products/${productId}`);
+        return { status: res.status, data: res.data as Product };
+    },
+    ['product-detail'],
+    { revalidate: CACHE_REVALIDATE_SECONDS }
+);
 
 export default async function ProductPage({ params }: PageProps) {
     const { id } = await params;
-    const URL = `${process.env.API_BASE_URL}/products/${id}`;
     let res;
     try {
-        const client = await getClient();
-        res = await client.fetch(URL);
+        res = await fetchProduct(id);
     } catch (error) {
         logger.error('Failed to fetch product', error instanceof Error ? error : undefined);
         throw error;
@@ -24,6 +35,5 @@ export default async function ProductPage({ params }: PageProps) {
                 return <div className="p-8">Failed to fetch product</div>;
         }
     }
-    const product = res.data as Product;
-    return <ProductDetail product={product} />;
+    return <ProductDetail product={res.data} />;
 }
