@@ -12,6 +12,11 @@ import {
 import { useState } from 'react';
 import { PriceDetail } from '@/types';
 
+export function formatDateTick(value: string): string {
+    const d = new Date(value);
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
 type Props = {
     data: PriceDetail[];
 };
@@ -50,7 +55,7 @@ export const ProductDetailChart = ({ data }: Props) => {
             </div>
             <LineChart data={data} width={700} height={400}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis dataKey="date" tickFormatter={formatDateTick} />
                 <YAxis />
                 <Tooltip />
                 <Legend />
