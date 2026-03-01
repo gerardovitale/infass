@@ -1,5 +1,6 @@
 import logging
 import os
+from functools import lru_cache
 
 from fastapi import Depends
 from fastapi import FastAPI
@@ -19,6 +20,7 @@ app = FastAPI(
 )
 
 
+@lru_cache
 def get_product_service() -> ProductService:
     db_path = os.environ["SQLITE_DB_PATH"]
     logger.info(f"Initializing ProductService with SQLite database path: '{db_path}'")

@@ -30,6 +30,9 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
         ("2", "Green Apple", "500g", "Fruits", "Apples", 1.99, "http://img2"),
     ]
 
+    # Add total_count column to each row (window function result)
+    expected_rows_with_count = [row + (2,) for row in expected_rows]
+
     expected_dicts = [
         {
             "id": "1",
@@ -56,8 +59,8 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
     # Patch context manager __enter__ to return mock_conn
     mock_sqlite_connect.return_value.__enter__.return_value = mock_conn
     mock_conn.cursor.return_value = mock_cursor
-    mock_cursor.execute.return_value.fetchall.return_value = expected_rows
-    # Simulate cursor.description as a list of tuples with column names
+    mock_cursor.execute.return_value.fetchall.return_value = expected_rows_with_count
+    # Simulate cursor.description as a list of tuples with column names (including total_count)
     mock_cursor.description = [
         ("id",),
         ("name",),
@@ -66,6 +69,7 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
         ("subcategories",),
         ("current_price",),
         ("image_url",),
+        ("total_count",),
     ]
 
     # Patch check_db_path_exist to avoid FileNotFoundError
@@ -73,10 +77,11 @@ def test_search_products_returns_expected_results(mock_sqlite_connect):
         repo = SQLiteProductRepository(test_db_path)
 
         # Act
-        results = repo.search_products(test_search_term)
+        results, total_count = repo.search_products(test_search_term)
 
     # Assert
     assert results == expected_dicts
+    assert total_count == 2
     mock_sqlite_connect.assert_called_once_with(test_db_path)
     mock_conn.cursor.assert_called_once()
     mock_cursor.execute.assert_called_once()

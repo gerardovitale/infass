@@ -29,8 +29,7 @@ def test_search_returns_expected_response(product_service, mock_product_reposito
             "image_url": "https://example.com/image.jpg",
         },
     ]
-    mock_product_repository.search_products.return_value = fake_products
-    mock_product_repository.count_search_products.return_value = 1
+    mock_product_repository.search_products.return_value = (fake_products, 1)
 
     products, total_count = product_service.search("Cola")
 
@@ -41,8 +40,7 @@ def test_search_returns_expected_response(product_service, mock_product_reposito
 
 
 def test_search_returns_empty_response(product_service, mock_product_repository):
-    mock_product_repository.search_products.return_value = []
-    mock_product_repository.count_search_products.return_value = 0
+    mock_product_repository.search_products.return_value = ([], 0)
 
     products, total_count = product_service.search("nonexistent")
 

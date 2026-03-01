@@ -8,11 +8,7 @@ logger = logging.getLogger("uvicorn.error")
 class ProductRepository(ABC):
 
     @abstractmethod
-    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> list[dict]:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def count_search_products(self, search_term: str) -> int:
+    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> tuple[list[dict], int]:
         raise NotImplementedError()
 
     @abstractmethod

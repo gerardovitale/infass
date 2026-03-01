@@ -21,7 +21,7 @@ class BigQueryProductRepository(ProductRepository):
                OR LOWER(subcategories) LIKE '%{search_term}%'
         """
 
-    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> list[dict]:
+    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> tuple[list[dict], int]:
         logger.info(f"BigQuery: Searching products with term '{search_term}' (limit={limit}, offset={offset})")
         query = f"""
             SELECT
@@ -31,27 +31,21 @@ class BigQueryProductRepository(ProductRepository):
                 categories,
                 subcategories,
                 price,
-                image_url
+                image_url,
+                COUNT(*) OVER() AS total_count
             FROM `{self.project_id}.{self.dataset_id}.dbt_ref_products`
             {self._build_where_clause(search_term)}
             LIMIT {limit} OFFSET {offset}
             """
         rows = self.bq.query(query).result()
-        results = [dict(row.items()) for row in rows]
-        logger.info(f"BigQuery: Found {len(results)} products for term '{search_term}'")
-        return results
+        results = []
+        total_count = 0
+        for row in rows:
+            row_dict = dict(row.items())
+            total_count = row_dict.pop("total_count", 0)
+            results.append(row_dict)
+        logger.info(f"BigQuery: Found {len(results)} products (total: {total_count}) for term '{search_term}'")
+        return results, total_count
 
     def get_enriched_product(self, product_id: str, months: int = 6) -> dict:
         raise NotImplementedError("get_enriched_product is not implemented for BigQuery repository")
-
-    def count_search_products(self, search_term: str) -> int:
-        logger.info(f"BigQuery: Counting products with term '{search_term}'")
-        query = f"""
-            SELECT COUNT(*) as cnt
-            FROM `{self.project_id}.{self.dataset_id}.dbt_ref_products`
-            {self._build_where_clause(search_term)}
-            """
-        rows = self.bq.query(query).result()
-        count = list(rows)[0]["cnt"]
-        logger.info(f"BigQuery: Total count for term '{search_term}': {count}")
-        return count

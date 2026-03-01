@@ -15,8 +15,7 @@ class ProductService:
     def search(self, query: str, limit: int = 20, offset: int = 0) -> tuple[List[Product], int]:
         logger.info(f"ProductService - Searching for products with query '{query}' (limit={limit}, offset={offset})")
         query = query.lower()
-        products = self.repo.search_products(query, limit=limit, offset=offset)
-        total_count = self.repo.count_search_products(query)
+        products, total_count = self.repo.search_products(query, limit=limit, offset=offset)
         logger.info(f"ProductService - Found {len(products)} products (total: {total_count}) for query '{query}'")
         return [Product(**product) for product in products], total_count
 

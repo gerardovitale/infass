@@ -38,10 +38,12 @@ def test_search_products_returns_expected_results(mock_bigquery_client):
             "image_url": "test_image_url",
         },
     ]
-    mock_rows = [FakeBigQueryRow(row) for row in expected_results]
+    # Add total_count to mock rows (simulating window function)
+    mock_rows = [FakeBigQueryRow({**row, "total_count": 1}) for row in expected_results]
     mock_bigquery_client.query.return_value.result.return_value = mock_rows
 
     product_repo = BigQueryProductRepository(**test_bigquery_params)
-    actual_products = product_repo.search_products(test_search_params)
+    actual_products, total_count = product_repo.search_products(test_search_params)
 
     assert actual_products == expected_results
+    assert total_count == 1

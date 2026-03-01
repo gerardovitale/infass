@@ -16,7 +16,7 @@ class SQLiteProductRepository(ProductRepository):
         self.check_db_path_exist(db_path)
         self.db_path = db_path
 
-    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> list[dict]:
+    def search_products(self, search_term: str, limit: int = 20, offset: int = 0) -> tuple[list[dict], int]:
         logger.info(f"SQLiteRepo - Searching products with term '{search_term}' using FTS5 table if available")
         fts_query = """
                 SELECT p.id,
@@ -25,7 +25,8 @@ class SQLiteProductRepository(ProductRepository):
                        p.categories,
                        p.subcategories,
                        p.price      AS current_price,
-                       p.image_url
+                       p.image_url,
+                       COUNT(*) OVER() AS total_count
                 FROM products AS p
                 JOIN products_fts ON p.id = products_fts.id
                 WHERE products_fts MATCH :search
@@ -38,22 +39,15 @@ class SQLiteProductRepository(ProductRepository):
             logger.info(
                 f"SQLiteRepo - Found {len(rows)} products for term '{search_term}' (fts query: '{search_term_fts}')"
             )
-            return self.map_rows(rows, cursor)
-
-    def count_search_products(self, search_term: str) -> int:
-        logger.info(f"SQLiteRepo - Counting products with term '{search_term}'")
-        count_query = """
-                SELECT COUNT(*)
-                FROM products AS p
-                JOIN products_fts ON p.id = products_fts.id
-                WHERE products_fts MATCH :search
-                """
-        search_term_fts = self._prepare_fts_term(search_term)
-        with sqlite3.connect(self.db_path) as conn:
-            cursor = conn.cursor()
-            count = cursor.execute(count_query, {"search": search_term_fts}).fetchone()[0]
-            logger.info(f"SQLiteRepo - Total count for term '{search_term}': {count}")
-            return count
+            if not rows:
+                return [], 0
+            total_count = rows[0][-1]
+            # Strip the total_count column from each row before mapping
+            trimmed_rows = [row[:-1] for row in rows]
+            # Build a trimmed description (exclude last column)
+            trimmed_description = cursor.description[:-1]
+            mock_cursor = type("Cursor", (), {"description": trimmed_description})()
+            return self.map_rows(trimmed_rows, mock_cursor), total_count
 
     @staticmethod
     def _prepare_fts_term(search_term: str) -> str:
