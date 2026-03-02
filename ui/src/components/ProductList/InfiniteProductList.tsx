@@ -12,7 +12,12 @@ type Props = {
     limit: number;
 };
 
-export default function InfiniteProductList({ initialProducts, initialHasMore, searchTerm, limit }: Props) {
+export default function InfiniteProductList({
+    initialProducts,
+    initialHasMore,
+    searchTerm,
+    limit,
+}: Props) {
     const [products, setProducts] = useState<Product[]>(initialProducts);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const [isLoading, setIsLoading] = useState(false);
@@ -60,11 +65,7 @@ export default function InfiniteProductList({ initialProducts, initialHasMore, s
     return (
         <>
             <ProductList products={products} />
-            {hasMore && (
-                <div ref={sentinelRef}>
-                    {isLoading && <Spinner />}
-                </div>
-            )}
+            {hasMore && <div ref={sentinelRef}>{isLoading && <Spinner />}</div>}
         </>
     );
 }

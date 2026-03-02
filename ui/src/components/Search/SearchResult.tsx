@@ -40,7 +40,10 @@ export default async function SearchResult(props: Props) {
             />
         );
     } catch (error) {
-        logger.error('Error fetching search results', error instanceof Error ? error : undefined);
+        logger.error(
+            'Error fetching search results',
+            error instanceof Error ? error : undefined
+        );
         return <NoResults />;
     }
 }

@@ -11,7 +11,9 @@ const CACHE_REVALIDATE_SECONDS = 300;
 const fetchProduct = unstable_cache(
     async (productId: string) => {
         const client = await getClient();
-        const res = await client.fetch(`${process.env.API_BASE_URL}/products/${productId}`);
+        const res = await client.fetch(
+            `${process.env.API_BASE_URL}/products/${productId}`
+        );
         return { status: res.status, data: res.data as Product };
     },
     ['product-detail'],
@@ -24,7 +26,10 @@ export default async function ProductPage({ params }: PageProps) {
     try {
         res = await fetchProduct(id);
     } catch (error) {
-        logger.error('Failed to fetch product', error instanceof Error ? error : undefined);
+        logger.error(
+            'Failed to fetch product',
+            error instanceof Error ? error : undefined
+        );
         throw error;
     }
     if (res.status !== 200) {

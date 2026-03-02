@@ -2,13 +2,21 @@
 
 import Link from 'next/link';
 
-export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function Error({
+    reset,
+}: {
+    error: Error & { digest?: string };
+    reset: () => void;
+}) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-100">
             <div className="text-center p-8 bg-white shadow-lg rounded-lg">
-                <h1 className="text-4xl font-bold text-red-600">Something went wrong</h1>
+                <h1 className="text-4xl font-bold text-red-600">
+                    Something went wrong
+                </h1>
                 <p className="mt-4 text-lg text-gray-600">
-                    Sorry, we couldn&apos;t load the product details. Please try again later.
+                    Sorry, we couldn&apos;t load the product details. Please try
+                    again later.
                 </p>
                 <div className="mt-6 flex gap-4 justify-center">
                     <button

@@ -15,13 +15,15 @@ let intersectionCallback: (entries: { isIntersecting: boolean }[]) => void;
 
 beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (global as any).IntersectionObserver = jest.fn((cb: (entries: { isIntersecting: boolean }[]) => void) => {
-        intersectionCallback = cb;
-        return {
-            observe: jest.fn(),
-            disconnect: jest.fn(),
-        };
-    });
+    (global as any).IntersectionObserver = jest.fn(
+        (cb: (entries: { isIntersecting: boolean }[]) => void) => {
+            intersectionCallback = cb;
+            return {
+                observe: jest.fn(),
+                disconnect: jest.fn(),
+            };
+        }
+    );
     (global.fetch as jest.Mock) = jest.fn();
 });
 
@@ -80,7 +82,9 @@ describe('InfiniteProductList', () => {
                 limit={20}
             />
         );
-        expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('status', { name: 'Loading' })
+        ).not.toBeInTheDocument();
     });
 
     it('shows spinner while loading more products and hides it after', async () => {
@@ -106,14 +110,18 @@ describe('InfiniteProductList', () => {
             intersectionCallback([{ isIntersecting: true }]);
         });
 
-        expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
+        expect(
+            screen.getByRole('status', { name: 'Loading' })
+        ).toBeInTheDocument();
 
         await act(async () => {
             resolveResponse!({ results: [makeProduct('2')], has_more: false });
         });
 
         await waitFor(() => {
-            expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+            expect(
+                screen.queryByRole('status', { name: 'Loading' })
+            ).not.toBeInTheDocument();
         });
     });
 });

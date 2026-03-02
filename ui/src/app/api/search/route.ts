@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
     const offset = searchParams.get('offset') || '0';
 
     if (!searchTerm) {
-        return NextResponse.json({ error: 'search_term is required' }, { status: 400 });
+        return NextResponse.json(
+            { error: 'search_term is required' },
+            { status: 400 }
+        );
     }
 
     try {
@@ -19,7 +22,13 @@ export async function GET(request: NextRequest) {
         );
         return NextResponse.json(res.data);
     } catch (error) {
-        logger.error('Search API error', error instanceof Error ? error : undefined);
-        return NextResponse.json({ error: 'Failed to fetch search results' }, { status: 502 });
+        logger.error(
+            'Search API error',
+            error instanceof Error ? error : undefined
+        );
+        return NextResponse.json(
+            { error: 'Failed to fetch search results' },
+            { status: 502 }
+        );
     }
 }

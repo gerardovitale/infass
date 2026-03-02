@@ -3,11 +3,13 @@ import { render } from '@testing-library/react';
 import SearchResult from './SearchResult';
 
 jest.mock('next/cache', () => ({
-    unstable_cache: (fn: Function) => fn,
+    unstable_cache: (fn: () => void) => fn,
 }));
 
 jest.mock('../ProductList/InfiniteProductList', () => {
-    return function MockInfiniteProductList(props: { initialProducts: { id: string }[] }) {
+    return function MockInfiniteProductList(props: {
+        initialProducts: { id: string }[];
+    }) {
         return (
             <ul>
                 {props.initialProducts.map((p) => (
@@ -72,7 +74,13 @@ describe('SearchResult', () => {
     it('should render an empty list if no search results are found', async () => {
         fetchMock.mockResolvedValueOnce({
             status: 200,
-            data: { results: [], total_results: 0, limit: 20, offset: 0, has_more: false },
+            data: {
+                results: [],
+                total_results: 0,
+                limit: 20,
+                offset: 0,
+                has_more: false,
+            },
         });
         const { queryByText } = await renderSearchPage();
         const noResults = queryByText('No products found');

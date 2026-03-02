@@ -37,7 +37,9 @@ describe('SearchPage Suspense behavior', () => {
             </Suspense>
         );
 
-        expect(screen.queryByRole('status', { name: 'Loading' })).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('status', { name: 'Loading' })
+        ).not.toBeInTheDocument();
         expect(screen.getByText('Search results loaded')).toBeInTheDocument();
     });
 });
