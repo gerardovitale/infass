@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 
+from google.cloud.bigquery import SchemaUpdateOption
 from google.cloud.bigquery import TimePartitioning
 from google.cloud.bigquery import TimePartitioningType
 from schemas import BQ_SCHEMA
@@ -104,6 +105,7 @@ def get_pipeline_config() -> dict:
                     field="date",
                 ),
                 "clustering_fields": ["name", "size"],
+                "schema_update_options": [SchemaUpdateOption.ALLOW_FIELD_ADDITION],
             },
         },
         "carr": {
@@ -117,6 +119,7 @@ def get_pipeline_config() -> dict:
                     field="date",
                 ),
                 "clustering_fields": ["name"],
+                "schema_update_options": [SchemaUpdateOption.ALLOW_FIELD_ADDITION],
             },
         },
         "dia": {},
