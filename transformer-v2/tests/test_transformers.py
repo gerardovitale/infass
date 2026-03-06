@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 from main import run_transformer
@@ -288,6 +289,23 @@ def test_round_price_columns_rounds_to_two_decimals():
     assert actual["original_price"].iloc[1] == pytest.approx(3.00, abs=1e-2)
     assert actual["discount_price"].iloc[0] == pytest.approx(0.56, abs=1e-2)
     assert actual["discount_price"].iloc[1] == pytest.approx(1.00, abs=1e-2)
+
+
+def test_round_price_columns_handles_nan_values():
+    df = pd.DataFrame(
+        {
+            "original_price": pd.array([1.705, 2.999], dtype="float32"),
+            "discount_price": pd.array([0.555, 1.004], dtype="float32"),
+            "price": pd.array([1.705, 2.999], dtype="float32"),
+            "price_per_unit": pd.array([np.nan, np.nan], dtype="float64"),
+        }
+    )
+
+    actual = round_price_columns(df)
+
+    assert actual["original_price"].iloc[0] == pytest.approx(1.70, abs=1e-2)
+    assert actual["price_per_unit"].isna().all()
+    assert actual["price_per_unit"].dtype == "float32"
 
 
 def test_ensure_columns_adds_missing_column_with_default():
