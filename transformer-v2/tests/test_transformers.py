@@ -99,6 +99,7 @@ def test_carr_transformer_integration_pipeline_with_carrefour_csv():
         transformer=CarrTransformer(),
         destination=destination,
         txn_recorder=txn_recorder,
+        reprocess=False,
     )
 
     assert destination.written_df is not None
@@ -401,6 +402,7 @@ def test_integration_pipeline_correctness_with_crafted_data():
         transformer=CarrTransformer(),
         destination=destination,
         txn_recorder=txn_recorder,
+        reprocess=False,
     )
 
     result = destination.written_df

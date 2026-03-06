@@ -52,30 +52,48 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 # - Transform data
 # - Overwrite/Update that date range BigQuery dataset
 
-
-def main():
-    logging.info("Starting transformer V2 pipeline")
-    args = parse_args()
-    product_config = get_pipeline_config()[args.product]
-    logging.info(f"Parsed args: {vars(args)}")
-    run_transformer(
-        data_source=Storage(bucket_name=args.gcs_source_bucket, prefix=args.product),
-        transformer=product_config["transformer"](),
-        destination=BigQuery(table_ref=args.bq_destination_table, write_config=product_config["write_config"]),
-        txn_recorder=TxnRecSQLite(
-            db_path="/mnt/sqlite/infass-transformer-sqlite.db",
-            product=args.product,
-            data_source=args.gcs_source_bucket,
-            destination=args.bq_destination_table,
-        ),
-    )
-    logging.info("Pipeline completed successfully.")
+PIPELINE_DEFAULT_CONFIG = {
+    "merc": {
+        "transformer": MercTransformer,
+        "write_config": {
+            "create_disposition": "CREATE_IF_NEEDED",
+            "write_disposition": "WRITE_APPEND",
+            "schema": BQ_SCHEMA,
+            "time_partitioning": TimePartitioning(
+                type_=TimePartitioningType.DAY,
+                field="date",
+            ),
+            "clustering_fields": ["name", "size"],
+            "schema_update_options": [SchemaUpdateOption.ALLOW_FIELD_ADDITION],
+        },
+    },
+    "carr": {
+        "transformer": CarrTransformer,
+        "write_config": {
+            "create_disposition": "CREATE_IF_NEEDED",
+            "write_disposition": "WRITE_APPEND",
+            "schema": BQ_SCHEMA,
+            "time_partitioning": TimePartitioning(
+                type_=TimePartitioningType.DAY,
+                field="date",
+            ),
+            "clustering_fields": ["name"],
+            "schema_update_options": [SchemaUpdateOption.ALLOW_FIELD_ADDITION],
+        },
+    },
+    "dia": {},
+}
 
 
 def parse_args():
     logging.info("Parsing command-line arguments")
     parser = argparse.ArgumentParser(description="Data transformation pipeline")
-    parser.add_argument("--gcs-source-bucket", type=str, required=True, help="Storage source bucket name")
+    parser.add_argument(
+        "--gcs-source-bucket",
+        type=str,
+        required=True,
+        help="Storage source bucket name",
+    )
     parser.add_argument(
         "--product",
         type=str,
@@ -89,41 +107,45 @@ def parse_args():
         required=True,
         help="BigQuery destination table name",
     )
+    parser.add_argument(
+        "--reprocess",
+        action="store_true",
+        default=False,
+        help="Force full reprocessing: fetch all files and overwrite the BQ table",
+    )
     return parser.parse_args()
 
 
-def get_pipeline_config() -> dict:
-    return {
-        "merc": {
-            "transformer": MercTransformer,
-            "write_config": {
-                "create_disposition": "CREATE_IF_NEEDED",
-                "write_disposition": "WRITE_APPEND",
-                "schema": BQ_SCHEMA,
-                "time_partitioning": TimePartitioning(
-                    type_=TimePartitioningType.DAY,
-                    field="date",
-                ),
-                "clustering_fields": ["name", "size"],
-                "schema_update_options": [SchemaUpdateOption.ALLOW_FIELD_ADDITION],
-            },
-        },
-        "carr": {
-            "transformer": CarrTransformer,
-            "write_config": {
-                "create_disposition": "CREATE_IF_NEEDED",
-                "write_disposition": "WRITE_APPEND",
-                "schema": BQ_SCHEMA,
-                "time_partitioning": TimePartitioning(
-                    type_=TimePartitioningType.DAY,
-                    field="date",
-                ),
-                "clustering_fields": ["name"],
-                "schema_update_options": [SchemaUpdateOption.ALLOW_FIELD_ADDITION],
-            },
-        },
-        "dia": {},
-    }
+def main():
+    logging.info("Starting transformer V2 pipeline")
+    args = parse_args()
+
+    product_config = PIPELINE_DEFAULT_CONFIG[args.product]
+    write_config = {**product_config["write_config"]}
+    if args.reprocess:
+        logging.info("Reprocess flag is set. Overriding write disposition to WRITE_TRUNCATE for full reprocessing.")
+        write_config["write_disposition"] = "WRITE_TRUNCATE"
+
+    logging.info(f"Parsed args: {vars(args)}")
+    run_transformer(
+        data_source=Storage(
+            bucket_name=args.gcs_source_bucket,
+            prefix=args.product,
+        ),
+        transformer=product_config["transformer"](),
+        destination=BigQuery(
+            table_ref=args.bq_destination_table,
+            write_config=write_config,
+        ),
+        txn_recorder=TxnRecSQLite(
+            db_path="/mnt/sqlite/infass-transformer-sqlite.db",
+            product=args.product,
+            data_source=args.gcs_source_bucket,
+            destination=args.bq_destination_table,
+        ),
+        reprocess=args.reprocess,
+    )
+    logging.info("Pipeline completed successfully.")
 
 
 def run_transformer(
@@ -131,6 +153,7 @@ def run_transformer(
     transformer: Transformer,
     destination: Sink,
     txn_recorder: TransactionRecorder,
+    reprocess: bool,
 ) -> None:
     logging.info(
         "Running transformer with "
@@ -139,7 +162,7 @@ def run_transformer(
         f"destination: {destination.__class__.__name__}, "
         f"txn_recorder: {txn_recorder.__class__.__name__} "
     )
-    last_txn = txn_recorder.get_last_txn_if_exists()
+    last_txn = txn_recorder.get_last_txn_if_exists() if not reprocess else None
     data = data_source.fetch_data(last_txn_date=last_txn.max_date if last_txn else None)
     if data.empty:
         logging.warning("No input data found. Skipping transform/write/record.")

@@ -1,0 +1,23 @@
+name: Trigger Reprocessing
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: "Product to reprocess"
+        required: true
+        type: choice
+        options:
+          - carr
+          - merc
+
+jobs:
+  trigger-reprocessing:
+    uses: ./.github/workflows/trigger-cloud-run-job.yml
+    with:
+      region: europe-southwest1
+      app_name: infass
+      component: transformer-v2
+      args: "--gcs-source-bucket,infass-${{ inputs.product }},--product,${{ inputs.product }},--bq-destination-table,inflation-assistant.infass.stg_${{ inputs.product }},--reprocess"
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
