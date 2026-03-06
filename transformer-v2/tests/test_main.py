@@ -150,8 +150,21 @@ def test_pipeline_default_config_not_mutated_after_reprocess():
 
     write_config = {**PIPELINE_DEFAULT_CONFIG["merc"]["write_config"]}
     write_config["write_disposition"] = "WRITE_TRUNCATE"
+    write_config.pop("schema_update_options", None)
 
     assert PIPELINE_DEFAULT_CONFIG["merc"]["write_config"]["write_disposition"] == "WRITE_APPEND"
+    assert "schema_update_options" in PIPELINE_DEFAULT_CONFIG["merc"]["write_config"]
+
+
+def test_reprocess_write_config_removes_schema_update_options():
+    write_config = {**PIPELINE_DEFAULT_CONFIG["merc"]["write_config"]}
+    assert "schema_update_options" in write_config
+
+    write_config["write_disposition"] = "WRITE_TRUNCATE"
+    write_config.pop("schema_update_options", None)
+
+    assert write_config["write_disposition"] == "WRITE_TRUNCATE"
+    assert "schema_update_options" not in write_config
 
 
 def test_run_transformer_skips_write_when_transform_result_is_empty():

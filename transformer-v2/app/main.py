@@ -125,6 +125,7 @@ def main():
     if args.reprocess:
         logging.info("Reprocess flag is set. Overriding write disposition to WRITE_TRUNCATE for full reprocessing.")
         write_config["write_disposition"] = "WRITE_TRUNCATE"
+        write_config.pop("schema_update_options", None)
 
     logging.info(f"Parsed args: {vars(args)}")
     run_transformer(
