@@ -50,7 +50,7 @@ def transform_merc(df: pd.DataFrame) -> pd.DataFrame:
         return build_empty_transformed_df()
 
     logger.info(f"Starting data transformation with df shape {df.shape}")
-    df = ensure_columns(df, {"size": pd.NA, "price_per_unit": pd.NA, "unit": pd.NA})
+    df = ensure_columns(df, {"size": np.nan, "price_per_unit": np.nan, "unit": np.nan})
     df = cats_date_column(df)
     df = cast_price_columns_as_float32(df)
     df = split_category_subcategory(df)
@@ -68,7 +68,7 @@ def transform_carr(df: pd.DataFrame) -> pd.DataFrame:
         return build_empty_transformed_df()
 
     logger.info(f"Starting Carrefour data transformation with df shape {df.shape}")
-    df = ensure_columns(df, {"size": pd.NA, "image_url": pd.NA, "discount_price": pd.NA, "price_per_unit": pd.NA})
+    df = ensure_columns(df, {"size": np.nan, "image_url": np.nan, "discount_price": np.nan, "price_per_unit": np.nan})
     df = parse_price_per_unit(df)
     df = cats_date_column(df)
     df = cast_price_columns_as_float32(df)
