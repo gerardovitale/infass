@@ -40,7 +40,12 @@ def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], fil
     logger.info(f"Writing data to local file: {output_path}")
 
     headers_written = False
+    chunks_written = 0
     for df_chunk in data_gen:
+        if df_chunk.empty:
+            logger.info("Skipping empty chunk")
+            continue
+
         mode = "w" if not headers_written else "a"
         header = not headers_written
 
@@ -52,6 +57,10 @@ def write_pandas_to_local_csv(data_gen: Generator[pd.DataFrame, None, None], fil
             f"Wrote chunk with{'out' if not header else ''} headers of size: {len(csv_content.encode('utf-8'))} bytes"
         )
         headers_written = True
+        chunks_written += 1
+
+    if chunks_written == 0:
+        raise RuntimeError("No data to write: 0 products were extracted. Failing to trigger alert.")
 
     logger.info("Local write completed successfully.")
 

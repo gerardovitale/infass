@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from writer import write_data
 from writer import write_pandas_to_bucket_as_parquet
+from writer import write_pandas_to_local_csv
 
 
 @pytest.fixture
@@ -148,3 +149,32 @@ def test_write_parquet_handles_null_typed_column_in_subsequent_chunk(mock_dateti
     assert list(df["name"]) == ["Product A", "Product B"]
     assert df["discount_price"][0] == "1,53 €"
     assert pd.isna(df["discount_price"][1])
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Test: write_pandas_to_local_csv
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@patch("writer.datetime")
+def test_write_local_csv_raises_on_empty_generator(mock_datetime):
+    mock_datetime.now.return_value.isoformat.return_value = "2024-01-15T00:00"
+
+    def empty_gen():
+        return
+        yield
+
+    with pytest.raises(RuntimeError, match="No data to write"):
+        write_pandas_to_local_csv(empty_gen())
+
+
+@patch("writer.datetime")
+def test_write_local_csv_raises_on_all_empty_chunks(mock_datetime):
+    mock_datetime.now.return_value.isoformat.return_value = "2024-01-15T00:00"
+
+    def gen_all_empty():
+        yield pd.DataFrame()
+        yield pd.DataFrame()
+
+    with pytest.raises(RuntimeError, match="No data to write"):
+        write_pandas_to_local_csv(gen_all_empty())
