@@ -84,8 +84,7 @@ def write_pandas_to_bucket_as_parquet(
         writer.close()
 
     if chunks_written == 0:
-        logger.info("No data to write, skipping upload")
-        return
+        raise RuntimeError("No data to write: 0 products were extracted. Failing to trigger alert.")
 
     blob_name = f"{bucket_prefix}/{datetime.now().date().isoformat()}.parquet"
     buffer.seek(0)

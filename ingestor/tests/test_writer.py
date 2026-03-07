@@ -108,9 +108,8 @@ def test_write_parquet_handles_all_empty_chunks(mock_datetime, mock_gcs_client):
         yield pd.DataFrame()
         yield pd.DataFrame()
 
-    write_pandas_to_bucket_as_parquet(gen_all_empty(), "test-bucket", "merc")
-
-    mock_bucket.blob.assert_not_called()
+    with pytest.raises(RuntimeError, match="No data to write"):
+        write_pandas_to_bucket_as_parquet(gen_all_empty(), "test-bucket", "merc")
 
 
 @patch("writer.datetime")
@@ -122,9 +121,8 @@ def test_write_parquet_handles_empty_generator(mock_datetime, mock_gcs_client):
         return
         yield
 
-    write_pandas_to_bucket_as_parquet(empty_gen(), "test-bucket", "merc")
-
-    mock_bucket.blob.assert_not_called()
+    with pytest.raises(RuntimeError, match="No data to write"):
+        write_pandas_to_bucket_as_parquet(empty_gen(), "test-bucket", "merc")
 
 
 @patch("writer.datetime")
