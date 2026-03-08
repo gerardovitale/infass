@@ -81,7 +81,8 @@ def write_pandas_to_bucket_as_parquet(
             continue
         table = pa.Table.from_pandas(chunk, preserve_index=False)
         if writer is None:
-            file_schema = table.schema
+            file_schema = pa.schema([pa.field(f.name, pa.string()) if f.type == pa.null() else f for f in table.schema])
+            table = table.cast(file_schema)
             writer = pq.ParquetWriter(buffer, file_schema, compression="snappy")
         else:
             table = table.cast(file_schema)
