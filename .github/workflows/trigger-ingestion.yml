@@ -16,15 +16,15 @@ jobs:
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
-  trigger-ingestor-carr:
-    uses: ./.github/workflows/trigger-cloud-run-job.yml
-    with:
-      region: europe-southwest1
-      app_name: infass
-      component: ingestor-carr
-      args: "https://www.carrefour.es/supermercado,gs://infass-carr/carr"
-    secrets:
-      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
+  # trigger-ingestor-carr:
+  #   uses: ./.github/workflows/trigger-cloud-run-job.yml
+  #   with:
+  #     region: europe-southwest1
+  #     app_name: infass
+  #     component: ingestor-carr
+  #     args: "https://www.carrefour.es/supermercado,gs://infass-carr/carr"
+  #   secrets:
+  #     gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
   trigger-transformer-merc:
     needs: trigger-ingestor-merc
@@ -37,13 +37,13 @@ jobs:
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
-  trigger-transformer-carr:
-    needs: trigger-ingestor-carr
-    uses: ./.github/workflows/trigger-cloud-run-job.yml
-    with:
-      region: europe-southwest1
-      app_name: infass
-      component: transformer-v2
-      args: "--gcs-source-bucket,infass-carr,--product,carr,--bq-destination-table,inflation-assistant.infass.stg_carr"
-    secrets:
-      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
+  # trigger-transformer-carr:
+  #   needs: trigger-ingestor-carr
+  #   uses: ./.github/workflows/trigger-cloud-run-job.yml
+  #   with:
+  #     region: europe-southwest1
+  #     app_name: infass
+  #     component: transformer-v2
+  #     args: "--gcs-source-bucket,infass-carr,--product,carr,--bq-destination-table,inflation-assistant.infass.stg_carr"
+  #   secrets:
+  #     gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
