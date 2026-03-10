@@ -64,7 +64,7 @@ resource "google_cloud_run_v2_service" "api_service" {
     service_account = google_service_account.api_service_account.email
 
     scaling {
-      min_instance_count = 1
+      min_instance_count = 0
       max_instance_count = 3
     }
 
@@ -101,7 +101,8 @@ resource "google_cloud_run_v2_service" "api_service" {
     volumes {
       name = local.volume_name
       gcs {
-        bucket = google_storage_bucket.sqlite_bucket.name
+        bucket    = google_storage_bucket.sqlite_bucket.name
+        read_only = true
       }
     }
 

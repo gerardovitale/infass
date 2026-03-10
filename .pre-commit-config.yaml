@@ -42,10 +42,3 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-
-#  - repo: local
-#    hooks:
-#      - id: sql-format
-#        name: SQL formatting
-#        entry: make sql-format.run
-#        language: system
