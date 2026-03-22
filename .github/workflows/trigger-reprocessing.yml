@@ -13,7 +13,7 @@ on:
 
 jobs:
   trigger-reprocessing:
-    uses: ./.github/workflows/trigger-cloud-run-job.yml
+    uses: gerardovitale/github-workflows/.github/workflows/trigger-cloud-run-job.yml@v1
     with:
       region: europe-southwest1
       app_name: infass

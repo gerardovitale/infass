@@ -7,7 +7,7 @@ on:
 
 jobs:
   trigger-ingestor-merc:
-    uses: ./.github/workflows/trigger-cloud-run-job.yml
+    uses: gerardovitale/github-workflows/.github/workflows/trigger-cloud-run-job.yml@v1
     with:
       region: europe-southwest1
       app_name: infass
@@ -17,7 +17,7 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
   # trigger-ingestor-carr:
-  #   uses: ./.github/workflows/trigger-cloud-run-job.yml
+  #   uses: gerardovitale/github-workflows/.github/workflows/trigger-cloud-run-job.yml@v1
   #   with:
   #     region: europe-southwest1
   #     app_name: infass
@@ -28,7 +28,7 @@ jobs:
 
   trigger-transformer-merc:
     needs: trigger-ingestor-merc
-    uses: ./.github/workflows/trigger-cloud-run-job.yml
+    uses: gerardovitale/github-workflows/.github/workflows/trigger-cloud-run-job.yml@v1
     with:
       region: europe-southwest1
       app_name: infass
@@ -39,7 +39,7 @@ jobs:
 
   # trigger-transformer-carr:
   #   needs: trigger-ingestor-carr
-  #   uses: ./.github/workflows/trigger-cloud-run-job.yml
+  #   uses: gerardovitale/github-workflows/.github/workflows/trigger-cloud-run-job.yml@v1
   #   with:
   #     region: europe-southwest1
   #     app_name: infass

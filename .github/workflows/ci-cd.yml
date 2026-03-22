@@ -72,7 +72,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs.ingestor == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
     with:
       service: ingestor
 
@@ -81,7 +81,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs['transformer-v2'] == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
     with:
       service: transformer-v2
 
@@ -90,7 +90,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs.api == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
     with:
       service: api
 
@@ -99,7 +99,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs.ui == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
     with:
       service: ui
 
@@ -108,7 +108,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs.retl == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
     with:
       service: retl
 
@@ -117,7 +117,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs.insights == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/test-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
     with:
       service: insights
 
@@ -130,9 +130,10 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.ingestor == 'true' ||
        inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
     with:
       service: ingestor
+      image_prefix: "infass-"
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -143,9 +144,10 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs['transformer-v2'] == 'true' ||
        inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
     with:
       service: transformer-v2
+      image_prefix: "infass-"
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -156,9 +158,10 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.api == 'true' ||
        inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
     with:
       service: api
+      image_prefix: "infass-"
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -169,9 +172,10 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.ui == 'true' ||
        inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
     with:
       service: ui
+      image_prefix: "infass-"
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -182,9 +186,10 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.retl == 'true' ||
        inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
     with:
       service: retl
+      image_prefix: "infass-"
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -195,9 +200,10 @@ jobs:
       always() && !failure() && !cancelled() &&
       (needs.detect-changes.outputs.insights == 'true' ||
        inputs.force_all == true)
-    uses: ./.github/workflows/build-service.yml
+    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
     with:
       service: insights
+      image_prefix: "infass-"
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -375,7 +381,7 @@ jobs:
     if: >-
       needs.detect-changes.outputs.dbt == 'true' ||
       inputs.force_all == true
-    uses: ./.github/workflows/run-dbt.yml
+    uses: gerardovitale/github-workflows/.github/workflows/run-dbt.yml@v1
     with:
       dbt_profile: infass
       dbt_target: test
