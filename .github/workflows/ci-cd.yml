@@ -31,7 +31,7 @@ jobs:
       any-backend-service: ${{ steps.filter.outputs.any-backend-service }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6.0.2
 
       - name: Detect file changes
         uses: dorny/paths-filter@v3
@@ -227,11 +227,10 @@ jobs:
        needs.detect-changes.outputs.infra == 'true' ||
        inputs.force_all == true)
     outputs:
-      terraform_vars: ${{ steps.tags.outputs.terraform_vars }}
-      env_vars: ${{ steps.env.outputs.env_vars }}
+      terraform_vars: ${{ steps.vars.outputs.terraform_vars }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6.0.2
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -239,7 +238,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3.1.1
+        uses: hashicorp/setup-terraform@v4.0.0
         with:
           terraform_version: 1.10.4
 
@@ -247,8 +246,8 @@ jobs:
         working-directory: ./infra
         run: terraform init
 
-      - name: Determine Docker image tags
-        id: tags
+      - name: Build terraform vars
+        id: vars
         working-directory: ./infra
         run: |
           FORCE="${{ inputs.force_all }}"
@@ -274,21 +273,18 @@ jobs:
           TAG_API=$(resolve_tag API '${{ needs.detect-changes.outputs.api }}')
           TAG_RETL=$(resolve_tag RETL '${{ needs.detect-changes.outputs.retl }}')
 
-          echo "terraform_vars=-var \"DOCKER_IMAGE_TAG_INGESTOR=${TAG_INGESTOR}\" -var \"DOCKER_IMAGE_TAG_TRANSFORMER_V2=${TAG_TRANSFORMER_V2}\" -var \"DOCKER_IMAGE_TAG_API=${TAG_API}\" -var \"DOCKER_IMAGE_TAG_RETL=${TAG_RETL}\"" >> "$GITHUB_OUTPUT"
+          VARS=""
+          VARS="$VARS -var \"APP_NAME=infass\""
+          VARS="$VARS -var \"PROJECT=${{ secrets.GCP_PROJECT_ID }}\""
+          VARS="$VARS -var \"REGION=europe-southwest1\""
+          VARS="$VARS -var \"DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}\""
+          VARS="$VARS -var \"GCP_USER=${{ secrets.GCP_USER }}\""
+          VARS="$VARS -var \"DOCKER_IMAGE_TAG_INGESTOR=${TAG_INGESTOR}\""
+          VARS="$VARS -var \"DOCKER_IMAGE_TAG_TRANSFORMER_V2=${TAG_TRANSFORMER_V2}\""
+          VARS="$VARS -var \"DOCKER_IMAGE_TAG_API=${TAG_API}\""
+          VARS="$VARS -var \"DOCKER_IMAGE_TAG_RETL=${TAG_RETL}\""
 
-      - name: Build env vars
-        id: env
-        run: |
-          EOF_MARKER=$(uuidgen)
-          {
-            echo "env_vars<<${EOF_MARKER}"
-            echo "TF_VAR_APP_NAME=infass"
-            echo "TF_VAR_PROJECT=${{ secrets.GCP_PROJECT_ID }}"
-            echo "TF_VAR_REGION=europe-southwest1"
-            echo "TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}"
-            echo "TF_VAR_GCP_USER=${{ secrets.GCP_USER }}"
-            echo "${EOF_MARKER}"
-          } >> "$GITHUB_OUTPUT"
+          echo "terraform_vars=${VARS}" >> "$GITHUB_OUTPUT"
 
   terraform-deploy:
     needs: [resolve-tags]
@@ -297,7 +293,6 @@ jobs:
     with:
       working_directory: ./infra
       terraform_vars: ${{ needs.resolve-tags.outputs.terraform_vars }}
-      env_vars: ${{ needs.resolve-tags.outputs.env_vars }}
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
@@ -316,11 +311,10 @@ jobs:
        needs.detect-changes.outputs.infra-ui == 'true' ||
        inputs.force_all == true)
     outputs:
-      terraform_vars: ${{ steps.tag.outputs.terraform_vars }}
-      env_vars: ${{ steps.env.outputs.env_vars }}
+      terraform_vars: ${{ steps.vars.outputs.terraform_vars }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6.0.2
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -328,7 +322,7 @@ jobs:
           credentials_json: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
 
       - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3.1.1
+        uses: hashicorp/setup-terraform@v4.0.0
         with:
           terraform_version: 1.10.4
 
@@ -336,8 +330,8 @@ jobs:
         working-directory: ./infra-ui
         run: terraform init
 
-      - name: Determine Docker image tag
-        id: tag
+      - name: Build terraform vars
+        id: vars
         working-directory: ./infra-ui
         run: |
           if [[ "${{ needs.detect-changes.outputs.ui }}" == "true" \
@@ -346,20 +340,15 @@ jobs:
           else
             DOCKER_TAG="$(terraform output -raw docker_image_tag 2>/dev/null || echo "${GITHUB_SHA::7}")"
           fi
-          echo "terraform_vars=-var \"DOCKER_IMAGE_TAG=${DOCKER_TAG}\"" >> "$GITHUB_OUTPUT"
 
-      - name: Build env vars
-        id: env
-        run: |
-          EOF_MARKER=$(uuidgen)
-          {
-            echo "env_vars<<${EOF_MARKER}"
-            echo "TF_VAR_APP_NAME=infass"
-            echo "TF_VAR_REGION=europe-southwest1"
-            echo "TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}"
-            echo "TF_VAR_GCP_API_URL=${{ vars.GCP_API_URL }}"
-            echo "${EOF_MARKER}"
-          } >> "$GITHUB_OUTPUT"
+          VARS=""
+          VARS="$VARS -var \"APP_NAME=infass\""
+          VARS="$VARS -var \"REGION=europe-southwest1\""
+          VARS="$VARS -var \"DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}\""
+          VARS="$VARS -var \"GCP_API_URL=${{ vars.GCP_API_URL }}\""
+          VARS="$VARS -var \"DOCKER_IMAGE_TAG=${DOCKER_TAG}\""
+
+          echo "terraform_vars=${VARS}" >> "$GITHUB_OUTPUT"
 
   terraform-ui-deploy:
     needs: [resolve-ui-tag]
@@ -368,7 +357,6 @@ jobs:
     with:
       working_directory: ./infra-ui
       terraform_vars: ${{ needs.resolve-ui-tag.outputs.terraform_vars }}
-      env_vars: ${{ needs.resolve-ui-tag.outputs.env_vars }}
     secrets:
       gcp_credentials: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
 
