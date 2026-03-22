@@ -209,10 +209,10 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   # ---------------------------------------------------------------------------
-  # Terraform deploy
+  # Terraform deploy — resolve tags then call reusable workflow
   # ---------------------------------------------------------------------------
-  terraform-deploy:
-    name: Deploy infra with tf
+  resolve-tags:
+    name: Resolve Docker image tags
     runs-on: ubuntu-latest
     needs:
       - detect-changes
@@ -226,35 +226,23 @@ jobs:
       (needs.detect-changes.outputs.any-backend-service == 'true' ||
        needs.detect-changes.outputs.infra == 'true' ||
        inputs.force_all == true)
-    env:
-      TF_VAR_APP_NAME: infass
-      TF_VAR_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
-      TF_VAR_REGION: europe-southwest1
-      TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      TF_VAR_GCP_USER: ${{ secrets.GCP_USER }}
+    outputs:
+      terraform_vars: ${{ steps.tags.outputs.terraform_vars }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
       - name: Authenticate to Google Cloud
-        id: auth
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
       - name: Set up Terraform
-        id: setup-tf
         uses: hashicorp/setup-terraform@v3.1.1
         with:
           terraform_version: 1.10.4
 
-      - name: Terraform fmt
-        id: fmt
-        run: terraform fmt -check
-        continue-on-error: false
-
       - name: Initialize Terraform
-        id: init
         working-directory: ./infra
         run: terraform init
 
@@ -280,38 +268,34 @@ jobs:
             fi
           }
 
-          {
-            echo "tag_INGESTOR=$(resolve_tag INGESTOR '${{ needs.detect-changes.outputs.ingestor }}')"
-            echo "tag_TRANSFORMER_V2=$(resolve_tag TRANSFORMER_V2 '${{ needs.detect-changes.outputs['transformer-v2'] }}')"
-            echo "tag_API=$(resolve_tag API '${{ needs.detect-changes.outputs.api }}')"
-            echo "tag_RETL=$(resolve_tag RETL '${{ needs.detect-changes.outputs.retl }}')"
-          } >> "$GITHUB_OUTPUT"
+          TAG_INGESTOR=$(resolve_tag INGESTOR '${{ needs.detect-changes.outputs.ingestor }}')
+          TAG_TRANSFORMER_V2=$(resolve_tag TRANSFORMER_V2 '${{ needs.detect-changes.outputs['transformer-v2'] }}')
+          TAG_API=$(resolve_tag API '${{ needs.detect-changes.outputs.api }}')
+          TAG_RETL=$(resolve_tag RETL '${{ needs.detect-changes.outputs.retl }}')
 
-      - name: Plan Terraform changes
-        id: plan
-        working-directory: ./infra
-        run: |
-          terraform plan \
-            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
-            -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
-            -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
-            -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
+          echo "terraform_vars=-var \"DOCKER_IMAGE_TAG_INGESTOR=${TAG_INGESTOR}\" -var \"DOCKER_IMAGE_TAG_TRANSFORMER_V2=${TAG_TRANSFORMER_V2}\" -var \"DOCKER_IMAGE_TAG_API=${TAG_API}\" -var \"DOCKER_IMAGE_TAG_RETL=${TAG_RETL}\"" >> "$GITHUB_OUTPUT"
 
-      - name: Apply Terraform changes
-        id: apply
-        working-directory: ./infra
-        run: |
-          terraform apply -auto-approve \
-            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
-            -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
-            -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
-            -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
+  terraform-deploy:
+    needs: [resolve-tags]
+    if: always() && !failure() && !cancelled() && needs.resolve-tags.result == 'success'
+    uses: gerardovitale/github-workflows/.github/workflows/terraform-deploy.yml@v1
+    with:
+      working_directory: ./infra
+      terraform_vars: ${{ needs.resolve-tags.outputs.terraform_vars }}
+      env_vars: |
+        TF_VAR_APP_NAME=infass
+        TF_VAR_PROJECT=${{ secrets.GCP_PROJECT_ID }}
+        TF_VAR_REGION=europe-southwest1
+        TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}
+        TF_VAR_GCP_USER=${{ secrets.GCP_USER }}
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
   # ---------------------------------------------------------------------------
-  # Terraform deploy (UI)
+  # Terraform deploy (UI) — resolve tag then call reusable workflow
   # ---------------------------------------------------------------------------
-  terraform-ui-deploy:
-    name: Deploy UI with tf
+  resolve-ui-tag:
+    name: Resolve UI Docker image tag
     runs-on: ubuntu-latest
     needs:
       - detect-changes
@@ -321,34 +305,23 @@ jobs:
       (needs.detect-changes.outputs.ui == 'true' ||
        needs.detect-changes.outputs.infra-ui == 'true' ||
        inputs.force_all == true)
-    env:
-      TF_VAR_APP_NAME: infass
-      TF_VAR_REGION: europe-southwest1
-      TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      TF_VAR_GCP_API_URL: ${{ vars.GCP_API_URL }}
+    outputs:
+      terraform_vars: ${{ steps.tag.outputs.terraform_vars }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
       - name: Authenticate to Google Cloud
-        id: auth
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
 
       - name: Set up Terraform
-        id: setup-tf
         uses: hashicorp/setup-terraform@v3.1.1
         with:
           terraform_version: 1.10.4
 
-      - name: Terraform fmt
-        id: fmt
-        run: terraform fmt -check
-        continue-on-error: false
-
       - name: Initialize Terraform
-        id: init
         working-directory: ./infra-ui
         run: terraform init
 
@@ -358,20 +331,26 @@ jobs:
         run: |
           if [[ "${{ needs.detect-changes.outputs.ui }}" == "true" \
               || "${{ inputs.force_all }}" == "true" ]]; then
-            echo "docker_tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+            DOCKER_TAG="${GITHUB_SHA::7}"
           else
-            echo "docker_tag=$(terraform output -raw docker_image_tag 2>/dev/null || echo "${GITHUB_SHA::7}")" >> "$GITHUB_OUTPUT"
+            DOCKER_TAG="$(terraform output -raw docker_image_tag 2>/dev/null || echo "${GITHUB_SHA::7}")"
           fi
+          echo "terraform_vars=-var \"DOCKER_IMAGE_TAG=${DOCKER_TAG}\"" >> "$GITHUB_OUTPUT"
 
-      - name: Plan Terraform changes
-        id: plan
-        working-directory: ./infra-ui
-        run: terraform plan -var "DOCKER_IMAGE_TAG=${{ steps.tag.outputs.docker_tag }}"
-
-      - name: Apply Terraform changes
-        id: apply
-        working-directory: ./infra-ui
-        run: terraform apply -auto-approve -var "DOCKER_IMAGE_TAG=${{ steps.tag.outputs.docker_tag }}"
+  terraform-ui-deploy:
+    needs: [resolve-ui-tag]
+    if: always() && !failure() && !cancelled() && needs.resolve-ui-tag.result == 'success'
+    uses: gerardovitale/github-workflows/.github/workflows/terraform-deploy.yml@v1
+    with:
+      working_directory: ./infra-ui
+      terraform_vars: ${{ needs.resolve-ui-tag.outputs.terraform_vars }}
+      env_vars: |
+        TF_VAR_APP_NAME=infass
+        TF_VAR_REGION=europe-southwest1
+        TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}
+        TF_VAR_GCP_API_URL=${{ vars.GCP_API_URL }}
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
 
   # ---------------------------------------------------------------------------
   # dbt
