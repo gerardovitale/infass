@@ -228,6 +228,7 @@ jobs:
        inputs.force_all == true)
     outputs:
       terraform_vars: ${{ steps.tags.outputs.terraform_vars }}
+      env_vars: ${{ steps.env.outputs.env_vars }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -275,6 +276,20 @@ jobs:
 
           echo "terraform_vars=-var \"DOCKER_IMAGE_TAG_INGESTOR=${TAG_INGESTOR}\" -var \"DOCKER_IMAGE_TAG_TRANSFORMER_V2=${TAG_TRANSFORMER_V2}\" -var \"DOCKER_IMAGE_TAG_API=${TAG_API}\" -var \"DOCKER_IMAGE_TAG_RETL=${TAG_RETL}\"" >> "$GITHUB_OUTPUT"
 
+      - name: Build env vars
+        id: env
+        run: |
+          EOF_MARKER=$(uuidgen)
+          {
+            echo "env_vars<<${EOF_MARKER}"
+            echo "TF_VAR_APP_NAME=infass"
+            echo "TF_VAR_PROJECT=${{ secrets.GCP_PROJECT_ID }}"
+            echo "TF_VAR_REGION=europe-southwest1"
+            echo "TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+            echo "TF_VAR_GCP_USER=${{ secrets.GCP_USER }}"
+            echo "${EOF_MARKER}"
+          } >> "$GITHUB_OUTPUT"
+
   terraform-deploy:
     needs: [resolve-tags]
     if: always() && !failure() && !cancelled() && needs.resolve-tags.result == 'success'
@@ -282,12 +297,7 @@ jobs:
     with:
       working_directory: ./infra
       terraform_vars: ${{ needs.resolve-tags.outputs.terraform_vars }}
-      env_vars: |
-        TF_VAR_APP_NAME=infass
-        TF_VAR_PROJECT=${{ secrets.GCP_PROJECT_ID }}
-        TF_VAR_REGION=europe-southwest1
-        TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}
-        TF_VAR_GCP_USER=${{ secrets.GCP_USER }}
+      env_vars: ${{ needs.resolve-tags.outputs.env_vars }}
     secrets:
       gcp_credentials: ${{ secrets.GCP_CICD_CREDENTIALS }}
 
@@ -307,6 +317,7 @@ jobs:
        inputs.force_all == true)
     outputs:
       terraform_vars: ${{ steps.tag.outputs.terraform_vars }}
+      env_vars: ${{ steps.env.outputs.env_vars }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
@@ -337,6 +348,19 @@ jobs:
           fi
           echo "terraform_vars=-var \"DOCKER_IMAGE_TAG=${DOCKER_TAG}\"" >> "$GITHUB_OUTPUT"
 
+      - name: Build env vars
+        id: env
+        run: |
+          EOF_MARKER=$(uuidgen)
+          {
+            echo "env_vars<<${EOF_MARKER}"
+            echo "TF_VAR_APP_NAME=infass"
+            echo "TF_VAR_REGION=europe-southwest1"
+            echo "TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}"
+            echo "TF_VAR_GCP_API_URL=${{ vars.GCP_API_URL }}"
+            echo "${EOF_MARKER}"
+          } >> "$GITHUB_OUTPUT"
+
   terraform-ui-deploy:
     needs: [resolve-ui-tag]
     if: always() && !failure() && !cancelled() && needs.resolve-ui-tag.result == 'success'
@@ -344,11 +368,7 @@ jobs:
     with:
       working_directory: ./infra-ui
       terraform_vars: ${{ needs.resolve-ui-tag.outputs.terraform_vars }}
-      env_vars: |
-        TF_VAR_APP_NAME=infass
-        TF_VAR_REGION=europe-southwest1
-        TF_VAR_DOCKER_HUB_USERNAME=${{ secrets.DOCKER_USERNAME }}
-        TF_VAR_GCP_API_URL=${{ vars.GCP_API_URL }}
+      env_vars: ${{ needs.resolve-ui-tag.outputs.env_vars }}
     secrets:
       gcp_credentials: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
 
