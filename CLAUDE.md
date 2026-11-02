@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
+> **Status: decommissioned (2026-11).** Only the daily Mercadona ingestor (Cloud Run job `infass-ingestor-merc` → `gs://infass-merc`) still runs. Everything after GCS in the data flow below is shut down: no BigQuery datasets, no transformer, no API or UI deployments. The module code is kept but is not built or deployed by CI. See README.md.
+
 infass is a data pipeline and analytics monorepo for tracking product prices. It scrapes data from retail websites (Mercadona), transforms it through a data warehouse (BigQuery), and serves it via an API/UI.
 
 **Data flow:** Web scraping (Ingestor) → GCS → Transformation → BigQuery → dbt models → Reverse ETL → SQLite → FastAPI → Next.js UI
@@ -77,9 +79,9 @@ Pre-commit hooks handle linting automatically. Manual runs:
 
 ## CI/CD Workflows
 
-- `ci-cd.yml` - Main pipeline: test → build Docker images → push to Docker Hub → Terraform deploy
-- `trigger-ingestion.yml` - Daily scheduled ingestor run (5 AM UTC)
-- `run-dbt.yml` - Reusable dbt build/test workflow
+- `ci-cd.yml` - Ingestor only: test → build Docker image → push to Docker Hub → Terraform deploy (`infra/`)
+- `trigger-ingestion.yml` - Daily scheduled Mercadona ingestor run (5 AM UTC)
+- Reusable workflows live in the `gerardovitale/github-workflows` repo
 
 ## dbt Model Hierarchy
 
