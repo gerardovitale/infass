@@ -53,59 +53,6 @@ resource "google_storage_bucket_iam_member" "bucket_permissions" {
 }
 
 # ------------------------------
-# Carrefour Bucket
-# ------------------------------
-resource "google_storage_bucket" "carr_bucket" {
-  name          = "${var.APP_NAME}-carr"
-  force_destroy = false
-  location      = var.REGION
-  storage_class = "STANDARD"
-
-  versioning {
-    enabled = true
-  }
-
-  lifecycle_rule {
-    condition {
-      age = 30
-    }
-    action {
-      type          = "SetStorageClass"
-      storage_class = "NEARLINE"
-    }
-  }
-
-  lifecycle_rule {
-    condition {
-      age = 90
-    }
-    action {
-      type          = "SetStorageClass"
-      storage_class = "COLDLINE"
-    }
-  }
-
-  lifecycle_rule {
-    condition {
-      num_newer_versions         = 1
-      days_since_noncurrent_time = 7
-      with_state                 = "ARCHIVED"
-    }
-    action {
-      type = "Delete"
-    }
-  }
-
-  labels = local.labels
-}
-
-resource "google_storage_bucket_iam_member" "carr_bucket_permissions" {
-  bucket = google_storage_bucket.carr_bucket.name
-  member = "serviceAccount:${google_service_account.ingestor_sa.email}"
-  role   = "roles/storage.legacyBucketWriter"
-}
-
-# ------------------------------
 # Cloud Run job Service Account
 # ------------------------------
 resource "google_service_account" "ingestor_sa" {
@@ -141,35 +88,6 @@ resource "google_cloud_run_v2_job" "ingestor_job" {
 
       containers {
         name  = "ingestor-merc"
-        image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG_INGESTOR}"
-        resources {
-          limits = {
-            cpu    = "1"
-            memory = "2Gi"
-          }
-        }
-      }
-    }
-  }
-}
-
-# ------------------------------
-# Cloud Run Job for Ingestor (Carrefour)
-# ------------------------------
-resource "google_cloud_run_v2_job" "ingestor_carr_job" {
-  name                = "${var.APP_NAME}-ingestor-carr"
-  location            = var.REGION
-  deletion_protection = false
-  labels              = local.labels
-
-  template {
-    template {
-      timeout         = "2000s"
-      max_retries     = 1
-      service_account = google_service_account.ingestor_sa.email
-
-      containers {
-        name  = "ingestor-carr"
         image = "docker.io/${var.DOCKER_HUB_USERNAME}/infass-ingestor:${var.DOCKER_IMAGE_TAG_INGESTOR}"
         resources {
           limits = {
