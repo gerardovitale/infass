@@ -1,5 +1,8 @@
 name: CI/CD Pipeline
 
+# Project decommissioned (2026-11): only the Mercadona ingestor is still
+# tested, built and deployed. See README.md for details.
+
 on:
   push:
     branches:
@@ -20,15 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ingestor: ${{ steps.filter.outputs.ingestor }}
-      transformer-v2: ${{ steps.filter.outputs.transformer-v2 }}
-      api: ${{ steps.filter.outputs.api }}
-      ui: ${{ steps.filter.outputs.ui }}
-      retl: ${{ steps.filter.outputs.retl }}
-      insights: ${{ steps.filter.outputs.insights }}
-      dbt: ${{ steps.filter.outputs.dbt }}
       infra: ${{ steps.filter.outputs.infra }}
-      infra-ui: ${{ steps.filter.outputs.infra-ui }}
-      any-backend-service: ${{ steps.filter.outputs.any-backend-service }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6.0.2
@@ -40,32 +35,11 @@ jobs:
           filters: |
             ingestor:
               - 'ingestor/**'
-            transformer-v2:
-              - 'transformer-v2/**'
-            api:
-              - 'api/**'
-            ui:
-              - 'ui/**'
-            retl:
-              - 'retl/**'
-            insights:
-              - 'insights/**'
-            dbt:
-              - 'dbt/**'
-              - '.dbt/**'
             infra:
               - 'infra/**'
-            infra-ui:
-              - 'infra-ui/**'
-            any-backend-service:
-              - 'ingestor/**'
-              - 'transformer-v2/**'
-              - 'api/**'
-              - 'retl/**'
-              - 'insights/**'
 
   # ---------------------------------------------------------------------------
-  # Test jobs
+  # Test
   # ---------------------------------------------------------------------------
   test-ingestor:
     needs: detect-changes
@@ -76,53 +50,8 @@ jobs:
     with:
       service: ingestor
 
-  test-transformer-v2:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs['transformer-v2'] == 'true' ||
-      inputs.force_all == true
-    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
-    with:
-      service: transformer-v2
-
-  test-api:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.api == 'true' ||
-      inputs.force_all == true
-    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
-    with:
-      service: api
-
-  test-ui:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.ui == 'true' ||
-      inputs.force_all == true
-    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
-    with:
-      service: ui
-
-  test-retl:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.retl == 'true' ||
-      inputs.force_all == true
-    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
-    with:
-      service: retl
-
-  test-insights:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.insights == 'true' ||
-      inputs.force_all == true
-    uses: gerardovitale/github-workflows/.github/workflows/test-service.yml@v1
-    with:
-      service: insights
-
   # ---------------------------------------------------------------------------
-  # Build jobs
+  # Build
   # ---------------------------------------------------------------------------
   build-ingestor:
     needs: [detect-changes, test-ingestor]
@@ -138,76 +67,6 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-  build-transformer-v2:
-    needs: [detect-changes, test-transformer-v2]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs['transformer-v2'] == 'true' ||
-       inputs.force_all == true)
-    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
-    with:
-      service: transformer-v2
-      image_prefix: "infass-"
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  build-api:
-    needs: [detect-changes, test-api]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.api == 'true' ||
-       inputs.force_all == true)
-    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
-    with:
-      service: api
-      image_prefix: "infass-"
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  build-ui:
-    needs: [detect-changes, test-ui]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.ui == 'true' ||
-       inputs.force_all == true)
-    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
-    with:
-      service: ui
-      image_prefix: "infass-"
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  build-retl:
-    needs: [detect-changes, test-retl]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.retl == 'true' ||
-       inputs.force_all == true)
-    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
-    with:
-      service: retl
-      image_prefix: "infass-"
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-  build-insights:
-    needs: [detect-changes, test-insights]
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.insights == 'true' ||
-       inputs.force_all == true)
-    uses: gerardovitale/github-workflows/.github/workflows/build-service.yml@v1
-    with:
-      service: insights
-      image_prefix: "infass-"
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
   # ---------------------------------------------------------------------------
   # Terraform deploy
   # ---------------------------------------------------------------------------
@@ -217,13 +76,9 @@ jobs:
     needs:
       - detect-changes
       - build-ingestor
-      - build-transformer-v2
-      - build-api
-      - build-retl
-      - build-insights
     if: >-
       always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.any-backend-service == 'true' ||
+      (needs.detect-changes.outputs.ingestor == 'true' ||
        needs.detect-changes.outputs.infra == 'true' ||
        inputs.force_all == true)
     env:
@@ -254,126 +109,28 @@ jobs:
         working-directory: ./infra
         run: terraform init
 
-      - name: Determine Docker image tags
+      - name: Determine Docker image tag
         id: tags
         working-directory: ./infra
         run: |
-          FORCE="${{ inputs.force_all }}"
-
-          # Read current tags from Terraform state (last successful apply).
-          # For unchanged services we re-use the existing tag so Terraform
-          # sees no diff and skips redeployment.
-          current_tag() {
-            terraform output -raw "$1" 2>/dev/null || echo "${GITHUB_SHA::7}"
-          }
-
-          resolve_tag() {
-            local KEY="$1" CHANGED="$2"
-            if [[ "$CHANGED" == "true" || "$FORCE" == "true" ]]; then
-              echo "${GITHUB_SHA::7}"
-            else
-              current_tag "docker_image_tag_$(echo "$KEY" | tr '[:upper:]' '[:lower:]')"
-            fi
-          }
-
-          {
-            echo "tag_INGESTOR=$(resolve_tag INGESTOR '${{ needs.detect-changes.outputs.ingestor }}')"
-            echo "tag_TRANSFORMER_V2=$(resolve_tag TRANSFORMER_V2 '${{ needs.detect-changes.outputs['transformer-v2'] }}')"
-            echo "tag_API=$(resolve_tag API '${{ needs.detect-changes.outputs.api }}')"
-            echo "tag_RETL=$(resolve_tag RETL '${{ needs.detect-changes.outputs.retl }}')"
-          } >> "$GITHUB_OUTPUT"
+          # Re-use the tag from the last successful apply unless the ingestor
+          # changed, so Terraform sees no diff and skips redeployment.
+          if [[ "${{ needs.detect-changes.outputs.ingestor }}" == "true" \
+              || "${{ inputs.force_all }}" == "true" ]]; then
+            TAG="${GITHUB_SHA::7}"
+          else
+            TAG="$(terraform output -raw docker_image_tag_ingestor 2>/dev/null || echo "${GITHUB_SHA::7}")"
+          fi
+          echo "tag_INGESTOR=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Plan Terraform changes
         working-directory: ./infra
         run: |
           terraform plan -input=false \
-            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
-            -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
-            -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
-            -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
+            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}"
 
       - name: Apply Terraform changes
         working-directory: ./infra
         run: |
           terraform apply -auto-approve -input=false \
-            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}" \
-            -var "DOCKER_IMAGE_TAG_TRANSFORMER_V2=${{ steps.tags.outputs.tag_TRANSFORMER_V2 }}" \
-            -var "DOCKER_IMAGE_TAG_API=${{ steps.tags.outputs.tag_API }}" \
-            -var "DOCKER_IMAGE_TAG_RETL=${{ steps.tags.outputs.tag_RETL }}"
-
-  # ---------------------------------------------------------------------------
-  # Terraform deploy (UI)
-  # ---------------------------------------------------------------------------
-  terraform-ui-deploy:
-    name: Deploy UI with tf
-    runs-on: ubuntu-latest
-    needs:
-      - detect-changes
-      - build-ui
-    if: >-
-      always() && !failure() && !cancelled() &&
-      (needs.detect-changes.outputs.ui == 'true' ||
-       needs.detect-changes.outputs.infra-ui == 'true' ||
-       inputs.force_all == true)
-    env:
-      TF_VAR_APP_NAME: infass
-      TF_VAR_REGION: europe-southwest1
-      TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      TF_VAR_GCP_API_URL: ${{ vars.GCP_API_URL }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v4.0.0
-        with:
-          terraform_version: 1.10.4
-
-      - name: Terraform fmt
-        run: terraform fmt -check
-        continue-on-error: false
-
-      - name: Initialize Terraform
-        working-directory: ./infra-ui
-        run: terraform init
-
-      - name: Determine Docker image tag
-        id: tag
-        working-directory: ./infra-ui
-        run: |
-          if [[ "${{ needs.detect-changes.outputs.ui }}" == "true" \
-              || "${{ inputs.force_all }}" == "true" ]]; then
-            echo "docker_tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-          else
-            echo "docker_tag=$(terraform output -raw docker_image_tag 2>/dev/null || echo "${GITHUB_SHA::7}")" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Plan Terraform changes
-        working-directory: ./infra-ui
-        run: terraform plan -input=false -var "DOCKER_IMAGE_TAG=${{ steps.tag.outputs.docker_tag }}"
-
-      - name: Apply Terraform changes
-        working-directory: ./infra-ui
-        run: terraform apply -auto-approve -input=false -var "DOCKER_IMAGE_TAG=${{ steps.tag.outputs.docker_tag }}"
-
-  # ---------------------------------------------------------------------------
-  # dbt
-  # ---------------------------------------------------------------------------
-  build-dbt:
-    needs: detect-changes
-    if: >-
-      needs.detect-changes.outputs.dbt == 'true' ||
-      inputs.force_all == true
-    uses: gerardovitale/github-workflows/.github/workflows/run-dbt.yml@v1
-    with:
-      dbt_profile: infass
-      dbt_target: test
-      dbt_subcommand: build
-      dbt_args: "" # e.g. "--select tag:nightly"
-    secrets:
-      gcp_credentials: ${{ secrets.GCP_DBT_CREDENTIALS }}
+            -var "DOCKER_IMAGE_TAG_INGESTOR=${{ steps.tags.outputs.tag_INGESTOR }}"
