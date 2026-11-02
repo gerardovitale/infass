@@ -1,38 +1,44 @@
 name: Decommission UI
 
-# One-off workflow: destroys the UI infrastructure (infra-ui) in the
-# inflation-assistant-ui project. Delete this file once it has run successfully.
+# One-off workflow: deletes the UI Cloud Run service in the
+# inflation-assistant-ui project. The infra-ui Terraform state bucket no longer
+# exists, so this uses gcloud directly. Delete this file once it has run.
 
 on:
   workflow_dispatch:
 
 jobs:
-  terraform-ui-destroy:
-    name: Destroy UI infra with tf
+  delete-ui-service:
+    name: Delete UI Cloud Run service
     runs-on: ubuntu-latest
     env:
-      TF_VAR_APP_NAME: infass
-      TF_VAR_REGION: europe-southwest1
-      TF_VAR_DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      TF_VAR_GCP_API_URL: ${{ vars.GCP_API_URL }}
+      REGION: europe-southwest1
+      SERVICE: infass-ui-service
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_UI_CICD_CREDENTIALS }}
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v4.0.0
-        with:
-          terraform_version: 1.10.4
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
 
-      - name: Initialize Terraform
-        working-directory: ./infra-ui
-        run: terraform init
+      - name: List Cloud Run services and buckets
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: |
+          echo "Project: ${PROJECT}"
+          gcloud run services list --project "${PROJECT}" || true
+          gcloud storage buckets list --project "${PROJECT}" --format="value(name)" || true
 
-      - name: Destroy Terraform resources
-        working-directory: ./infra-ui
-        run: terraform destroy -auto-approve -input=false -var "DOCKER_IMAGE_TAG=decommissioned"
+      - name: Delete UI service
+        env:
+          PROJECT: ${{ steps.auth.outputs.project_id }}
+        run: |
+          if gcloud run services describe "${SERVICE}" --region "${REGION}" --project "${PROJECT}" >/dev/null 2>&1; then
+            gcloud run services delete "${SERVICE}" --region "${REGION}" --project "${PROJECT}" --quiet
+            echo "Deleted ${SERVICE}"
+          else
+            echo "${SERVICE} not found; nothing to delete"
+          fi
